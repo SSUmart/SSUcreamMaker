@@ -1,0 +1,52 @@
+body {
+  font: 16px/1.6 system-ui, sans-serif;
+  margin: 0;
+  padding: 24px 16px;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+}
+
+input[type='checkbox'] + label,
+input[type='radio'] + label {
+  display: inline;
+}
+
+input[type='password'],
+input[type='text'],
+input[type='url'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  font: inherit;
+}
+
+button {
+  padding: 8px 16px;
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid #1a5fb4;
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #eee;
+    background: #1e1e1e;
+  }
+}
