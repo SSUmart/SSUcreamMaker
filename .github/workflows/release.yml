@@ -1,0 +1,80 @@
+# 릴리즈: 태그를 푸시하면 확장 프로그램 zip을 만들어 GitHub Release를 연다
+# - v26.1.0-beta.1 : 사전 릴리즈(베타). v26.1.0 : 정식 릴리즈
+# - Release 첨부: ssucreammaker-<태그>.zip (압축을 풀어 "압축해제된 확장 프로그램 로드"로 설치)
+# - 수동 실행 / 패키징을 바꾼 PR: zip만 만들어 Actions 결과 페이지에 첨부
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/package-extension.sh"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+
+jobs:
+  check:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: 태그 형식과 CHANGELOG 확인
+        run: |
+          # 메이저·마이너 0~99, 베타 1~98 (manifest version 계산 범위, collab-rules 1장)
+          if ! [[ "$TAG" =~ ^v[0-9]{2}\.[0-9]{1,2}\.[0-9]{1,2}(-beta\.([1-9]|[1-8][0-9]|9[0-8]))?$ ]]; then
+            echo "::error::태그는 v26.1.0 또는 v26.1.0-beta.1 형식이어야 합니다 (메이저·마이너 0~99, 베타 1~98): $TAG"
+            exit 1
+          fi
+          if ! grep -q "^## \[${TAG#v}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md에 [${TAG#v}] 항목이 없습니다"
+            exit 1
+          fi
+
+  package:
+    needs: check
+    # check 는 태그일 때만 돈다. 수동 실행·PR에서는 건너뛴 check 를 무시하고 만든다
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm test
+      - name: 확장 zip 만들기
+        run: scripts/package-extension.sh "$TAG"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ssucreammaker-extension
+          path: dist/*.zip
+          retention-days: 30
+
+  release:
+    needs: package
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: ssucreammaker-extension
+          path: dist
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver="${TAG#v}"
+          # 릴리즈 노트: 베타는 그 버전 항목, 정식은 그 버전 항목 + 같은 버전의 베타 항목들
+          awk -v ver="$ver" '
+            /^## \[/ { h = substr($0, 5); sub(/\].*/, "", h); f = (h == ver || (ver !~ /-/ && index(h, ver "-beta.") == 1)) }
+            f' CHANGELOG.md > dist/notes.md
+          if [[ "$TAG" == *-beta.* ]]; then flag="--prerelease"; else flag="--latest"; fi
+          gh release create "$TAG" dist/*.zip --title "$TAG" --notes-file dist/notes.md $flag

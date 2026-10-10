@@ -5,12 +5,15 @@ AI를 활용한 스크린리더 서비스 제공
 
 기획과 진행 단계는 [docs/PROPOSAL.md](docs/PROPOSAL.md)를 참고하세요.
 
-## 설치 (개발 버전)
+## 설치
 
-1. Chrome, Edge, Whale에서 `chrome://extensions` 열기 (Edge는 `edge://extensions`)
-2. 개발자 모드 켜기
-3. "압축해제된 확장 프로그램을 로드합니다"에서 `extension` 폴더 선택
-4. 설치되면 설정 화면이 자동으로 열립니다.
+1. [Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 `ssucreammaker-v<버전>.zip`을 받아 압축 풀기 (소스로 설치할 때는 저장소의 `extension` 폴더)
+2. Chrome, Edge, Whale에서 `chrome://extensions` 열기 (Edge는 `edge://extensions`)
+3. 개발자 모드 켜기
+4. "압축해제된 확장 프로그램을 로드합니다"에서 압축을 푼 폴더 선택
+5. 설치되면 설정 화면이 자동으로 열립니다.
+
+새 버전으로 바꿀 때는 기존 폴더를 새 버전 파일로 덮어쓴 뒤 `chrome://extensions`에서 새로고침하면 설정(API 키 포함)이 유지됩니다. 다른 폴더에 풀어 로드하거나 확장을 삭제하고 다시 설치하면 새 확장으로 인식되어 설정이 지워집니다.
 
 ## 설정
 
