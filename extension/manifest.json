@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SSUcreamMaker",
   "description": "쇼핑몰 상세 이미지 속 글자를 AI로 읽어 스크린리더가 읽을 수 있는 텍스트로 넣어줍니다.",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "permissions": ["scripting", "storage"],
   "host_permissions": ["<all_urls>"],
   "background": {
