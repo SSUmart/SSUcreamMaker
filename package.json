@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test \"extension/test/*.test.js\""
+    "test": "node --test \"extension/test/*.test.js\" \"eval/test/*.test.js\""
   }
 }

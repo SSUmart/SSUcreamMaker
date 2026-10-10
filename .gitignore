@@ -8,3 +8,5 @@ dist/
 # Codex용으로 복사한 지침·스킬 (원본은 CLAUDE.md, .claude/skills)
 /AGENTS.md
 /.agents/
+# 평가 결과 (공유할 결과는 docs로 옮겨 기록)
+/eval/results/
