@@ -19,8 +19,16 @@ description: SSUcreamMaker 팀 공통 협업 규칙 — 버전 관리(연도.메
 | 마이너 | 버그 수정, 기능 개선 같은 작은 작업 | `26.1.0` → `26.1.1` |
 
 - **버전은 `CHANGELOG.md`와 릴리즈 태그(`v26.1.0`)로만 관리한다.** 릴리즈할 때 고치는 파일은 `CHANGELOG.md` 하나다
-  - `extension/manifest.json`의 `version`과 `package.json`의 `version`은 `0.0.0`으로 고정하고 바꾸지 않는다
-  - 배포용 확장 패키지의 버전은 태그에서 만든다 (릴리즈 워크플로는 아직 없음, 5장)
+  - `extension/manifest.json`, `package.json`, `eval/package.json`의 `version`은 `0.0.0`으로 고정하고 바꾸지 않는다
+  - 배포용 zip의 manifest 버전은 CI가 태그에서 만든다 (`scripts/package-extension.sh`). Chrome의 `version`은 숫자만 허용하므로 네 번째 자리에 베타 번호(정식은 99)를 넣어 항상 커지게 한다. 확장 관리 화면에는 `version_name`(원래 버전)이 보인다
+
+    | 태그 | `version` | `version_name` |
+    |---|---|---|
+    | `v26.1.0-beta.2` | `26.1.0.2` | `26.1.0-beta.2` |
+    | `v26.1.0` | `26.1.0.99` | `26.1.0` |
+    | 태그 없음 (로컬) | `0.0.0` | `0.0.0-dev` |
+
+    그래서 메이저·마이너는 0~99, 베타 번호는 1~98까지 쓴다
 - 애매하면 마이너로 올린다. 메이저인지 판단이 안 서면 팀에 묻는다.
 
 ### 베타(사전 릴리즈): `연도.메이저.마이너-beta.번호`
@@ -112,6 +120,7 @@ main ──●────────●──────────●──
 ## 5. 릴리즈 절차
 
 베타·정식 모두 같은 절차다. 별도 요청이 없으면 **베타**(`26.1.0-beta.N`)로 진행한다.
+태그를 푸시하면 GitHub Actions(`.github/workflows/release.yml`)가 Release를 만든다. Release를 손으로 만들지 않는다.
 
 1. `chore/release-<버전>` 브랜치 생성 (예: `chore/release-26.1.0-beta.1`)
 2. `CHANGELOG.md`의 `[Unreleased]` → `[26.1.0-beta.1] - 날짜`로 확정, 비어 있는 `[Unreleased]` 다시 추가 (**바꾸는 파일은 이것 하나**)
@@ -121,8 +130,17 @@ main ──●────────●──────────●──
    git switch main && git pull
    git tag v26.1.0-beta.1 && git push origin v26.1.0-beta.1
    ```
+5. Actions가 끝나면 Release가 열린다. 베타는 Pre-release, 정식은 Latest로 표시된다.
 
-- **[팀 결정 필요] 릴리즈 워크플로(`release.yml`)는 아직 없다.** 태그로 확장 패키지(zip)를 만들어 GitHub Release에 올릴지, Chrome 웹스토어에 올릴지 정한 뒤 만든다. 그전까지는 태그만 붙이고 Release는 만들지 않는다.
+| Release 구성 | 내용 |
+|---|---|
+| 본문 | `CHANGELOG.md`의 해당 버전 항목 (정식은 같은 버전의 베타 항목 포함) |
+| `ssucreammaker-v<버전>.zip` | 확장 프로그램. 압축을 풀어 `chrome://extensions` → 개발자 모드 → "압축해제된 확장 프로그램 로드"로 설치. 테스트 코드는 빠져 있다 |
+
+- 태그 형식이 `v연도.메이저.마이너` 또는 `…-beta.번호`가 아니거나, CHANGELOG에 그 버전 항목이 없거나, `npm test`가 실패하면 Release는 만들어지지 않는다.
+- 같은 zip을 로컬에서 만들려면 `scripts/package-extension.sh v26.1.0-beta.1` (결과는 `dist/`, 커밋하지 않음).
+- 태그 없이 zip만 필요하면 Actions → Release → **Run workflow**로 수동 실행하고, 결과 페이지의 `ssucreammaker-extension`을 받는다.
+- Chrome 웹스토어 배포는 하지 않는다. 필요해지면 팀이 정한 뒤 권한 축소(`<all_urls>` → 허용한 사이트만)와 함께 추가한다.
 - 베타에서 고칠 것이 나오면 일반 작업 브랜치 → PR로 고친 뒤 다음 베타(`-beta.2`)로 다시 릴리즈한다.
 
 ## 6. 저장소 설정 (관리자, 1회)
