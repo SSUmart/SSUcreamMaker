@@ -37,6 +37,8 @@ AI를 활용한 스크린리더 서비스 제공
 npm test   # 단위 테스트 (Node 20 이상, 의존성 없음)
 ```
 
+Gemini·NVIDIA NIM 추출 품질 비교는 [eval/README.md](eval/README.md)를 참고하세요.
+
 확장 코드를 고친 뒤에는 `chrome://extensions`에서 새로고침하세요.
 
 브랜치·커밋·버전·CHANGELOG 규칙은 [협업 규칙](.claude/skills/collab-rules/SKILL.md)을 따릅니다. 변경 내역은 [CHANGELOG.md](CHANGELOG.md)에 기록합니다.

@@ -14,7 +14,7 @@
   const MIN_RENDERED_WIDTH = 300;
   let busy = false;
 
-  function announce(text) {
+  function statusRegion() {
     let region = document.getElementById('ssucream-status');
     if (!region) {
       region = document.createElement('div');
@@ -23,6 +23,16 @@
       region.style.cssText = SR_ONLY;
       document.body.append(region);
     }
+    return region;
+  }
+
+  // 진행 상태(running, done, error). 평가 도구가 끝났는지 판단할 때 쓴다.
+  function setState(state) {
+    statusRegion().dataset.state = state;
+  }
+
+  function announce(text) {
+    const region = statusRegion();
     // 같은 문장도 다시 읽히도록 비운 뒤 채운다.
     region.textContent = '';
     setTimeout(() => (region.textContent = text), 100);
@@ -88,6 +98,7 @@
     else document.body.prepend(section);
 
     title.focus();
+    setState('done');
     announce('완료. 상세 이미지 내용으로 이동했습니다.');
   }
 
@@ -97,18 +108,23 @@
       return;
     }
     busy = true;
+    setState('running');
+    const fail = (text) => {
+      setState('error');
+      announce(text);
+    };
     try {
       const images = collectImages();
       if (!images.size) {
-        announce('이 페이지에서 이미지를 찾지 못했습니다.');
+        fail('이 페이지에서 이미지를 찾지 못했습니다.');
         return;
       }
       announce('상세 이미지를 찾는 중입니다.');
       const result = await chrome.runtime.sendMessage({ type: 'extract-detail', urls: [...images.keys()] });
-      if (result?.error) announce(result.error);
+      if (result?.error) fail(result.error);
       else render(result, images);
     } catch (error) {
-      announce(`오류가 발생했습니다. ${error.message}`);
+      fail(`오류가 발생했습니다. ${error.message}`);
     } finally {
       busy = false;
     }
