@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>SSUcreamMaker 설정</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>SSUcreamMaker 설정</h1>
+    <p>쇼핑몰 상품 페이지에서 Alt+Shift+D를 누르면 상세 이미지 속 글자를 AI로 읽어 페이지에 텍스트로 넣습니다.</p>
+
+    <form id="settings-form">
+      <h2>AI 사용</h2>
+      <p>
+        <input type="checkbox" id="ai-enabled" aria-describedby="ai-enabled-help">
+        <label for="ai-enabled">AI로 상세 이미지 읽기 켜기</label>
+      </p>
+      <p id="ai-enabled-help">켜면 상세 이미지가 아래에서 선택한 AI 서비스로 전송되고, 사용 요금은 입력한 API 키의 계정에 청구됩니다.</p>
+
+      <fieldset>
+        <legend>AI 공급자</legend>
+        <p>
+          <input type="radio" name="provider" id="provider-gemini" value="gemini">
+          <label for="provider-gemini">Google Gemini</label>
+        </p>
+        <p>
+          <input type="radio" name="provider" id="provider-nim" value="nim">
+          <label for="provider-nim">NVIDIA NIM</label>
+        </p>
+      </fieldset>
+
+      <section id="gemini-settings" aria-labelledby="gemini-title">
+        <h2 id="gemini-title">Google Gemini 설정</h2>
+        <p>
+          <label for="gemini-key">Gemini API 키</label>
+          <input type="password" id="gemini-key" autocomplete="off" spellcheck="false">
+        </p>
+        <p>
+          <label for="gemini-model">모델</label>
+          <input type="text" id="gemini-model" spellcheck="false">
+        </p>
+      </section>
+
+      <section id="nim-settings" aria-labelledby="nim-title">
+        <h2 id="nim-title">NVIDIA NIM 설정</h2>
+        <p>
+          <label for="nim-key">NVIDIA API 키</label>
+          <input type="password" id="nim-key" autocomplete="off" spellcheck="false">
+        </p>
+        <p>
+          <label for="nim-model">모델 (이미지 입력을 지원하는 모델)</label>
+          <input type="text" id="nim-model" spellcheck="false">
+        </p>
+        <p>
+          <label for="nim-base-url">API 주소 (직접 설치한 NIM을 쓸 때만 변경)</label>
+          <input type="url" id="nim-base-url" spellcheck="false">
+        </p>
+      </section>
+
+      <p>API 키는 이 컴퓨터의 브라우저에만 저장되며 다른 기기와 동기화되지 않습니다.</p>
+
+      <p>
+        <button type="submit">저장</button>
+        <button type="button" id="test-button">연결 확인</button>
+      </p>
+      <p id="status" role="status"></p>
+    </form>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

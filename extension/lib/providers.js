@@ -1,0 +1,103 @@
+import { STRUCTURE_PROMPT, TRANSCRIBE_PROMPT } from './structure.js';
+
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const TILE_ORDER_NOTE =
+  '이미지 조각은 위에서 아래 순서이며 경계가 조금씩 겹칩니다. 겹쳐서 반복된 글자는 한 번만 쓰세요.';
+
+async function apiError(name, res) {
+  if (res.status === 401 || res.status === 403) return new Error(`${name} API 키가 올바르지 않습니다.`);
+  if (res.status === 429) return new Error(`${name} 요청 한도를 넘었습니다. 잠시 후 다시 시도해주세요.`);
+  const detail = (await res.text().catch(() => '')).slice(0, 200);
+  return new Error(`${name} 오류 (${res.status}) ${detail}`.trim());
+}
+
+// --- Gemini: 조각 전체를 한 번에 보내 바로 JSON으로 정리한다.
+async function geminiGenerate(config, parts, json) {
+  const url = `${GEMINI_BASE}/models/${encodeURIComponent(config.model)}:generateContent`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.apiKey },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts }],
+      ...(json && { generationConfig: { responseMimeType: 'application/json' } })
+    })
+  });
+  if (!res.ok) throw await apiError('Gemini', res);
+  const body = await res.json();
+  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('');
+  if (!text) throw new Error(`Gemini 응답이 비어 있습니다. (${body.candidates?.[0]?.finishReason ?? '이유 불명'})`);
+  return text;
+}
+
+const gemini = {
+  label: 'Gemini',
+  maxBase64Length: Infinity,
+  async extract(tiles, config) {
+    const parts = [
+      { text: `${STRUCTURE_PROMPT}\n${TILE_ORDER_NOTE}` },
+      ...tiles.map((t) => ({ inlineData: { mimeType: t.mimeType, data: t.data } }))
+    ];
+    return geminiGenerate(config, parts, true);
+  },
+  async test(config) {
+    await geminiGenerate(config, [{ text: 'OK라고만 답하세요.' }], false);
+  }
+};
+
+// --- NVIDIA NIM: 다중 이미지 지원이 모델마다 달라 조각별로 글자를 읽은 뒤 텍스트로 정리한다.
+async function nimChat(config, content, maxTokens) {
+  const res = await fetch(`${config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${config.apiKey}`
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [{ role: 'user', content }],
+      max_tokens: maxTokens,
+      temperature: 0,
+      stream: false
+    })
+  });
+  if (!res.ok) throw await apiError('NVIDIA NIM', res);
+  const body = await res.json();
+  const text = body.choices?.[0]?.message?.content;
+  if (!text) throw new Error('NVIDIA NIM 응답이 비어 있습니다.');
+  // 추론형 모델이 붙이는 생각 과정은 버린다.
+  return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+}
+
+const nim = {
+  label: 'NVIDIA NIM',
+  // build.nvidia.com 호스팅 API는 인라인 이미지 크기 제한이 있어 조각을 이 크기 아래로 압축한다.
+  maxBase64Length: 180_000,
+  async extract(tiles, config, onProgress = () => {}) {
+    const texts = [];
+    for (const [i, tile] of tiles.entries()) {
+      onProgress(`이미지 조각 ${i + 1}/${tiles.length} 읽는 중`);
+      const text = await nimChat(
+        config,
+        [
+          { type: 'image_url', image_url: { url: `data:${tile.mimeType};base64,${tile.data}` } },
+          { type: 'text', text: TRANSCRIBE_PROMPT }
+        ],
+        2048
+      );
+      if (text !== '없음') texts.push(text);
+    }
+    if (!texts.length) return '{"sections":[]}';
+    onProgress('읽은 내용 정리 중');
+    return nimChat(
+      config,
+      `${STRUCTURE_PROMPT}\n${TILE_ORDER_NOTE}\n\n이미지에서 읽은 글자:\n${texts.join('\n\n')}`,
+      4096
+    );
+  },
+  async test(config) {
+    await nimChat(config, 'OK라고만 답하세요.', 16);
+  }
+};
+
+export const PROVIDERS = { gemini, nim };
