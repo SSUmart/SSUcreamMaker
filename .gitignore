@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.omc/
+.env
+.env.*
+!.env.example
+.DS_Store
+# Codex용으로 복사한 지침·스킬 (원본은 CLAUDE.md, .claude/skills)
+/AGENTS.md
+/.agents/
