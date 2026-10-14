@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>솔빛 데일리 진공 텀블러 500ml : 솔빛리빙</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="shop.css">
+<!--
+  확장 프로그램 평가용 가상 쇼핑몰 상품 페이지.
+  페이지 구조(랜드마크·제목·표·폼·탭)는 스크린리더로 잘 읽히게 만들고,
+  상세 설명만 실제 쇼핑몰처럼 글자가 든 이미지(대체 텍스트 없음, 지연 로딩)로 둔다.
+  확장이 채워야 할 빈칸은 이 상세 이미지뿐이다.
+-->
+</head>
+<body>
+<a class="skip-link" href="#main">본문 바로가기</a>
+
+<header class="site-header">
+  <p class="notice-bar">평가용 가상 쇼핑몰입니다. 실제로 판매하지 않습니다.</p>
+  <div class="header-inner">
+    <a class="logo" href="index.html">솔빛리빙</a>
+    <form class="search" role="search" action="index.html">
+      <label for="q">상품 검색</label>
+      <input id="q" name="q" type="search" placeholder="텀블러, 머그컵">
+      <button type="submit">검색</button>
+    </form>
+    <ul class="util">
+      <li><a href="index.html">로그인</a></li>
+      <li><a href="index.html">장바구니 <span id="cart-count">0</span>개</a></li>
+    </ul>
+  </div>
+  <nav class="gnb" aria-label="주 메뉴">
+    <ul>
+      <li><a href="index.html">신상품</a></li>
+      <li><a href="index.html" aria-current="page">텀블러·보틀</a></li>
+      <li><a href="index.html">머그·컵</a></li>
+      <li><a href="index.html">주방소품</a></li>
+      <li><a href="index.html">기획전</a></li>
+    </ul>
+  </nav>
+  <!-- 헤더 안 배너: 확장이 상세 이미지로 잘못 고르지 않아야 한다 -->
+  <img class="header-banner" src="images/store-banner.jpg" width="1200" height="400" alt="가을 주방용품 기획전">
+</header>
+
+<nav class="breadcrumb" aria-label="현재 위치">
+  <ol>
+    <li><a href="index.html">홈</a></li>
+    <li><span class="sep" aria-hidden="true">›</span><a href="index.html">텀블러·보틀</a></li>
+    <li><span class="sep" aria-hidden="true">›</span><a href="index.html" aria-current="page">솔빛 데일리 진공 텀블러 500ml</a></li>
+  </ol>
+</nav>
+
+<main id="main" tabindex="-1">
+  <div class="product">
+    <section class="gallery" aria-label="상품 사진">
+      <img id="gallery-main" class="gallery-main" src="images/product-white.jpg" width="1000" height="1000"
+           alt="화이트 색상 텀블러 정면, 투명한 슬라이드 뚜껑">
+      <ul class="thumbs">
+        <li><button type="button" aria-pressed="true" data-src="images/product-white.jpg"
+              data-alt="화이트 색상 텀블러 정면, 투명한 슬라이드 뚜껑">
+          <img src="images/product-white.jpg" alt="화이트 정면 사진 보기"></button></li>
+        <li><button type="button" aria-pressed="false" data-src="images/product-colors.jpg"
+              data-alt="화이트, 블랙, 세이지그린 세 가지 색상 텀블러를 나란히 세운 모습">
+          <img src="images/product-colors.jpg" alt="세 가지 색상 사진 보기"></button></li>
+        <li><button type="button" aria-pressed="false" data-src="images/lid-detail.jpg"
+              data-alt="슬라이드 뚜껑을 반쯤 연 모습을 가까이서 찍은 사진">
+          <img src="images/lid-detail.jpg" alt="뚜껑 확대 사진 보기"></button></li>
+        <li><button type="button" aria-pressed="false" data-src="images/lifestyle.jpg"
+              data-alt="책상 위 노트북 옆에 놓인 세이지그린 텀블러">
+          <img src="images/lifestyle.jpg" alt="사용 모습 사진 보기"></button></li>
+      </ul>
+    </section>
+
+    <div class="summary">
+      <p class="brand"><a href="index.html">솔빛리빙</a></p>
+      <h1>솔빛 데일리 진공 텀블러 500ml</h1>
+      <p class="rating"><span class="stars" aria-hidden="true">★★★★☆</span>
+        <span class="sr-only">별점 5점 만점에 4.5점,</span> 리뷰 <a href="#tab-review" data-open-tab="tab-review">3개</a></p>
+
+      <section aria-labelledby="price-title">
+        <h2 id="price-title" class="sr-only">가격</h2>
+        <dl class="price">
+          <dt>정가</dt><dd><del>32,000원</del></dd>
+          <dt>할인율</dt><dd class="rate">22%</dd>
+          <dt>판매가</dt><dd class="sale">24,900원</dd>
+          <dt>배송비</dt><dd>3,000원 (30,000원 이상 무료)</dd>
+        </dl>
+      </section>
+
+      <form id="order" class="order" novalidate>
+        <h2 class="sr-only">옵션 선택</h2>
+        <fieldset>
+          <legend>색상 <span class="required">(필수)</span></legend>
+          <label><input type="radio" name="color" value="화이트" required> 화이트</label>
+          <label><input type="radio" name="color" value="블랙"> 블랙</label>
+          <label><input type="radio" name="color" value="세이지그린"> 세이지그린 (품절 임박)</label>
+        </fieldset>
+
+        <div class="qty">
+          <label for="qty">수량</label>
+          <button type="button" data-step="-1" aria-controls="qty" aria-label="수량 1개 줄이기">−</button>
+          <input id="qty" name="qty" type="number" min="1" max="10" value="1" inputmode="numeric">
+          <button type="button" data-step="1" aria-controls="qty" aria-label="수량 1개 늘리기">+</button>
+        </div>
+
+        <p class="total">총 상품 금액 <strong id="total">24,900원</strong></p>
+
+        <div class="actions">
+          <button type="button" id="wish" class="wish" aria-pressed="false">찜하기</button>
+          <button type="submit" name="action" value="cart">장바구니 담기</button>
+          <button type="submit" name="action" value="buy" class="primary">바로 구매</button>
+        </div>
+        <!-- 장바구니 담기 결과, 옵션 미선택 같은 안내를 스크린리더가 바로 읽는다 -->
+        <p id="order-status" class="order-status" role="status"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div role="tablist" aria-label="상품 정보">
+      <button type="button" role="tab" id="tab-detail" aria-controls="panel-detail" aria-selected="true">상세정보</button>
+      <button type="button" role="tab" id="tab-review" aria-controls="panel-review" aria-selected="false" tabindex="-1">리뷰 (3)</button>
+      <button type="button" role="tab" id="tab-qna" aria-controls="panel-qna" aria-selected="false" tabindex="-1">상품문의</button>
+      <button type="button" role="tab" id="tab-ship" aria-controls="panel-ship" aria-selected="false" tabindex="-1">배송·교환·반품</button>
+    </div>
+
+    <section role="tabpanel" id="panel-detail" aria-labelledby="tab-detail" tabindex="0">
+      <h2>상세정보</h2>
+      <!-- 실제 쇼핑몰처럼 상세 설명을 글자가 든 이미지로만 제공한다. 대체 텍스트가 없고 스크롤하면 불러온다. -->
+      <div class="detail-images">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="images/detail-01.jpg" width="860" height="2608" alt="">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="images/detail-02.jpg" width="860" height="1978" alt="">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="images/detail-03.jpg" width="860" height="1134" alt="">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="images/detail-04.jpg" width="860" height="1021" alt="">
+      </div>
+
+      <table class="notice-table">
+        <caption>상품정보제공고시</caption>
+        <tbody>
+          <tr><th scope="row">품명 및 모델명</th><td>진공 텀블러, SB-TM500</td></tr>
+          <tr><th scope="row">제조자(수입자)</th><td>솔빛리빙 (가상 업체)</td></tr>
+          <tr><th scope="row">제조국</th><td>대한민국</td></tr>
+          <tr><th scope="row">식품용 기구 표시</th><td>식품용 기구 해당</td></tr>
+          <tr><th scope="row">A/S 책임자와 전화번호</th><td>솔빛리빙 고객센터, 000-0000-0000 (가상 번호)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section role="tabpanel" id="panel-review" aria-labelledby="tab-review" tabindex="0" hidden>
+      <h2>리뷰</h2>
+      <p>평균 별점 5점 만점에 4.5점, 리뷰 3개</p>
+      <ol class="reviews">
+        <li>
+          <article>
+            <h3>출근길에 매일 써요</h3>
+            <p class="meta"><span class="sr-only">별점</span> 5점 · 세이지그린 · 2026년 9월 12일</p>
+            <p>아침에 담은 커피가 점심까지 따뜻해요. 뚜껑이 한 손으로 열려서 편합니다.</p>
+          </article>
+        </li>
+        <li>
+          <article>
+            <h3>가볍고 좋은데 컵홀더에는 빡빡해요</h3>
+            <p class="meta"><span class="sr-only">별점</span> 4점 · 블랙 · 2026년 9월 20일</p>
+            <p>차 컵홀더에 들어가긴 하는데 꽉 낍니다. 보냉은 확실해요.</p>
+          </article>
+        </li>
+        <li>
+          <article>
+            <h3>선물용으로 샀어요</h3>
+            <p class="meta"><span class="sr-only">별점</span> 4.5점 · 화이트 · 2026년 10월 2일</p>
+            <p>포장이 깔끔하고 색이 예쁩니다.</p>
+          </article>
+        </li>
+      </ol>
+    </section>
+
+    <section role="tabpanel" id="panel-qna" aria-labelledby="tab-qna" tabindex="0" hidden>
+      <h2>상품문의</h2>
+      <dl class="qna">
+        <dt>질문: 탄산수를 담아도 되나요?</dt>
+        <dd>답변: 압력이 생겨 뚜껑이 열릴 수 있어 탄산음료는 권하지 않습니다.</dd>
+        <dt>질문: 각인 서비스가 있나요?</dt>
+        <dd>답변: 현재는 각인 서비스를 제공하지 않습니다.</dd>
+      </dl>
+    </section>
+
+    <section role="tabpanel" id="panel-ship" aria-labelledby="tab-ship" tabindex="0" hidden>
+      <h2>배송·교환·반품 안내</h2>
+      <table>
+        <caption class="sr-only">배송·교환·반품 조건</caption>
+        <tbody>
+          <tr><th scope="row">배송 방법</th><td>택배</td></tr>
+          <tr><th scope="row">배송비</th><td>3,000원, 30,000원 이상 구매 시 무료</td></tr>
+          <tr><th scope="row">출고</th><td>상세정보 이미지 참고</td></tr>
+          <tr><th scope="row">교환·반품 신청 기간</th><td>상세정보 이미지 참고</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <nav aria-label="고객 안내">
+    <ul>
+      <li><a href="index.html">이용약관</a></li>
+      <li><a href="index.html">개인정보처리방침</a></li>
+      <li><a href="index.html">고객센터</a></li>
+    </ul>
+  </nav>
+  <p>솔빛리빙은 SSUcreamMaker 확장 프로그램 평가를 위해 만든 가상 쇼핑몰입니다. 상호, 상품, 연락처는 모두 실제가 아닙니다.</p>
+  <p>상품 사진은 AI로 생성했습니다.</p>
+</footer>
+
+<script src="shop.js"></script>
+</body>
+</html>
