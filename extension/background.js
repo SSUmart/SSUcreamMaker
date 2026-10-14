@@ -3,6 +3,7 @@ import { pickDetailImages } from './lib/detect.js';
 import { cutTiles } from './lib/tiles.js';
 import { PROVIDERS } from './lib/providers.js';
 import { parseSections } from './lib/structure.js';
+import { buildQuestionPrompt, buildSummaryPrompt, parseAnswer, parseSummary } from './lib/answer.js';
 
 // 한 번에 AI로 보내는 조각 수 상한. 사용자 API 요금이 과하게 나오지 않도록 한다.
 const MAX_TILES = 40;
@@ -11,28 +12,40 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') chrome.runtime.openOptionsPage();
 });
 
-chrome.action.onClicked.addListener(runOnTab);
+// 단축키별로 페이지에 넣을 content script. page-text.js는 요약·질문 응답이 같이 쓴다.
+const COMMAND_FILES = {
+  'read-detail': ['content/detail.js'],
+  'summarize-page': ['content/page-text.js', 'content/summary.js'],
+  'ask-page': ['content/page-text.js', 'content/qa.js']
+};
+
+chrome.action.onClicked.addListener((tab) => runOnTab(tab, 'read-detail'));
 chrome.commands.onCommand.addListener((command, tab) => {
-  if (command === 'read-detail') runOnTab(tab);
+  if (COMMAND_FILES[command]) runOnTab(tab, command);
 });
 
-async function runOnTab(tab) {
+async function runOnTab(tab, command) {
   if (!tab?.id) return;
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/detail.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: COMMAND_FILES[command] });
   } catch (error) {
     // chrome:// 같은 페이지에는 주입할 수 없다.
     console.warn('content script 주입 실패', error);
   }
 }
 
+const HANDLERS = {
+  'extract-detail': (message, progress) => extractDetail(message.urls, progress),
+  'summarize-page': (message) => summarizePage(message.page),
+  'ask-page': (message) => askPage(message.page, message.question, message.history)
+};
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type !== 'extract-detail' || !sender.tab?.id) return;
+  const handler = HANDLERS[message?.type];
+  if (!handler || !sender.tab?.id) return;
   const progress = (text) =>
     chrome.tabs.sendMessage(sender.tab.id, { type: 'progress', text }).catch(() => {});
-  extractDetail(message.urls, progress).then(sendResponse, (error) =>
-    sendResponse({ error: error.message })
-  );
+  handler(message, progress).then(sendResponse, (error) => sendResponse({ error: error.message }));
   return true;
 });
 
@@ -41,7 +54,7 @@ async function extractDetail(urls, progress) {
   if (active.error) return { error: active.error };
   const provider = PROVIDERS[active.name];
 
-  const cacheKey = await makeCacheKey(active, urls);
+  const cacheKey = await makeCacheKey('detail', active, urls);
   const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
   if (cached) return cached;
 
@@ -85,9 +98,43 @@ async function loadImages(urls) {
   return { images, failedCount: results.length - images.length };
 }
 
-async function makeCacheKey(active, urls) {
-  const source = [active.name, active.config.model, ...urls].join('\n');
+// F4 요약: 같은 페이지 글·같은 모델이면 캐시를 쓴다.
+async function summarizePage(page) {
+  const active = activeProvider(await loadSettings());
+  if (active.error) return { error: active.error };
+  if (!page?.paragraphs?.length) return { error: '요약할 글을 찾지 못했습니다.' };
+
+  const cacheKey = await makeCacheKey('summary', active, [page.title, ...page.paragraphs]);
+  const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
+  if (cached) return cached;
+
+  const text = await PROVIDERS[active.name].generateJson(buildSummaryPrompt(page), active.config);
+  const result = parseSummary(text, page.paragraphs.length);
+  await chrome.storage.session.set({ [cacheKey]: result });
+  return result;
+}
+
+// F5 질문 응답: 같은 페이지 글·같은 질문·같은 이전 대화면 캐시를 쓴다 (시연 리허설 대비).
+async function askPage(page, question, history = []) {
+  const active = activeProvider(await loadSettings());
+  if (active.error) return { error: active.error };
+  if (!question?.trim()) return { error: '질문을 입력해주세요.' };
+  if (!page?.paragraphs?.length) return { error: '이 페이지에서 읽을 글을 찾지 못했습니다.' };
+
+  const prompt = buildQuestionPrompt(page, question.trim(), history);
+  const cacheKey = await makeCacheKey('qa', active, [prompt]);
+  const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
+  if (cached) return cached;
+
+  const text = await PROVIDERS[active.name].generateJson(prompt, active.config);
+  const result = parseAnswer(text, page.paragraphs.length);
+  await chrome.storage.session.set({ [cacheKey]: result });
+  return result;
+}
+
+async function makeCacheKey(kind, active, parts) {
+  const source = [active.name, active.config.model, ...parts].join('\n');
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
   const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-  return `detail:${hex}`;
+  return `${kind}:${hex}`;
 }

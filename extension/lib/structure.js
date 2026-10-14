@@ -28,17 +28,30 @@ export const STRUCTURE_PROMPT = [
   '{"sections":[{"title":"가격·할인","items":["정가 39,000원, 할인가 29,000원"]}]}'
 ].join('\n');
 
-export function parseSections(text) {
+// AI 응답에서 JSON을 꺼낸다. 코드 블록이나 앞뒤 설명 문장이 붙어 와도 처리한다.
+export function parseJsonText(text) {
   const json = text
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '');
-  let parsed;
   try {
-    parsed = JSON.parse(json);
+    return JSON.parse(json);
   } catch {
+    const start = json.indexOf('{');
+    const end = json.lastIndexOf('}');
+    if (start !== -1 && end > start) {
+      try {
+        return JSON.parse(json.slice(start, end + 1));
+      } catch {
+        // 아래에서 같은 오류로 처리
+      }
+    }
     throw new Error('AI 응답을 해석하지 못했습니다.');
   }
+}
+
+export function parseSections(text) {
+  const parsed = parseJsonText(text);
   if (!Array.isArray(parsed?.sections)) throw new Error('AI 응답 형식이 올바르지 않습니다.');
 
   const byTitle = new Map();
