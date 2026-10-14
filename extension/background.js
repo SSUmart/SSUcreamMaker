@@ -4,6 +4,7 @@ import { cutTiles } from './lib/tiles.js';
 import { PROVIDERS } from './lib/providers.js';
 import { parseSections } from './lib/structure.js';
 import { buildQuestionPrompt, buildSummaryPrompt, parseAnswer, parseSummary } from './lib/answer.js';
+import { MAX_EXPLAIN_TILES, buildExplainPrompt, parseExplanation } from './lib/explain.js';
 
 // 한 번에 AI로 보내는 조각 수 상한. 사용자 API 요금이 과하게 나오지 않도록 한다.
 const MAX_TILES = 40;
@@ -16,7 +17,8 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 const COMMAND_FILES = {
   'read-detail': ['content/detail.js'],
   'summarize-page': ['content/page-text.js', 'content/summary.js'],
-  'ask-page': ['content/page-text.js', 'content/qa.js']
+  'ask-page': ['content/page-text.js', 'content/qa.js'],
+  'explain-mode': ['content/page-text.js', 'content/explain.js']
 };
 
 chrome.action.onClicked.addListener((tab) => runOnTab(tab, 'read-detail'));
@@ -37,7 +39,8 @@ async function runOnTab(tab, command) {
 const HANDLERS = {
   'extract-detail': (message, progress) => extractDetail(message.urls, progress),
   'summarize-page': (message) => summarizePage(message.page),
-  'ask-page': (message) => askPage(message.page, message.question, message.history)
+  'ask-page': (message) => askPage(message.page, message.question, message.history),
+  'explain-item': (message, progress) => explainItem(message.item, progress)
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -130,6 +133,52 @@ async function askPage(page, question, history = []) {
   const result = parseAnswer(text, page.paragraphs.length);
   await chrome.storage.session.set({ [cacheKey]: result });
   return result;
+}
+
+// F6 항목 설명(시험): 고른 항목 하나를 설명한다. 그림이 있으면 앞부분 조각을 함께 보낸다.
+async function explainItem(item, progress) {
+  const active = activeProvider(await loadSettings());
+  if (active.error) return { error: active.error };
+  if (!item?.kind) return { error: '설명할 항목 정보가 없습니다.' };
+  const provider = PROVIDERS[active.name];
+
+  const cacheKey = await makeCacheKey('explain', active, [JSON.stringify(item)]);
+  const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
+  if (cached) return cached;
+
+  let tiles = [];
+  let imageTruncated = false;
+  if (item.imageUrl) {
+    progress('그림을 불러오는 중');
+    tiles = await loadImageTiles(item.imageUrl, provider.maxBase64Length);
+    imageTruncated = tiles.length > MAX_EXPLAIN_TILES;
+    tiles = tiles.slice(0, MAX_EXPLAIN_TILES);
+  }
+
+  progress(`${provider.label}로 설명을 만드는 중`);
+  const prompt = buildExplainPrompt(item, { hasImage: tiles.length > 0 });
+  const result = {
+    ...parseExplanation(await provider.describe(prompt, tiles, active.config, progress)),
+    imageRead: tiles.length > 0,
+    imageTruncated
+  };
+  // 그림을 못 읽은 결과는 일시적인 실패일 수 있어 저장하지 않는다(다시 누르면 다시 시도).
+  if (!item.imageUrl || tiles.length) await chrome.storage.session.set({ [cacheKey]: result });
+  return result;
+}
+
+// 그림을 못 불러오거나(SVG 등) 해석하지 못하면 글 정보만으로 설명한다.
+async function loadImageTiles(url, maxBase64Length) {
+  try {
+    const { images } = await loadImages([url]);
+    if (!images.length) return [];
+    const bitmap = await createImageBitmap(images[0].blob);
+    const tiles = await cutTiles(bitmap, { maxBase64Length });
+    bitmap.close();
+    return tiles;
+  } catch {
+    return [];
+  }
 }
 
 async function makeCacheKey(kind, active, parts) {

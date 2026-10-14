@@ -13,8 +13,9 @@
     'dialog',
     null,
     // display를 지정하면 닫힌 대화상자가 숨겨지지 않으므로 상자 스타일에서 뺀다.
+    // 공통 상자 스타일의 position:relative가 대화상자 기본 배치(화면 가운데 고정)를 덮지 않게 fixed로 되돌린다.
     STYLE.box.replace('display:block;', '').replace('margin:16px auto;', 'margin:auto;') +
-      'width:min(640px,92vw);max-height:80vh;overflow:auto;'
+      'position:fixed;inset:0;height:fit-content;width:min(640px,92vw);max-height:80vh;overflow:auto;'
   );
   dialog.id = 'ssucream-qa';
   dialog.setAttribute('aria-labelledby', 'ssucream-qa-title');
