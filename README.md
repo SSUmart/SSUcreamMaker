@@ -25,19 +25,33 @@ AI를 활용한 스크린리더 서비스 제공
 스크린리더는 **글자만** 읽을 수 있습니다. 쇼핑몰 상세페이지처럼 가격, 옵션, 주의사항을 그림 속 글자로 넣고 대체 텍스트(그림 설명)를 달지 않으면, 스크린리더는 "그래픽"이라고만 읽거나 아예 건너뜁니다. 이 확장은 그 그림 속 글자를 AI로 읽어 스크린리더가 읽을 수 있는 글로 페이지에 넣어 줍니다.
 
 ```mermaid
-flowchart LR
-    page["웹페이지"] --> sr["스크린리더<br/>센스리더 · NVDA · JAWS"]
-    sr --> voice["음성<br/>귀로 듣기"]
-    sr --> braille["점자 디스플레이<br/>손끝으로 읽기"]
-    image["글자가 든 상세 이미지<br/>(대체 텍스트 없음)"] -. "읽을 수 없음" .-> sr
-    image --> ext["SSUcreamMaker<br/>AI로 그림 속 글자 읽기"]
-    ext -- "제목과 글로 넣기" --> page
+flowchart TD
+    page["웹페이지"] --> scan["스크린리더가<br/>페이지 전체를 읽음<br/>센스리더 · NVDA · JAWS"]
+    scan --> check{"글자로 되어 있나?"}
+    check -- "읽을 수 있음<br/>본문 글자,<br/>대체 텍스트가 있는 그림" --> read["스크린리더가 읽음"]
+    check -- "읽을 수 없음<br/>글자가 든 상세 이미지" --> ai["SSUcreamMaker<br/>AI로 그림 속 글자 읽기"]
+    ai --> text["텍스트화<br/>제목과 항목으로 정리해<br/>페이지에 넣음"]
+    text -- "확장이 넣은 글" --> read
+    read --> voice["음성<br/>귀로 듣기"]
+    read --> braille["점자 디스플레이<br/>손끝으로 읽기"]
 ```
+
+음성과 점자로 내보내는 것은 사용자가 원래 쓰던 스크린리더입니다. 확장은 읽을 수 없던 부분을 글로 바꿔 페이지에 넣기만 하므로, 사용자는 익숙한 스크린리더 조작 그대로 그 내용을 읽습니다.
 
 | 같은 상세 이미지에서 | 스크린리더가 읽는 것 |
 |---|---|
 | 확장 사용 전 | "그래픽" (또는 아무것도 읽지 않음) |
 | 확장 사용 후 (`Alt+Shift+D`) | 예: "상세 이미지 내용, AI 추출, 제목 2" → "가격·할인, 제목 3" → "할인가 24,900원 (22% 할인)" … (평가용 쇼핑몰 기준, 문장은 AI 결과에 따라 다름) |
+
+### 참고 영상
+
+시청각장애인이 점자정보단말기(점자 디스플레이)로 실제로 소통하는 모습을 볼 수 있는 영상입니다.
+
+| 영상 | 내용 |
+|---|---|
+| [![KBS 시청각장애인을 아십니까 영상 미리보기](https://img.youtube.com/vi/jExIQsDwt_s/hqdefault.jpg)](https://www.youtube.com/watch?v=jExIQsDwt_s) | [[이런뉴스] "빛도, 소리도 차단된 사람들" 시청각장애인을 아십니까](https://www.youtube.com/watch?v=jExIQsDwt_s)<br/>KBS News, 2025년 6월, 6분 52초<br/>국회에서 시청각장애인이 점자정보단말기를 손으로 읽으며 발언하고, 다른 시청각장애인들은 손을 맞잡는 촉수화로 내용을 전달받음 |
+| [![CBS 점자정보 단말기 영상 미리보기](https://img.youtube.com/vi/IRJ4dteEp40/hqdefault.jpg)](https://www.youtube.com/watch?v=IRJ4dteEp40) | [[CBS 뉴스] '점자정보 단말기'…높은 가격에 고통 받는 시청각장애인들](https://www.youtube.com/watch?v=IRJ4dteEp40)<br/>CBS크리스천노컷뉴스, 2021년 10월, 3분 27초<br/>시청각장애인이 점자정보단말기로 카카오톡을 주고받고 뉴스를 보는 모습과 기기 가격 부담 문제 |
+| [![Haben Girma 소개 영상 미리보기](https://img.youtube.com/vi/f1RQcWaw7Zg/hqdefault.jpg)](https://www.youtube.com/watch?v=f1RQcWaw7Zg) | [Meet The First Deaf-Blind Harvard Law Grad, Haben Girma](https://www.youtube.com/watch?v=f1RQcWaw7Zg) (영어)<br/>Oxygen, 2016년 10월, 4분 37초<br/>하버드 로스쿨 첫 시청각장애인 졸업생의 일상. 상대가 키보드로 치면 점자 디스플레이로 읽고 말로 답하는 장면 |
 
 ## 설치
 
