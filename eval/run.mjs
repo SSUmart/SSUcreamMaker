@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { scoreCase, summarize, toMarkdown } from './score.js';
+import { serveShop } from './shop/serve.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const EXTENSION = path.resolve(here, '../extension');
@@ -67,7 +68,7 @@ const MOCK_SECTIONS = JSON.stringify({
   ]
 });
 
-// 사례 이미지(fixture) 페이지와 가짜 AI 서버
+// 사례 이미지(fixture) 페이지, 쇼핑몰형 테스트 페이지(/shop/), 가짜 AI 서버
 function startServer(fixtureImages) {
   const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/mock/v1/chat/completions') {
@@ -92,6 +93,7 @@ function startServer(fixtureImages) {
           `<div id="detail"><img src="/fixture/${id}.png" alt=""></div></body></html>`
       );
     }
+    if (serveShop(req, res)) return;
     res.statusCode = 404;
     res.end();
   });
@@ -222,7 +224,7 @@ async function main() {
       for (const c of cases) {
         // 캐시를 비워 매번 실제로 AI를 호출한 시간을 잰다.
         await sw.evaluate(() => chrome.storage.session.clear());
-        const url = c.fixture ? `${base}/fixture/${c.id}.html` : c.url;
+        const url = c.fixture ? `${base}/fixture/${c.id}.html` : c.page ? base + c.page : c.url;
         console.error(`[${provider}] ${c.id} 실행 중`);
         results.push({ provider, caseId: c.id, ...(await runCase(context, sw, url, c)) });
       }

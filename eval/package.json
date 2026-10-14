@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "eval": "node run.mjs"
+    "eval": "node run.mjs",
+    "shop": "node shop/serve.mjs",
+    "shop:build": "node shop/build-detail.mjs"
   },
   "devDependencies": {
     "playwright": "1.52.0"
