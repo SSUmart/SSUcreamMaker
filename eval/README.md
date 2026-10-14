@@ -33,7 +33,7 @@ node run.mjs --mock
 | `GEMINI_API_KEY` | 없음 | Gemini API 키 |
 | `GEMINI_MODEL` | `gemini-3.8-flash` | Gemini 모델 |
 | `NVIDIA_API_KEY` | 없음 | NVIDIA API 키 (무료 키는 개발·테스트 용도로만) |
-| `NVIDIA_MODEL` | `nvidia/nemotron-nano-12b-v2-vl` | NIM 모델 (이미지 입력 지원 모델) |
+| `NVIDIA_MODEL` | 없음 (NIM을 쓰면 필수) | NIM 모델 (이미지 입력 지원 모델). 추천 후보는 아래 "NVIDIA NIM 모델 고르기" 참고 |
 | `NIM_BASE_URL` | `https://integrate.api.nvidia.com/v1` | NIM API 주소 |
 
 결과는 화면에 표로 나오고, 자세한 내용(추출된 섹션 전체 포함)은 `eval/results/<시각>.json`에 저장됩니다. `results/`는 커밋하지 않습니다. 팀과 공유할 결과는 표를 문서로 옮겨 기록하세요.
@@ -135,7 +135,7 @@ npm run e2e
 
 ## NVIDIA NIM 모델 고르기
 
-기본 모델 `nvidia/nemotron-nano-12b-v2-vl`은 2026-08-26에 서비스가 종료되어 410 오류가 납니다. 대체 모델은 아래 스크립트로 비교한 뒤 확장 설정의 "모델" 칸에 넣습니다.
+이전 기본 모델 `nvidia/nemotron-nano-12b-v2-vl`은 2026-08-26에 서비스가 종료되어 410 오류가 납니다. NIM은 모델이 자주 바뀌어 이제 기본 모델을 두지 않고, 설정 화면에서 추천 후보를 고르거나 직접 입력합니다. 추천 후보는 `extension/lib/settings.js`의 `NIM_RECOMMENDED_MODELS` 한 곳에서 관리하며, 아래 스크립트의 기본 후보도 같은 목록입니다. 한국어 인식 품질을 비교한 뒤 그 목록의 순서를 정하세요.
 
 ```bash
 NVIDIA_API_KEY=... node nim-models.mjs            # 기본 후보 전체
