@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SSUcreamMaker",
-  "description": "쇼핑몰 상세 이미지 속 글자를 AI로 읽어 텍스트로 넣고, 페이지 요약과 질문 응답으로 스크린리더 탐색을 돕습니다.",
+  "description": "쇼핑몰 상세 이미지 속 글자를 AI로 읽어 텍스트로 넣고, 페이지 요약·질문 응답·항목 설명으로 스크린리더 탐색을 돕습니다.",
   "version": "0.0.0",
   "permissions": ["scripting", "storage"],
   "host_permissions": ["<all_urls>"],
@@ -34,6 +34,10 @@
     "ask-page": {
       "suggested_key": { "default": "Alt+Shift+Q" },
       "description": "페이지에 질문하기"
+    },
+    "explain-mode": {
+      "suggested_key": { "default": "Alt+Shift+E" },
+      "description": "항목 설명 모드 켜기/끄기 (켜진 동안 클릭한 항목을 설명)"
     }
   },
   "options_page": "options/options.html"

@@ -90,6 +90,31 @@ test('글만 보내기: Gemini는 JSON 모드, NIM은 텍스트 메시지 하나
   assert.equal(calls[1].body.messages[0].content, '질문');
 });
 
+test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM은 그림 글자를 먼저 읽어 붙인다', async () => {
+  const answer = '{"description":"장바구니 담기 버튼입니다."}';
+  let calls = mockFetch([{ body: { candidates: [{ content: { parts: [{ text: answer }] } }] } }]);
+  assert.equal(await PROVIDERS.gemini.describe('설명 요청', tiles, { apiKey: 'k', model: 'm' }), answer);
+  const parts = calls[0].body.contents[0].parts;
+  assert.equal(parts[0].text, '설명 요청');
+  assert.deepEqual(parts.slice(1).map((p) => p.inlineData.data), ['AAA', 'BBB']);
+
+  const config = { apiKey: 'nv', model: 'm', baseUrl: 'http://localhost:9/v1' };
+  calls = mockFetch([
+    { body: { choices: [{ message: { content: '할인가 24,900원' } }] } },
+    { body: { choices: [{ message: { content: '없음' } }] } },
+    { body: { choices: [{ message: { content: answer } }] } }
+  ]);
+  assert.equal(await PROVIDERS.nim.describe('설명 요청', tiles, config), answer);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[2].body.messages[0].content, '설명 요청\n\n그림에서 읽은 글자:\n할인가 24,900원');
+
+  // 그림이 없으면 요청 한 번
+  calls = mockFetch([{ body: { choices: [{ message: { content: answer } }] } }]);
+  assert.equal(await PROVIDERS.nim.describe('설명 요청', [], config), answer);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].body.messages[0].content, '설명 요청');
+});
+
 test('설정: AI 꺼짐, 키 없음, 정상', () => {
   assert.match(activeProvider(mergeSettings()).error, /꺼져 있습니다/);
   assert.match(activeProvider(mergeSettings({ aiEnabled: true })).error, /API 키가 없습니다/);

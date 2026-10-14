@@ -11,7 +11,7 @@
   const BLOCKS = 'h1,h2,h3,h4,h5,h6,p,li,dt,dd,caption,figcaption,blockquote,pre,tr,summary,legend,label';
   const SKIP =
     'script,style,noscript,template,svg,canvas,iframe,textarea,select,option,nav,aside,' +
-    '[aria-hidden="true"],#ssucream-summary,#ssucream-qa,#ssucream-status';
+    '[aria-hidden="true"],#ssucream-summary,#ssucream-qa,#ssucream-status,#ssucream-explain,#ssucream-explain-bar';
   const MAX_CHARS = 30_000;
   const MAX_PARAGRAPH_CHARS = 600;
   const MIN_MAIN_CHARS = 200;

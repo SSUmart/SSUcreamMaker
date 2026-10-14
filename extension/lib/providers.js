@@ -43,6 +43,11 @@ const gemini = {
   async generateJson(prompt, config) {
     return geminiGenerate(config, [{ text: prompt }], true);
   },
+  // 항목 설명: 글과 (있으면) 그림 조각을 함께 보내 JSON 답을 받는다.
+  async describe(prompt, tiles, config) {
+    const images = tiles.map((t) => ({ inlineData: { mimeType: t.mimeType, data: t.data } }));
+    return geminiGenerate(config, [{ text: prompt }, ...images], true);
+  },
   async test(config) {
     await geminiGenerate(config, [{ text: 'OK라고만 답하세요.' }], false);
   }
@@ -73,24 +78,30 @@ async function nimChat(config, content, maxTokens) {
   return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
 
+// 조각마다 글자를 읽는다. 글자가 없는 조각은 뺀다.
+async function nimTranscribe(tiles, config, onProgress) {
+  const texts = [];
+  for (const [i, tile] of tiles.entries()) {
+    onProgress(`이미지 조각 ${i + 1}/${tiles.length} 읽는 중`);
+    const text = await nimChat(
+      config,
+      [
+        { type: 'image_url', image_url: { url: `data:${tile.mimeType};base64,${tile.data}` } },
+        { type: 'text', text: TRANSCRIBE_PROMPT }
+      ],
+      2048
+    );
+    if (text !== '없음') texts.push(text);
+  }
+  return texts;
+}
+
 const nim = {
   label: 'NVIDIA NIM',
   // build.nvidia.com 호스팅 API는 인라인 이미지 크기 제한이 있어 조각을 이 크기 아래로 압축한다.
   maxBase64Length: 180_000,
   async extract(tiles, config, onProgress = () => {}) {
-    const texts = [];
-    for (const [i, tile] of tiles.entries()) {
-      onProgress(`이미지 조각 ${i + 1}/${tiles.length} 읽는 중`);
-      const text = await nimChat(
-        config,
-        [
-          { type: 'image_url', image_url: { url: `data:${tile.mimeType};base64,${tile.data}` } },
-          { type: 'text', text: TRANSCRIBE_PROMPT }
-        ],
-        2048
-      );
-      if (text !== '없음') texts.push(text);
-    }
+    const texts = await nimTranscribe(tiles, config, onProgress);
     if (!texts.length) return '{"sections":[]}';
     onProgress('읽은 내용 정리 중');
     return nimChat(
@@ -102,6 +113,12 @@ const nim = {
   // 이미지 없이 글만 보내 JSON 답을 받는다. NIM은 JSON 모드가 모델마다 달라 프롬프트로만 요구한다.
   async generateJson(prompt, config) {
     return nimChat(config, prompt, 2048);
+  },
+  // 항목 설명: 그림이 있으면 조각별로 글자를 먼저 읽어 글로 붙인다.
+  async describe(prompt, tiles, config, onProgress = () => {}) {
+    if (!tiles.length) return nimChat(config, prompt, 1024);
+    const texts = await nimTranscribe(tiles, config, onProgress);
+    return nimChat(config, `${prompt}\n\n그림에서 읽은 글자:\n${texts.join('\n\n') || '(글자 없음)'}`, 1024);
   },
   async test(config) {
     await nimChat(config, 'OK라고만 답하세요.', 16);
