@@ -132,3 +132,14 @@ npm run e2e
 ```
 
 항목마다 `PASS`/`FAIL`이 나오고, 하나라도 실패하면 종료 코드가 1입니다. 스크린샷(`summary.png`, `qa.png`)과 AI에 보낸 요약 요청 글(`summary-prompt.txt`)은 `eval/results/e2e/`에 저장됩니다. 확장의 요약·질문 응답 코드를 고쳤다면 PR 전에 실행하세요.
+
+## NVIDIA NIM 모델 고르기
+
+기본 모델 `nvidia/nemotron-nano-12b-v2-vl`은 2026-08-26에 서비스가 종료되어 410 오류가 납니다. 대체 모델은 아래 스크립트로 비교한 뒤 확장 설정의 "모델" 칸에 넣습니다.
+
+```bash
+NVIDIA_API_KEY=... node nim-models.mjs            # 기본 후보 전체
+NVIDIA_API_KEY=... node nim-models.mjs 모델1 모델2  # 원하는 모델만
+```
+
+후보마다 성공 여부, 걸린 시간, 정답 단어를 몇 개 맞혔는지가 나옵니다. 설정 화면의 "연결 확인"은 글만 보내므로 이미지 지원 여부는 이 스크립트나 실제 상세 이미지 읽기로 확인하세요.
