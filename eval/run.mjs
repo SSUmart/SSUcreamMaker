@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { scoreCase, summarize, toMarkdown } from './score.js';
 import { serveShop } from './shop/serve.mjs';
+import { NIM_RECOMMENDED_MODELS } from '../extension/lib/settings.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const EXTENSION = path.resolve(here, '../extension');
@@ -33,11 +34,14 @@ function providerSettings(name, mockBaseUrl) {
     };
   }
   if (name === 'nim') {
+    if (!process.env.NVIDIA_MODEL) {
+      throw new Error(`NVIDIA_MODEL 환경 변수로 NIM 모델을 정해주세요. 추천 후보: ${NIM_RECOMMENDED_MODELS.join(', ')}`);
+    }
     return {
       provider: 'nim',
       nim: {
         apiKey: process.env.NVIDIA_API_KEY ?? '',
-        model: process.env.NVIDIA_MODEL || 'nvidia/nemotron-nano-12b-v2-vl',
+        model: process.env.NVIDIA_MODEL,
         baseUrl: process.env.NIM_BASE_URL || 'https://integrate.api.nvidia.com/v1'
       }
     };

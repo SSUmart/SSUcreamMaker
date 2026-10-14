@@ -1,7 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { PROVIDERS } from '../lib/providers.js';
-import { DEFAULT_SETTINGS, activeProvider, mergeSettings } from '../lib/settings.js';
+import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, mergeSettings } from '../lib/settings.js';
 
 const realFetch = globalThis.fetch;
 afterEach(() => (globalThis.fetch = realFetch));
@@ -118,7 +118,16 @@ test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM은 그
 test('설정: AI 꺼짐, 키 없음, 정상', () => {
   assert.match(activeProvider(mergeSettings()).error, /꺼져 있습니다/);
   assert.match(activeProvider(mergeSettings({ aiEnabled: true })).error, /API 키가 없습니다/);
-  const ok = activeProvider(mergeSettings({ aiEnabled: true, provider: 'nim', nim: { apiKey: 'nv' } }));
+  // NIM은 기본 모델이 없어 사용자가 골라야 한다.
+  assert.match(
+    activeProvider(mergeSettings({ aiEnabled: true, provider: 'nim', nim: { apiKey: 'nv' } })).error,
+    /모델을 고르지 않았습니다/
+  );
+  // 서비스 종료된 예전 모델이 저장돼 있으면 고르지 않은 것으로 본다.
+  assert.equal(mergeSettings({ nim: { model: 'nvidia/nemotron-nano-12b-v2-vl' } }).nim.model, '');
+  const ok = activeProvider(
+    mergeSettings({ aiEnabled: true, provider: 'nim', nim: { apiKey: 'nv', model: NIM_RECOMMENDED_MODELS[0] } })
+  );
   assert.equal(ok.name, 'nim');
   assert.equal(ok.config.baseUrl, DEFAULT_SETTINGS.nim.baseUrl);
 });

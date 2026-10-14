@@ -1,9 +1,23 @@
-import { DEFAULT_SETTINGS, activeProvider, loadSettings, saveSettings } from '../lib/settings.js';
+import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, loadSettings, saveSettings } from '../lib/settings.js';
 import { PROVIDERS } from '../lib/providers.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('settings-form');
 const status = $('status');
+
+// 추천 후보를 "직접 입력" 앞에 넣는다.
+const nimChoice = $('nim-model-choice');
+for (const model of NIM_RECOMMENDED_MODELS) {
+  nimChoice.lastElementChild.before(new Option(`${model} (추천 후보)`, model));
+}
+
+function showNimCustom() {
+  $('nim-model-custom-row').hidden = nimChoice.value !== 'custom';
+}
+
+function nimModel() {
+  return nimChoice.value === 'custom' ? $('nim-model-custom').value.trim() : nimChoice.value;
+}
 
 function showProviderSection(provider) {
   $('gemini-settings').hidden = provider !== 'gemini';
@@ -20,7 +34,7 @@ function readForm() {
     },
     nim: {
       apiKey: $('nim-key').value.trim(),
-      model: $('nim-model').value.trim() || DEFAULT_SETTINGS.nim.model,
+      model: nimModel(),
       baseUrl: $('nim-base-url').value.trim() || DEFAULT_SETTINGS.nim.baseUrl
     }
   };
@@ -33,19 +47,31 @@ async function init() {
   $('gemini-key').value = settings.gemini.apiKey;
   $('gemini-model').value = settings.gemini.model;
   $('nim-key').value = settings.nim.apiKey;
-  $('nim-model').value = settings.nim.model;
+  // 추천 후보면 목록에서 고르고, 아니면 직접 입력 칸에 넣는다.
+  const model = settings.nim.model;
+  nimChoice.value = !model || NIM_RECOMMENDED_MODELS.includes(model) ? model : 'custom';
+  $('nim-model-custom').value = nimChoice.value === 'custom' ? model : '';
+  showNimCustom();
   $('nim-base-url').value = settings.nim.baseUrl;
   showProviderSection(settings.provider);
 }
 
 form.addEventListener('change', (event) => {
   if (event.target.name === 'provider') showProviderSection(event.target.value);
+  if (event.target === nimChoice) {
+    showNimCustom();
+    if (nimChoice.value === 'custom') $('nim-model-custom').focus();
+  }
 });
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  await saveSettings(readForm());
-  status.textContent = '저장했습니다.';
+  const settings = readForm();
+  await saveSettings(settings);
+  status.textContent =
+    settings.provider === 'nim' && !settings.nim.model
+      ? '저장했습니다. NVIDIA NIM 모델을 아직 고르지 않았습니다.'
+      : '저장했습니다.';
 });
 
 $('test-button').addEventListener('click', async () => {

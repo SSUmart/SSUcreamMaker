@@ -20,7 +20,7 @@ AI를 활용한 스크린리더 서비스 제공
 1. "AI 기능 켜기" 체크
 2. AI 공급자 선택
    - Google Gemini: [Google AI Studio](https://aistudio.google.com/)에서 API 키 발급
-   - NVIDIA NIM: [build.nvidia.com](https://build.nvidia.com/)에서 API 키 발급. 직접 설치한 NIM을 쓰면 API 주소 변경. NVIDIA 무료 키는 개발·테스트 용도로만 쓸 수 있습니다.
+   - NVIDIA NIM: [build.nvidia.com](https://build.nvidia.com/)에서 API 키 발급. NIM은 기본 모델이 없으니 "모델" 목록에서 추천 후보를 고르거나 "직접 입력"으로 모델 이름을 넣습니다. 직접 설치한 NIM을 쓰면 API 주소 변경. NVIDIA 무료 키는 개발·테스트 용도로만 쓸 수 있습니다.
 3. API 키 입력 후 "저장", "연결 확인"으로 키 확인
 
 - API 키는 이 브라우저에만 저장되며 동기화되지 않습니다.

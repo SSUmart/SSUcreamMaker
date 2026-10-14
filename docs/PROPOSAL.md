@@ -182,7 +182,7 @@ F4·F5는 F2의 AI 공급자(`providers.js`), 설정, 캐시, 안내 영역을 �
 | 확장 | JavaScript(ES 모듈), Manifest V3, 빌드 도구 없음 | 의존성 없이 바로 로드 가능. 규모가 커지면 TypeScript·WXT 도입 검토 |
 | 단위 테스트 | Node 내장 `node --test` | 의존성 없음. `npm test` |
 | E2E 확인 | Playwright + Chromium, 가짜 AI 서버 | 이미지 처리·삽입·접근성 트리까지 실제 브라우저에서 확인 |
-| AI | Google Gemini (기본 `gemini-3.8-flash`), NVIDIA NIM (기본 `nvidia/nemotron-nano-12b-v2-vl`) | 사용자가 옵션에서 모델 변경 가능. 한국어 정확도는 평가 단계에서 비교 |
+| AI | Google Gemini (기본 `gemini-3.8-flash`), NVIDIA NIM (기본 모델 없음, 설정에서 추천 후보 중 선택 또는 직접 입력) | 사용자가 옵션에서 모델 변경 가능. 한국어 정확도는 평가 단계에서 비교 |
 
 ## 7. 안전·개인정보 원칙
 

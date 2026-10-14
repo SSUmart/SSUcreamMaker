@@ -5,16 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TRANSCRIBE_PROMPT } from '../extension/lib/structure.js';
+import { NIM_RECOMMENDED_MODELS } from '../extension/lib/settings.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.NIM_BASE_URL || 'https://integrate.api.nvidia.com/v1';
-const CANDIDATES = [
-  'google/gemma-4-31b-it',
-  'google/gemma-3-12b-it',
-  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
-  'meta/llama-3.2-90b-vision-instruct',
-  'moonshotai/kimi-k3'
-];
+// 후보는 설정 화면의 추천 모델과 같은 목록을 쓴다.
+const CANDIDATES = NIM_RECOMMENDED_MODELS;
 // detail-03.jpg(제품 사양, 사용 방법)에 실제로 적힌 글자. 많이 맞힐수록 좋다.
 const EXPECT = ['500ml', '320g', '스테인리스 스틸 304', '트라이탄', '중성세제', '예열', '패킹'];
 
