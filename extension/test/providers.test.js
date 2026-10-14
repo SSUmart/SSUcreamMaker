@@ -76,6 +76,20 @@ test('NIM: 모든 조각에 글자가 없으면 정리 요청을 생략한다', 
   assert.equal(calls.length, 2);
 });
 
+test('글만 보내기: Gemini는 JSON 모드, NIM은 텍스트 메시지 하나', async () => {
+  const calls = mockFetch([
+    { body: { candidates: [{ content: { parts: [{ text: '{"items":[]}' }] } }] } },
+    { body: { choices: [{ message: { content: '<think>음</think>{"found":false}' } }] } }
+  ]);
+  assert.equal(await PROVIDERS.gemini.generateJson('요약해', { apiKey: 'k', model: 'm' }), '{"items":[]}');
+  assert.deepEqual(calls[0].body.contents[0].parts, [{ text: '요약해' }]);
+  assert.equal(calls[0].body.generationConfig.responseMimeType, 'application/json');
+
+  const config = { apiKey: 'nv', model: 'x', baseUrl: 'http://localhost:9/v1' };
+  assert.equal(await PROVIDERS.nim.generateJson('질문', config), '{"found":false}');
+  assert.equal(calls[1].body.messages[0].content, '질문');
+});
+
 test('설정: AI 꺼짐, 키 없음, 정상', () => {
   assert.match(activeProvider(mergeSettings()).error, /꺼져 있습니다/);
   assert.match(activeProvider(mergeSettings({ aiEnabled: true })).error, /API 키가 없습니다/);

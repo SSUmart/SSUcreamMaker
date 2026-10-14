@@ -39,6 +39,10 @@ const gemini = {
     ];
     return geminiGenerate(config, parts, true);
   },
+  // 이미지 없이 글만 보내 JSON 답을 받는다 (요약, 질문 응답).
+  async generateJson(prompt, config) {
+    return geminiGenerate(config, [{ text: prompt }], true);
+  },
   async test(config) {
     await geminiGenerate(config, [{ text: 'OK라고만 답하세요.' }], false);
   }
@@ -94,6 +98,10 @@ const nim = {
       `${STRUCTURE_PROMPT}\n${TILE_ORDER_NOTE}\n\n이미지에서 읽은 글자:\n${texts.join('\n\n')}`,
       4096
     );
+  },
+  // 이미지 없이 글만 보내 JSON 답을 받는다. NIM은 JSON 모드가 모델마다 달라 프롬프트로만 요구한다.
+  async generateJson(prompt, config) {
+    return nimChat(config, prompt, 2048);
   },
   async test(config) {
     await nimChat(config, 'OK라고만 답하세요.', 16);

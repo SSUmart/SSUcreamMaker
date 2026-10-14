@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "eval": "node run.mjs",
+    "e2e": "node e2e-summary-qa.mjs",
     "shop": "node shop/serve.mjs",
     "shop:build": "node shop/build-detail.mjs"
   },
