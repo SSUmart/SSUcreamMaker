@@ -25,6 +25,7 @@
 - 읽기 정확성 측정(`eval/reader/`, `npm run reader:accuracy`): 평가용 쇼핑몰의 읽기 목록을 사람이 만든 정답표와 비교(처음 화면, 옵션을 고른 뒤, 숨겨진 탭 3개)
 - 온글 E2E를 실제 음성으로 들으며 확인하는 옵션(`npm run e2e:reader -- --headed --real-voice`)
 - 점자 변환 정확도 점검(`eval/braille/`, `npm run braille`): 2024 한국 점자 규정 예문 141개 비교(모두 일치)와 개발용 liblouis 참고 비교
+- 팀원용 테스트 가이드(`docs/TESTING-GUIDE.md`): 브랜치 받기와 설치, 테스트용 쇼핑몰 띄우기, 기본 키, 해 볼 일, AI 켜기, 점자 관리자 도구, 자동 점검 방법
 - 점자 디스플레이 연결 설계 문서(`docs/BRAILLE-DEVICES.md`): 스크린리더와 점자 디스플레이의 역할 나눔, 기기 종류(HID 표준, 닷패드 같은 BLE+제조사 SDK, 제조사 시리얼 방식)별 전송 계층 설계와 주의점, 출처
 
 ### Fixed
