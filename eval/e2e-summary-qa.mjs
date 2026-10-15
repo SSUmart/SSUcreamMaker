@@ -69,7 +69,7 @@ const focusedText = () => page.evaluate(() => document.activeElement?.textConten
 // 1) AI 꺼짐 → 실패 상자가 남고 포커스
 await inject(['content/page-text.js', 'content/summary.js']);
 await page.waitForSelector('#ssucream-summary-title:text("페이지 요약 실패")');
-check('AI 꺼짐: 실패 상자', (await page.textContent('#ssucream-summary')).includes('AI 설정이 꺼져 있습니다'));
+check('AI 꺼짐: 실패 상자', (await page.textContent('#ssucream-summary')).includes('AI 기능이 꺼져 있습니다'));
 check('AI 꺼짐: 실패 제목에 포커스', (await focusedText()) === '페이지 요약 실패');
 
 // 2) 요약
@@ -86,7 +86,7 @@ check('요약: 화면에 보임', await page.isVisible('#ssucream-summary'));
 check('요약: 제목에 포커스', (await focusedText()) === '페이지 요약, AI 생성');
 const buttons = await page.$$eval('#ssucream-summary li button', (b) => b.map((x) => x.textContent));
 check('요약: 근거 없는 항목엔 버튼 없음', buttons.length === 3 && buttons[2] === '3번 원문으로 이동');
-check('요약: 상세 이미지 미포함 안내', (await page.textContent('#ssucream-summary')).includes('Alt+Shift+D'));
+check('요약: 상세 이미지 미포함 안내', (await page.textContent('#ssucream-summary')).includes('온글 키와 D'));
 await page.screenshot({ path: path.join(OUT, 'summary.png') });
 await page.click('#ssucream-summary li:nth-child(3) button');
 check('원문 이동: 닫힌 상품문의 탭이 열림', await page.isVisible('#panel-qna'));

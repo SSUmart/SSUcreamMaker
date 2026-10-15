@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>온글 음성(TTS) 확인</title>
+  <link rel="stylesheet" href="check.css">
+</head>
+<body>
+  <main>
+    <h1>온글 음성(TTS) 확인</h1>
+    <p>크롬 확장 음성(chrome.tts)으로 온글 스크린리더가 한국어를 읽을 수 있는지 확인합니다. 스피커나 이어폰을 켜고, 다른 스크린리더(NVDA, 센스리더)는 끈 상태에서 실행하세요.</p>
+
+    <h2>음성 선택</h2>
+    <p>
+      <label for="voice">한국어 음성</label>
+      <select id="voice"></select>
+    </p>
+    <p id="voice-note"></p>
+
+    <h2>자동 확인</h2>
+    <p>
+      <button type="button" id="run">전체 확인 시작</button>
+      <button type="button" id="stop">읽기 중지</button>
+    </p>
+    <p id="status" role="status"></p>
+
+    <table>
+      <caption>확인 결과</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">결과</th><th scope="col">내용</th></tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+
+    <h2>귀로 확인</h2>
+    <p>자동 확인은 크롬이 보낸 신호만 봅니다. 실제로 소리가 들렸는지 직접 답해 주세요.</p>
+    <fieldset>
+      <legend>한국어 문장이 또렷하게 들렸나요?</legend>
+      <label><input type="radio" name="heard" value="예"> 예</label>
+      <label><input type="radio" name="heard" value="아니요"> 아니요</label>
+      <label><input type="radio" name="heard" value="일부만"> 일부만 들림</label>
+    </fieldset>
+
+    <h2>결과 보내기</h2>
+    <p>
+      <button type="button" id="copy">결과 복사</button>
+      복사한 결과를 개발 담당자에게 그대로 붙여 넣어 전달하세요.
+    </p>
+    <pre id="report" tabindex="0"></pre>
+  </main>
+  <!-- 이 페이지도 온글로 읽을 수 있게 온글 스크립트를 넣는다 (확장 페이지에는 content script가 들어가지 않음) -->
+  <script src="../content/reader/defaults.js"></script>
+  <script src="../content/reader/guidance.js"></script>
+  <script src="../content/reader/model.js"></script>
+  <script src="../content/reader/hangul-braille.js"></script>
+  <script src="../content/reader/output.js"></script>
+  <script src="../content/reader/braille.js"></script>
+  <script src="../content/reader/describe.js"></script>
+  <script src="../content/reader/ai.js"></script>
+  <script src="../content/reader/guide-content.js"></script>
+  <script src="../content/reader/guide.js"></script>
+  <script src="../content/reader/menu.js"></script>
+  <script src="../content/reader/reader.js"></script>
+  <script type="module" src="tts.js"></script>
+</body>
+</html>

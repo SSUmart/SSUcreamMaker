@@ -1,3 +1,7 @@
+import '../content/reader/defaults.js';
+
+const { mergeReaderSettings } = globalThis.__ongeul;
+
 // NVIDIA NIM 추천 모델 후보: 이미지 입력을 받는 모델 중 NVIDIA가 제공 중인 것 (2026-10-14 목록에서 확인).
 // NIM은 모델이 자주 바뀌고 종료돼 기본 모델을 두지 않고 사용자가 고른다.
 // 한국어 글자 인식 품질은 eval/nim-models.mjs로 비교한 뒤 순서를 정한다.
@@ -31,7 +35,9 @@ export function mergeSettings(stored = {}) {
     ...DEFAULT_SETTINGS,
     ...stored,
     gemini: { ...DEFAULT_SETTINGS.gemini, ...stored.gemini },
-    nim
+    nim,
+    // 온글 스크린리더 설정(온글 키, 기능 키, 안내 자세히, 음성)
+    ...mergeReaderSettings(stored)
   };
 }
 
@@ -46,10 +52,10 @@ export async function saveSettings(settings) {
 
 // 현재 선택된 공급자의 설정과, 사용 불가 시 그 이유를 돌려준다.
 export function activeProvider(settings) {
-  if (!settings.aiEnabled) return { error: 'AI 설정이 꺼져 있습니다. 확장 프로그램 옵션에서 켜주세요.' };
+  if (!settings.aiEnabled) return { error: 'AI 기능이 꺼져 있습니다. 온글 메뉴에서 온글 설정을 고르고, AI 기능 켜기를 선택한 뒤 API 키를 넣고 저장하세요. 그다음 다시 시도하세요.' };
   const config = settings[settings.provider];
   if (!config) return { error: `알 수 없는 AI 공급자입니다: ${settings.provider}` };
-  if (!config.apiKey.trim()) return { error: 'API 키가 없습니다. 확장 프로그램 옵션에서 입력해주세요.' };
-  if (!config.model.trim()) return { error: 'AI 모델을 고르지 않았습니다. 확장 프로그램 옵션에서 모델을 골라주세요.' };
+  if (!config.apiKey.trim()) return { error: 'API 키가 없습니다. 온글 메뉴에서 온글 설정을 고르고, 사용할 AI 공급자의 API 키를 넣고 저장하세요. 그다음 다시 시도하세요.' };
+  if (!config.model.trim()) return { error: 'AI 모델을 고르지 않았습니다. 온글 메뉴에서 온글 설정을 고르고, 모델을 고른 뒤 저장하세요. 그다음 다시 시도하세요.' };
   return { name: settings.provider, config };
 }

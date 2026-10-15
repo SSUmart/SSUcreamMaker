@@ -78,22 +78,34 @@ async function nimChat(config, content, maxTokens) {
   return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
 
-// 조각마다 글자를 읽는다. 글자가 없는 조각은 뺀다.
+// 한 번에 읽는 조각 수. 기다리는 시간을 줄이되, 무료 키의 분당 요청 한도(약 40회)를 넘지 않게 작게 둔다.
+const NIM_CONCURRENCY = 3;
+
+// 조각마다 글자를 읽는다(동시에 몇 개씩, 결과는 원래 순서대로). 글자가 없는 조각은 뺀다.
 async function nimTranscribe(tiles, config, onProgress) {
-  const texts = [];
-  for (const [i, tile] of tiles.entries()) {
-    onProgress(`이미지 조각 ${i + 1}/${tiles.length} 읽는 중`);
-    const text = await nimChat(
-      config,
-      [
-        { type: 'image_url', image_url: { url: `data:${tile.mimeType};base64,${tile.data}` } },
-        { type: 'text', text: TRANSCRIBE_PROMPT }
-      ],
-      2048
-    );
-    if (text !== '없음') texts.push(text);
-  }
-  return texts;
+  const results = new Array(tiles.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < tiles.length) {
+      const i = next++;
+      results[i] = await transcribeTile(tiles[i], i, tiles.length, config, onProgress);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(NIM_CONCURRENCY, tiles.length) }, worker));
+  return results.filter((text) => text !== null);
+}
+
+async function transcribeTile(tile, i, total, config, onProgress) {
+  onProgress(`이미지 조각 ${i + 1}/${total} 읽는 중`);
+  const text = await nimChat(
+    config,
+    [
+      { type: 'image_url', image_url: { url: `data:${tile.mimeType};base64,${tile.data}` } },
+      { type: 'text', text: TRANSCRIBE_PROMPT }
+    ],
+    2048
+  );
+  return text === '없음' ? null : text;
 }
 
 const nim = {
@@ -112,7 +124,8 @@ const nim = {
   },
   // 이미지 없이 글만 보내 JSON 답을 받는다. NIM은 JSON 모드가 모델마다 달라 프롬프트로만 요구한다.
   async generateJson(prompt, config) {
-    return nimChat(config, prompt, 2048);
+    // 요약·답변은 짧으므로 답 길이 상한을 낮춰 기다리는 시간을 줄인다
+    return nimChat(config, prompt, 1024);
   },
   // 항목 설명: 그림이 있으면 조각별로 글자를 먼저 읽어 글로 붙인다.
   async describe(prompt, tiles, config, onProgress = () => {}) {

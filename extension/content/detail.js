@@ -31,11 +31,13 @@
     statusRegion().dataset.state = state;
   }
 
+  let announceTimer = null;
   function announce(text) {
     const region = statusRegion();
     // 같은 문장도 다시 읽히도록 비운 뒤 채운다.
     region.textContent = '';
-    setTimeout(() => (region.textContent = text), 100);
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => (region.textContent = text), 100);
   }
 
   function imageUrl(img) {
@@ -99,7 +101,15 @@
 
     title.focus();
     setState('done');
-    announce('완료. 상세 이미지 내용으로 이동했습니다.');
+    // 온글 스크린리더가 켜져 있으면 추출한 내용을 처음부터 끝까지 바로 읽고, 아니면 안내 영역으로 알린다
+    const reader = globalThis.__ongeul?.reader;
+    globalThis.__ongeul?.ai?.addResult({ kind: 'detail', title: `상세 이미지 내용, ${result.sections.length}개 항목`, el: section });
+    if (reader?.enabled) {
+      // 끝난 진행 안내("읽은 내용 정리 중" 등)가 결과 읽기 사이에 끼지 않게 지운다
+      clearTimeout(announceTimer);
+      statusRegion().textContent = '';
+      reader.readElement(section);
+    } else announce('완료. 상세 이미지 내용으로 이동했습니다.');
   }
 
   async function run() {

@@ -93,3 +93,14 @@ th { width: 30%; background: #f6f6f6; }
   .header-inner { flex-wrap: wrap; }
   .util { display: none; }
 }
+
+/* 평가용 이름 없는 요소(★): 아이콘 버튼, 최근 본 상품, 맨 위로 */
+.title-row { display: flex; align-items: center; gap: 12px; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid #ccc; border-radius: 50%; background: #fff; color: #333; cursor: pointer; vertical-align: middle; }
+.icon-btn svg { fill: currentColor; }
+.helpful { display: flex; align-items: center; gap: 6px; color: #666; font-size: 14px; }
+.helpful .icon-btn { width: 30px; height: 30px; }
+.recent { max-width: 860px; margin: 24px auto 0; padding: 0 16px; }
+.recent-item img { border-radius: 8px; border: 1px solid #ddd; }
+.top-btn { position: fixed; right: 20px; bottom: 90px; width: 44px; height: 44px; border-radius: 50%; background: #222; cursor: pointer; z-index: 4; }
+.top-btn::after { content: ''; position: absolute; left: 15px; top: 17px; border: 7px solid transparent; border-bottom-color: #fff; border-top: 0; }

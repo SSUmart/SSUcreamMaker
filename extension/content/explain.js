@@ -310,7 +310,7 @@
       PRE_CLICK.forEach((type) => document.addEventListener(type, onPreClick, true));
       document.addEventListener('mouseover', onHover, true);
       document.addEventListener('keydown', onKey, true);
-      announce('항목 설명 모드를 켰습니다. 설명을 볼 항목을 클릭하세요. 끄려면 Esc나 Alt+Shift+E를 누르세요.');
+      announce('항목 설명 모드를 켰습니다. 설명을 볼 항목으로 이동해 Enter를 누르거나 클릭하세요. 끄려면 Esc를 누르거나, 온글 메뉴에서 항목 설명 모드를 다시 고르세요.');
     } else {
       if (dialog.open) dialog.close();
       dialog.remove();
