@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SSUcreamMaker",
-  "description": "쇼핑몰 상세 이미지 속 글자를 AI로 읽어 텍스트로 넣고, 페이지 요약·질문 응답·항목 설명으로 스크린리더 탐색을 돕습니다.",
+  "name": "온글",
+  "short_name": "온글",
+  "description": "그림 속 글자와 긴 페이지를 AI로 읽어 스크린리더가 읽을 수 있는 글로 바꿔 줍니다. 상세 이미지 읽기, 페이지 요약, 질문 응답, 항목 설명.",
   "version": "0.0.0",
   "permissions": ["scripting", "storage"],
   "host_permissions": ["<all_urls>"],
@@ -16,7 +17,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "상세 이미지 읽기 (Alt+Shift+D)",
+    "default_title": "온글: 상세 이미지 읽기 (Alt+Shift+D)",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 확장 프로그램을 배포용 zip으로 묶는다. 버전은 태그에서 만든다 (collab-rules 1장).
-#   scripts/package-extension.sh v26.1.0-beta.2   → dist/ssucreammaker-v26.1.0-beta.2.zip
-#   scripts/package-extension.sh                  → dist/ssucreammaker-<커밋>.zip (버전 0.0.0)
+#   scripts/package-extension.sh v26.1.0-beta.2   → dist/ongeul-v26.1.0-beta.2.zip
+#   scripts/package-extension.sh                  → dist/ongeul-<커밋>.zip (버전 0.0.0)
 #
 # Chrome의 version은 숫자 4자리까지만 허용하므로 네 번째 자리에 베타 번호(정식은 99)를 넣어
 # 항상 커지게 한다. 확장 관리 화면에는 version_name(원래 버전)이 보인다.
@@ -20,11 +20,11 @@ if [ -n "$tag" ]; then
   yy="${BASH_REMATCH[1]}" major="${BASH_REMATCH[2]}" minor="${BASH_REMATCH[3]}" beta="${BASH_REMATCH[5]:-99}"
   version="$((10#$yy)).$((10#$major)).$((10#$minor)).$((10#$beta))"
   version_name="${tag#v}"
-  name="ssucreammaker-$tag"
+  name="ongeul-$tag"
 else
   version="0.0.0"
   version_name="0.0.0-dev"
-  name="ssucreammaker-$(git -C "$root" rev-parse --short HEAD)"
+  name="ongeul-$(git -C "$root" rev-parse --short HEAD)"
 fi
 
 work="$(mktemp -d)"
