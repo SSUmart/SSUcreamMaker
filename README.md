@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/images/logo.png" width="128" alt="온글 로고: 남색 바탕에서 노란 문이 열리고, 그 문으로 점자 한 칸이 흘러나오는 모양"></p>
+<p align="center"><img src="extension/icons/icon-128.png" width="128" alt="온글 아이콘: 두 손이 둥글게 감싼 원 안에 음성 파형이 있는 모양"></p>
 
 # 온글
 그림 속 글자와 긴 페이지를 스크린리더가 읽을 수 있는 글로 바꿔 주는 확장 프로그램
