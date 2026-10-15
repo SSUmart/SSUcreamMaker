@@ -135,11 +135,11 @@ main ──●────────●──────────●──
 | Release 구성 | 내용 |
 |---|---|
 | 본문 | `CHANGELOG.md`의 해당 버전 항목 (정식은 같은 버전의 베타 항목 포함) |
-| `ssucreammaker-v<버전>.zip` | 확장 프로그램. 압축을 풀어 `chrome://extensions` → 개발자 모드 → "압축해제된 확장 프로그램 로드"로 설치. 테스트 코드는 빠져 있다 |
+| `ongeul-v<버전>.zip` | 확장 프로그램(이름: 온글, 26.1.0까지는 `ssucreammaker-v<버전>.zip`). 압축을 풀어 `chrome://extensions` → 개발자 모드 → "압축해제된 확장 프로그램 로드"로 설치. 테스트 코드는 빠져 있다 |
 
 - 태그 형식이 `v연도.메이저.마이너` 또는 `…-beta.번호`가 아니거나, CHANGELOG에 그 버전 항목이 없거나, `npm test`가 실패하면 Release는 만들어지지 않는다.
 - 같은 zip을 로컬에서 만들려면 `scripts/package-extension.sh v26.1.0-beta.1` (결과는 `dist/`, 커밋하지 않음).
-- 태그 없이 zip만 필요하면 Actions → Release → **Run workflow**로 수동 실행하고, 결과 페이지의 `ssucreammaker-extension`을 받는다.
+- 태그 없이 zip만 필요하면 Actions → Release → **Run workflow**로 수동 실행하고, 결과 페이지의 `ongeul-extension`을 받는다.
 - Chrome 웹스토어 배포는 하지 않는다. 필요해지면 팀이 정한 뒤 권한 축소(`<all_urls>` → 허용한 사이트만)와 함께 추가한다.
 - 베타에서 고칠 것이 나오면 일반 작업 브랜치 → PR로 고친 뒤 다음 베타(`-beta.2`)로 다시 릴리즈한다.
 

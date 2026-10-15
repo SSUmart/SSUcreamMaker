@@ -1,5 +1,9 @@
-# SSUcreamMaker
-AI를 활용한 스크린리더 서비스 제공
+<p align="center"><img src="docs/images/logo.png" width="128" alt="온글 로고: 남색 바탕에서 노란 문이 열리고, 그 문으로 점자 한 칸이 흘러나오는 모양"></p>
+
+# 온글
+그림 속 글자와 긴 페이지를 스크린리더가 읽을 수 있는 글로 바꿔 주는 확장 프로그램
+
+온글은 "온전한 글"이라는 뜻입니다. 프로젝트(저장소) 이름은 SSUcreamMaker(숭실대에서 스크린리더 도구를 만든다는 뜻)이고, 사용자에게 보이는 확장 이름이 온글입니다.
 
 쇼핑몰 상세페이지의 이미지 속 글자를 AI로 읽어 스크린리더가 읽을 수 있는 텍스트로 페이지에 넣고, 긴 페이지를 요약하거나 페이지 내용으로 질문에 답해 주는 크로미움 확장 프로그램입니다. 읽기는 평소 쓰는 스크린리더(센스리더, NVDA, JAWS)가 그대로 합니다. 점자 디스플레이만으로도 쓸 수 있게 결과와 오류를 페이지 안에 남깁니다.
 
@@ -29,7 +33,7 @@ flowchart TD
     page["웹페이지"] --> scan["스크린리더가<br/>페이지 전체를 읽음<br/>센스리더 · NVDA · JAWS"]
     scan --> check{"글자로 되어 있나?"}
     check -- "읽을 수 있음<br/>본문 글자,<br/>대체 텍스트가 있는 그림" --> read["스크린리더가 읽음"]
-    check -- "읽을 수 없음<br/>글자가 든 상세 이미지" --> ai["SSUcreamMaker<br/>AI로 그림 속 글자 읽기"]
+    check -- "읽을 수 없음<br/>글자가 든 상세 이미지" --> ai["온글<br/>AI로 그림 속 글자 읽기"]
     ai --> text["텍스트화<br/>제목과 항목으로 정리해<br/>페이지에 넣음"]
     text -- "확장이 넣은 글" --> read
     read --> voice["음성<br/>귀로 듣기"]
@@ -55,7 +59,7 @@ flowchart TD
 
 ## 설치
 
-1. [Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 `ssucreammaker-v<버전>.zip`을 받아 압축 풀기 (소스로 설치할 때는 저장소의 `extension` 폴더)
+1. [Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 `ongeul-v<버전>.zip` (26.1.0까지는 `ssucreammaker-v<버전>.zip`)을 받아 압축 풀기 (소스로 설치할 때는 저장소의 `extension` 폴더)
 2. Chrome, Edge, Whale에서 `chrome://extensions` 열기 (Edge는 `edge://extensions`)
 3. 개발자 모드 켜기
 4. "압축해제된 확장 프로그램을 로드합니다"에서 압축을 푼 폴더 선택
