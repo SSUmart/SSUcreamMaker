@@ -1,11 +1,11 @@
 # 온글 테스트 가이드 (팀원용)
 
-`feature/ai-screen-reader` 브랜치의 온글을 직접 써 보는 방법입니다. 10분이면 됩니다.
+`main` 브랜치의 온글을 직접 써 보는 방법입니다. 10분이면 됩니다.
 
 ## 1. 받기와 설치
 
 ```bash
-git fetch && git switch feature/ai-screen-reader
+git switch main && git pull
 ```
 
 1. 크롬 주소창에 `chrome://extensions` → 오른쪽 위 **개발자 모드** 켜기
@@ -19,7 +19,6 @@ git fetch && git switch feature/ai-screen-reader
 
 ```bash
 cd eval
-npm install
 npm run shop
 ```
 
@@ -33,7 +32,7 @@ npm run shop
 | `Alt+Shift+M` | 온글 메뉴 (첫 항목이 **사용 가이드**) |
 | `Alt+Shift+X` / `Ctrl` | 읽기 멈춤 |
 | `↓` `↑` | 다음·이전 항목 읽기 |
-| `H` `K` `B` `F` | 다음 제목·링크·버튼·입력칸 (`Shift`와 함께 누르면 이전) |
+| `H` `K` `B` `F` | 다음 제목·링크·버튼·입력 요소 (`Shift`와 함께 누르면 이전) |
 | `Enter` / `Space` | 누르기 |
 | 온글 키 + `1` | 키 도움말 |
 
@@ -72,7 +71,7 @@ npm run reader:accuracy           # 쇼핑몰 읽기 정확성 (정답표와 비
 npm run braille                   # 한국 점자 규정 예문 비교
 ```
 
-처음 한 번은 `cd eval && npx playwright install chromium`이 필요합니다.
+처음 한 번은 `cd eval && npm install && npx playwright install chromium`이 필요합니다.
 
 ## 8. 문제를 찾았으면
 
