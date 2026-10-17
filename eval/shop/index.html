@@ -74,7 +74,13 @@
 
     <div class="summary">
       <p class="brand"><a href="index.html">솔빛리빙</a></p>
-      <h1>솔빛 데일리 진공 텀블러 500ml</h1>
+      <!-- 평가용: 아래 표시(★)한 요소들은 실제 쇼핑몰에서 흔한 "이름 없는 요소"를 일부러 넣은 것이다.
+           일반 스크린리더는 "버튼", "링크", "그래픽"이라고만 읽고, 온글은 AI 자동 보완으로 이름을 채운다. -->
+      <div class="title-row">
+        <h1>솔빛 데일리 진공 텀블러 500ml</h1>
+        <!-- ★ 아이콘만 있는 공유 버튼 (이름 없음) -->
+        <button type="button" class="btn-share icon-btn" id="share"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="15" cy="4" r="2.5"/><circle cx="5" cy="10" r="2.5"/><circle cx="15" cy="16" r="2.5"/><path d="M7 9l6-4M7 11l6 4" stroke="currentColor" fill="none"/></svg></button>
+      </div>
       <p class="rating"><span class="stars" aria-hidden="true">★★★★☆</span>
         <span class="sr-only">별점 5점 만점에 4.5점,</span> 리뷰 <a href="#tab-review" data-open-tab="tab-review">3개</a></p>
 
@@ -102,6 +108,8 @@
           <button type="button" data-step="-1" aria-controls="qty" aria-label="수량 1개 줄이기">−</button>
           <input id="qty" name="qty" type="number" min="1" max="10" value="1" inputmode="numeric">
           <button type="button" data-step="1" aria-controls="qty" aria-label="수량 1개 늘리기">+</button>
+          <!-- ★ 아이콘만 있는 옵션 초기화(휴지통) 버튼 (이름 없음, 파괴적 동작 단서: btn-delete) -->
+          <button type="button" class="btn-delete icon-trash icon-btn" id="reset-options"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M7 5V3h4v2M5 5l1 11h6l1-11" stroke="currentColor" fill="none"/></svg></button>
         </div>
 
         <p class="total">총 상품 금액 <strong id="total">24,900원</strong></p>
@@ -156,6 +164,7 @@
             <h3>출근길에 매일 써요</h3>
             <p class="meta"><span class="sr-only">별점</span> 5점 · 세이지그린 · 2026년 9월 12일</p>
             <p>아침에 담은 커피가 점심까지 따뜻해요. 뚜껑이 한 손으로 열려서 편합니다.</p>
+            <p class="helpful"><!-- ★ 아이콘만 있는 도움돼요 버튼 (이름 없음) --><button type="button" class="btn-like icon-btn"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 7h3v7H2zM5 7l3-5c1 0 2 1 1.5 2.5L9 7h4l-1 7H5" stroke="currentColor" fill="none"/></svg></button> <span class="like-count">12</span></p>
           </article>
         </li>
         <li>
@@ -163,6 +172,7 @@
             <h3>가볍고 좋은데 컵홀더에는 빡빡해요</h3>
             <p class="meta"><span class="sr-only">별점</span> 4점 · 블랙 · 2026년 9월 20일</p>
             <p>차 컵홀더에 들어가긴 하는데 꽉 낍니다. 보냉은 확실해요.</p>
+            <p class="helpful"><!-- ★ 아이콘만 있는 도움돼요 버튼 (이름 없음) --><button type="button" class="btn-like icon-btn"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 7h3v7H2zM5 7l3-5c1 0 2 1 1.5 2.5L9 7h4l-1 7H5" stroke="currentColor" fill="none"/></svg></button> <span class="like-count">5</span></p>
           </article>
         </li>
         <li>
@@ -170,6 +180,7 @@
             <h3>선물용으로 샀어요</h3>
             <p class="meta"><span class="sr-only">별점</span> 4.5점 · 화이트 · 2026년 10월 2일</p>
             <p>포장이 깔끔하고 색이 예쁩니다.</p>
+            <p class="helpful"><!-- ★ 아이콘만 있는 도움돼요 버튼 (이름 없음) --><button type="button" class="btn-like icon-btn"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 7h3v7H2zM5 7l3-5c1 0 2 1 1.5 2.5L9 7h4l-1 7H5" stroke="currentColor" fill="none"/></svg></button> <span class="like-count">3</span></p>
           </article>
         </li>
       </ol>
@@ -198,7 +209,16 @@
       </table>
     </section>
   </div>
+
+  <section class="recent" aria-labelledby="recent-title">
+    <h2 id="recent-title">최근 본 상품</h2>
+    <!-- ★ 대체 텍스트 없는 상품 사진 링크 (이름 없음) -->
+    <a href="index.html" class="recent-item"><img src="images/product-colors.jpg" width="96" height="96"></a>
+  </section>
 </main>
+
+<!-- ★ 클릭 처리기만 있는 맨 위로 버튼 (div, 글자·이름 없음, 키보드로 갈 수 없음) -->
+<div class="top-btn" onclick="window.scrollTo({ top: 0 })"></div>
 
 <footer class="site-footer">
   <nav aria-label="고객 안내">

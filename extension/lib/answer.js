@@ -15,16 +15,64 @@ const COMMON_RULES = [
   '- 각 문단 앞의 [번호]는 문단 위치입니다. sources에는 근거가 된 문단 번호를 최대 3개까지 넣으세요.'
 ];
 
-function pageBlock(page) {
-  const lines = page.paragraphs.map((text, i) => `[${i + 1}] ${text}`);
+// indices: 보낼 문단 번호(0부터). 없으면 전부. 고른 문단만 보내도 번호는 원래 번호를 쓴다(근거 위치 이동용).
+function pageBlock(page, indices = null) {
+  const picked = indices ?? page.paragraphs.map((_, i) => i);
+  const lines = picked.map((i) => `[${i + 1}] ${page.paragraphs[i]}`);
   return [
     `페이지 제목: ${page.title || '(없음)'}`,
     page.truncated ? '(페이지가 길어 앞부분만 보냅니다.)' : '',
+    indices ? '(질문과 관련 있어 보이는 문단만 골라 보냅니다. 번호는 페이지 안 순서입니다.)' : '',
     '페이지 글:',
     ...lines
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+// 질문에 답할 때 보낼 글자 수 상한. 넘으면 질문과 겹치는 낱말이 많은 문단과 그 앞뒤 문단만 보낸다(응답 속도).
+export const MAX_QUESTION_CHARS = 6000;
+
+// 한글·영문·숫자를 두 글자씩 묶은 조각 (낱말 겹침을 대략 재는 데 씀. "배송비"와 "배송은"이 "배송"으로 겹침)
+function bigrams(text) {
+  const out = new Set();
+  for (const word of text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []) {
+    if (word.length === 1) out.add(word);
+    for (let i = 0; i < word.length - 1; i++) out.add(word.slice(i, i + 2));
+  }
+  return out;
+}
+
+export function selectRelevant(page, question, maxChars = MAX_QUESTION_CHARS) {
+  const total = page.paragraphs.reduce((sum, p) => sum + p.length, 0);
+  if (total <= maxChars) return null;
+  const want = bigrams(question);
+  const scored = page.paragraphs
+    .map((text, i) => {
+      const grams = bigrams(text);
+      let hits = 0;
+      want.forEach((g) => grams.has(g) && hits++);
+      return { i, score: hits };
+    })
+    .filter((p) => p.score > 0)
+    .sort((a, b) => b.score - a.score || a.i - b.i);
+  const chosen = new Set();
+  let used = 0;
+  const add = (i) => {
+    if (i < 0 || i >= page.paragraphs.length || chosen.has(i)) return true;
+    if (used + page.paragraphs[i].length > maxChars) return false;
+    chosen.add(i);
+    used += page.paragraphs[i].length;
+    return true;
+  };
+  // 페이지 앞부분(상품명, 가격 등 기본 정보)은 늘 넣는다
+  for (let i = 0; i < Math.min(5, page.paragraphs.length); i++) add(i);
+  for (const { i } of scored) {
+    if (!add(i)) break;
+    add(i - 1);
+    add(i + 1);
+  }
+  return [...chosen].sort((a, b) => a - b);
 }
 
 export function buildSummaryPrompt(page) {
@@ -53,7 +101,7 @@ export function buildQuestionPrompt(page, question, history = []) {
     '반드시 다음 JSON 형식으로만 답하세요:',
     '{"found":true,"answer":"배송비는 3,000원이고 30,000원 이상 구매 시 무료입니다.","sources":[4]}',
     '',
-    pageBlock(page),
+    pageBlock(page, selectRelevant(page, `${question} ${recent.map((h) => h.question).join(' ')}`)),
     '',
     ...(recent.length
       ? ['이전 대화:', ...recent.flatMap((h) => [`질문: ${h.question}`, `답변: ${h.answer}`]), '']

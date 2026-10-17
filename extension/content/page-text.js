@@ -155,10 +155,19 @@
   }
 
   // 진행 상황 안내용. 결과와 오류는 이것만 쓰지 않고 페이지 안에 남긴다(점자 우선).
+  let announceTimer = null;
   function announce(text) {
     const region = statusRegion();
     region.textContent = '';
-    setTimeout(() => (region.textContent = text), 100);
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => (region.textContent = text), 100);
+  }
+
+  // 끝난 진행 안내를 지운다 (결과를 읽기 시작했는데 지난 "…하는 중" 안내가 뒤늦게 읽히지 않도록)
+  function clearStatus() {
+    clearTimeout(announceTimer);
+    const region = document.getElementById('ssucream-status');
+    if (region) region.textContent = '';
   }
 
   function el(tag, text, style) {
@@ -183,5 +192,5 @@
       'background:#fff;border:1px solid #1d4ed8;border-radius:4px;cursor:pointer;'
   };
 
-  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, el, STYLE };
+  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, STYLE };
 })();

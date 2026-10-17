@@ -5,7 +5,7 @@
     window.__ssucreamSummary();
     return;
   }
-  const { collect, focusSource, hasUnreadDetailImages, announce, el, STYLE } = window.__ssucreamPage;
+  const { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, STYLE } = window.__ssucreamPage;
   let busy = false;
 
   // 요약 상자를 (다시) 만들고 제목으로 포커스를 옮긴다.
@@ -40,7 +40,7 @@
       let note = 'AI가 페이지 글을 요약했습니다. 틀릴 수 있으니 가격 같은 중요한 정보는 원문으로 이동해 확인하세요.';
       if (page.payload.truncated) note += ' 페이지가 길어 앞부분만 요약했습니다.';
       if (hasUnreadDetailImages()) {
-        note += ' 상세 설명 이미지의 글자는 아직 포함되지 않았습니다. Alt+Shift+D로 상세 이미지를 먼저 읽으면 요약에 포함됩니다.';
+        note += ' 상세 설명 이미지의 글자는 아직 포함되지 않았습니다. 온글 키와 D 키를 함께 눌러 상세 이미지를 먼저 읽으면 요약에 포함됩니다.';
       }
       box.append(el('p', note, STYLE.note));
 
@@ -64,11 +64,21 @@
       });
       box.append(list);
     }, returnFocus);
-    announce('요약 완료. 요약 제목으로 이동했습니다.');
+    // 온글 스크린리더가 켜져 있으면 요약 상자를 처음부터 끝까지 바로 읽고, 아니면 안내 영역으로 알린다
+    const reader = globalThis.__ongeul?.reader;
+    const box = document.getElementById('ssucream-summary');
+    globalThis.__ongeul?.ai?.addResult({ kind: 'summary', title: `페이지 요약, ${result.items.length}개 항목`, el: box });
+    if (reader?.enabled) {
+      clearStatus();
+      reader.readElement(box);
+    }
+    else announce('요약 완료. 요약 제목으로 이동했습니다.');
   }
 
   function renderError(message, returnFocus) {
     showBox('페이지 요약 실패', (box) => box.append(el('p', message, STYLE.text)), returnFocus);
+    // 오류도 소리로 알린다 (제목으로 초점만 옮기면 오류 내용을 듣지 못함)
+    announce(`페이지 요약 실패. ${message}`);
   }
 
   async function run() {
@@ -87,7 +97,8 @@
       }
       // 기다리는 동안에도 점자로 다시 확인할 수 있게 상자에 남긴다.
       showBox('페이지 요약 중', (box) => box.append(el('p', '페이지 글을 요약하는 중입니다. 잠시 기다려주세요.', STYLE.text)), returnFocus);
-      announce('페이지 글을 요약하는 중입니다.');
+      // 온글이 켜져 있으면 초점이 간 "페이지 요약 중" 제목을 읽으므로 따로 알리지 않는다
+      if (!globalThis.__ongeul?.reader?.enabled) announce('페이지 글을 요약하는 중입니다.');
       const result = await chrome.runtime.sendMessage({ type: 'summarize-page', page: page.payload });
       if (result?.error) renderError(result.error, returnFocus);
       else renderResult(result, page, returnFocus);

@@ -2,10 +2,16 @@
   "manifest_version": 3,
   "name": "온글",
   "short_name": "온글",
-  "description": "그림 속 글자와 긴 페이지를 AI로 읽어 스크린리더가 읽을 수 있는 글로 바꿔 줍니다. 상세 이미지 읽기, 페이지 요약, 질문 응답, 항목 설명.",
+  "description": "AI를 결합한 웹 스크린리더. 웹페이지를 화면 자막과 음성으로 읽고, 읽을 수 없는 그림 속 글자는 AI로 채우며, 긴 페이지 요약과 질문 응답을 제공합니다.",
   "version": "0.0.0",
-  "permissions": ["scripting", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "scripting",
+    "storage",
+    "tts"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -17,27 +23,69 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "온글: 상세 이미지 읽기 (Alt+Shift+D)",
+    "default_title": "온글: 상세 이미지 읽기",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"
     }
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/reader/defaults.js",
+        "content/reader/guidance.js",
+        "content/reader/model.js",
+        "content/reader/hangul-braille.js",
+        "content/reader/output.js",
+        "content/reader/braille.js",
+        "content/reader/describe.js",
+        "content/reader/ai.js",
+        "content/reader/guide-content.js",
+        "content/reader/guide.js",
+        "content/reader/menu.js",
+        "content/reader/reader.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
   "commands": {
+    "toggle-reader": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "온글 스크린리더 켜기/끄기"
+    },
+    "open-menu": {
+      "suggested_key": {
+        "default": "Alt+Shift+M"
+      },
+      "description": "온글 메뉴 열기 (모든 기능을 목록에서 고르기)"
+    },
+    "stop-speech": {
+      "suggested_key": {
+        "default": "Alt+Shift+X"
+      },
+      "description": "읽기 멈춤 (어디서든)"
+    },
+    "reread-current": {
+      "suggested_key": {
+        "default": "Alt+Shift+R"
+      },
+      "description": "현재 위치 다시 읽기 (어디서든)"
+    },
     "read-detail": {
-      "suggested_key": { "default": "Alt+Shift+D" },
-      "description": "상세 이미지 읽기"
+      "description": "상세 이미지 읽기 (온글 키와 D로도 실행)"
     },
     "summarize-page": {
-      "suggested_key": { "default": "Alt+Shift+S" },
-      "description": "페이지 요약"
+      "description": "페이지 요약 (온글 키와 S로도 실행)"
     },
     "ask-page": {
-      "suggested_key": { "default": "Alt+Shift+Q" },
-      "description": "페이지에 질문하기"
+      "description": "페이지에 질문하기 (온글 키와 Q로도 실행)"
     },
     "explain-mode": {
-      "suggested_key": { "default": "Alt+Shift+E" },
       "description": "항목 설명 모드 켜기/끄기 (켜진 동안 클릭한 항목을 설명)"
     }
   },

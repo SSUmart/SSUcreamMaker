@@ -6,8 +6,11 @@
   "scripts": {
     "eval": "node run.mjs",
     "e2e": "node e2e-summary-qa.mjs",
+    "e2e:reader": "node e2e-reader.mjs",
+    "braille": "node braille/compare.mjs",
     "shop": "node shop/serve.mjs",
-    "shop:build": "node shop/build-detail.mjs"
+    "shop:build": "node shop/build-detail.mjs",
+    "reader:accuracy": "node reader/accuracy.mjs"
   },
   "devDependencies": {
     "playwright": "1.52.0"

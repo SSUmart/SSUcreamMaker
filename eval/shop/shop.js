@@ -105,4 +105,19 @@
     cartCount.textContent = Number(cartCount.textContent) + Number(qty.value);
     say(`${color} ${qty.value}개를 장바구니에 담았습니다.`);
   });
+
+  // 평가용 이름 없는 요소(★)의 동작
+  document.getElementById('share').addEventListener('click', () => say('상품 링크를 복사했습니다.'));
+  document.getElementById('reset-options').addEventListener('click', () => {
+    document.querySelectorAll('input[name="color"]').forEach((input) => (input.checked = false));
+    qty.value = 1;
+    updateTotal();
+    say('선택한 옵션을 초기화했습니다.');
+  });
+  document.querySelectorAll('.btn-like').forEach((button) =>
+    button.addEventListener('click', () => {
+      const count = button.parentElement.querySelector('.like-count');
+      count.textContent = Number(count.textContent) + 1;
+    })
+  );
 })();

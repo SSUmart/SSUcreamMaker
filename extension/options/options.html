@@ -8,17 +8,103 @@
 <body>
   <main>
     <h1>온글 설정</h1>
-    <p>웹페이지에서 아래 단축키를 누르면 AI가 페이지를 읽기 쉽게 도와줍니다.</p>
-    <ul>
-      <li>Alt+Shift+D: 상세 이미지 속 글자를 읽어 페이지에 텍스트로 넣기</li>
-      <li>Alt+Shift+S: 페이지 내용 요약</li>
-      <li>Alt+Shift+Q: 페이지에 질문하기</li>
-      <li>Alt+Shift+E: 항목 설명 모드 켜기/끄기 (켜진 동안 클릭한 항목을 AI가 설명, 시험 기능)</li>
+    <p>온글은 AI를 결합한 웹 스크린리더입니다. 웹페이지를 읽어 화면 위 자막, 음성, 점자 디스플레이로 전하고, 읽을 수 없는 부분은 AI로 채웁니다. 온글을 쓰는 동안 NVDA나 센스리더 같은 다른 스크린리더는 꺼 주세요.</p>
+
+    <h2>시작하기</h2>
+    <ol>
+      <li>NVDA나 센스리더 같은 다른 스크린리더를 끕니다.</li>
+      <li id="start-toggle">온글 켜기 단축키를 누릅니다.</li>
+      <li id="start-menu">온글 메뉴 단축키를 누르고, 첫 항목 "사용 가이드"에서 사용법을 듣습니다.</li>
+      <li>AI 기능(이름 없는 항목 분석, 요약, 질문, 상세 이미지 읽기)을 쓰려면 아래 "AI 사용"에서 AI를 켜고 API 키를 넣은 뒤 저장합니다.</li>
+    </ol>
+
+    <h2>크롬 단축키</h2>
+    <p>아래 네 단축키는 웹페이지 밖(주소창 등)에서도 동작합니다. 그 밖의 기능은 온글 키 명령이나 온글 메뉴로 실행합니다.</p>
+    <ul id="chrome-shortcuts">
+      <!-- options.js가 현재 단축키로 채운다 -->
     </ul>
-    <p>단축키는 브라우저 주소창에 chrome://extensions/shortcuts 를 입력해 바꿀 수 있습니다.</p>
+    <p>이 네 단축키를 바꾸려면 주소창에 chrome://extensions/shortcuts 를 입력합니다. 이 화면은 크롬 설정 화면이라 온글이 읽을 수 없으므로, 다른 스크린리더나 주변 사람의 도움이 필요합니다. 온글 키와 기능 키는 아래에서 온글로 바꿀 수 있습니다.</p>
+
+    <details id="guide-section">
+      <summary>사용 가이드 전체 보기</summary>
+      <div id="guide-text">
+        <!-- options.js가 content/reader/guide-content.js의 내용으로 채운다 -->
+      </div>
+    </details>
 
     <form id="settings-form">
+      <h2>온글 키</h2>
+      <fieldset aria-describedby="ongeul-keys-help">
+        <legend>온글 키로 쓸 키 (하나 이상)</legend>
+        <p><input type="checkbox" id="ongeul-insert" value="Insert"> <label for="ongeul-insert">Insert</label></p>
+        <p><input type="checkbox" id="ongeul-capslock" value="CapsLock"> <label for="ongeul-capslock">Caps Lock (Windows에서만. 누를 때마다 대문자 상태도 바뀝니다)</label></p>
+        <p><input type="checkbox" id="ongeul-ctrlalt" value="CtrlAlt"> <label for="ongeul-ctrlalt">Ctrl과 Alt를 함께 (macOS는 Control과 Option)</label></p>
+      </fieldset>
+      <p id="ongeul-keys-help">온글 키를 누른 채 다른 키를 누르면 온글 명령이 됩니다. 예: 온글 키와 1을 누르면 키 도움말. Insert가 없는 노트북에서는 Ctrl과 Alt를 쓰세요.</p>
+
+      <h2>기능 키</h2>
+      <p>온글 키와 함께 눌러 실행할 키입니다. 서로 다른 글자여야 하고, A(계속 읽기), L(현재 항목 다시 읽기), I(AI 결과 모음)는 쓸 수 없습니다.</p>
+      <p><label for="key-summary">페이지 요약</label> <select id="key-summary" class="command-key"></select></p>
+      <p><label for="key-ask">페이지에 질문하기</label> <select id="key-ask" class="command-key"></select></p>
+      <p><label for="key-detail">상세 이미지 읽기</label> <select id="key-detail" class="command-key"></select></p>
+      <p><label for="key-explain">현재 항목 AI 설명</label> <select id="key-explain" class="command-key"></select></p>
+      <p><label for="key-menu">온글 메뉴</label> <select id="key-menu" class="command-key"></select></p>
+
+      <h2>안내</h2>
+      <fieldset>
+        <legend>안내를 얼마나 자세히 읽을까요?</legend>
+        <p><input type="radio" name="verbosity" id="verbosity-auto" value="auto"> <label for="verbosity-auto">자동: 같은 안내를 처음 3번은 자세히, 그 뒤로는 짧게</label></p>
+        <p><input type="radio" name="verbosity" id="verbosity-detailed" value="detailed"> <label for="verbosity-detailed">항상 자세히</label></p>
+        <p><input type="radio" name="verbosity" id="verbosity-short" value="short"> <label for="verbosity-short">항상 짧게</label></p>
+      </fieldset>
+      <p>오류나 막힌 상황(읽을 수 없는 페이지, 초점이 주소창에 있을 때 등)의 안내는 설정과 관계없이 항상 자세히 읽습니다.</p>
+
+      <h2>화면 자막</h2>
+      <fieldset>
+        <legend>자막 패널 위치</legend>
+        <p><input type="radio" name="caption" id="caption-bottom" value="bottom"> <label for="caption-bottom">화면 아래</label></p>
+        <p><input type="radio" name="caption" id="caption-top" value="top"> <label for="caption-top">화면 위</label></p>
+      </fieldset>
+
+      <h2>점자</h2>
+      <fieldset>
+        <legend>점자 규칙</legend>
+        <p><input type="radio" name="braille-grade" id="braille-grade-2" value="2"> <label for="braille-grade-2">2종: 약자 사용 (일반적인 한국 점자)</label></p>
+        <p><input type="radio" name="braille-grade" id="braille-grade-1" value="1"> <label for="braille-grade-1">1종: 약자 없음</label></p>
+      </fieldset>
+      <p>
+        <label for="braille-cells">점자 디스플레이 칸 수</label>
+        <select id="braille-cells">
+          <option value="20">20칸</option>
+          <option value="32">32칸</option>
+          <option value="40">40칸</option>
+          <option value="80">80칸</option>
+        </select>
+      </p>
+      <p>
+        <input type="checkbox" id="braille-admin" aria-describedby="braille-admin-help">
+        <label for="braille-admin">관리자 도구 켜기 (점자 전달 테스트)</label>
+      </p>
+      <p id="braille-admin-help">켜면 화면 오른쪽 아래에 "점자 전달 테스트" 버튼이 생기고, 온글 메뉴에도 같은 항목이 생깁니다. 누르면 가상 점자 디스플레이와 전달 결과(보낸 원문, 점자 변환, 보낸 데이터, 전송 결과, 기기 신호 왕복)를 보여 줍니다. 끄면 온글은 일반 스크린리더로만 동작합니다.</p>
+
+      <h2>음성</h2>
+      <p>
+        <label for="speech-voice">한국어 음성</label>
+        <select id="speech-voice" aria-describedby="speech-voice-help"></select>
+      </p>
+      <p id="speech-voice-help"></p>
+      <p>
+        <label for="speech-rate">읽기 속도 (1이 보통, 0.5부터 3까지)</label>
+        <input type="number" id="speech-rate" min="0.5" max="3" step="0.1">
+      </p>
+      <p><button type="button" id="speech-test">이 음성으로 들어 보기</button></p>
+
       <h2>AI 사용</h2>
+      <p>
+        <input type="checkbox" id="auto-supplement" aria-describedby="auto-supplement-help">
+        <label for="auto-supplement">이름 없는 항목 AI 자동 분석</label>
+      </p>
+      <p id="auto-supplement-help">켜면 이름이 없어 읽을 수 없는 버튼, 링크, 그림을 읽을 때 AI가 자동으로 분석해 이름을 붙입니다(AI 기능이 켜져 있을 때만). 그 항목의 글자, 주변 글, 그림이 AI로 전송됩니다. 페이지를 열면 앞쪽 다섯 개는 미리 분석하고, 한 페이지에서 최대 30개까지 분석합니다.</p>
       <p>
         <input type="checkbox" id="ai-enabled" aria-describedby="ai-enabled-help">
         <label for="ai-enabled">AI 기능 켜기 (상세 이미지 읽기, 요약, 질문 응답, 항목 설명)</label>
@@ -83,6 +169,19 @@
       <p id="status" role="status"></p>
     </form>
   </main>
+  <!-- 이 설정 화면도 온글로 읽을 수 있게 온글 스크립트를 넣는다 (확장 페이지에는 content script가 들어가지 않음) -->
+  <script src="../content/reader/defaults.js"></script>
+  <script src="../content/reader/guidance.js"></script>
+  <script src="../content/reader/model.js"></script>
+  <script src="../content/reader/hangul-braille.js"></script>
+  <script src="../content/reader/output.js"></script>
+  <script src="../content/reader/braille.js"></script>
+  <script src="../content/reader/describe.js"></script>
+  <script src="../content/reader/ai.js"></script>
+  <script src="../content/reader/guide-content.js"></script>
+  <script src="../content/reader/guide.js"></script>
+  <script src="../content/reader/menu.js"></script>
+  <script src="../content/reader/reader.js"></script>
   <script type="module" src="options.js"></script>
 </body>
 </html>

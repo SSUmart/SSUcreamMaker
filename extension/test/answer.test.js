@@ -72,3 +72,23 @@ test('JSON 꺼내기: 코드 블록, 앞뒤 설명 문장', () => {
   assert.deepEqual(parseJsonText('결과입니다.\n{"a":{"b":2}}\n이상입니다.'), { a: { b: 2 } });
   assert.throws(() => parseJsonText('JSON 없음'), /해석하지 못했습니다/);
 });
+
+import { MAX_QUESTION_CHARS, selectRelevant } from '../lib/answer.js';
+
+test('질문 관련 문단 고르기: 짧은 페이지는 전부, 긴 페이지는 관련 문단과 앞뒤·앞부분만, 번호는 원래대로', () => {
+  assert.equal(selectRelevant(page, '배송비'), null);
+  const paragraphs = [
+    '솔빛 텀블러', '판매가 24,900원', ...Array.from({ length: 60 }, (_, i) => `리뷰 ${i} `.repeat(30)),
+    '배송비는 3,000원입니다', '30,000원 이상 무료배송', '반품 안내'
+  ];
+  const picked = selectRelevant({ title: 't', paragraphs, truncated: false }, '배송비 얼마야');
+  const total = picked.reduce((sum, i) => sum + paragraphs[i].length, 0);
+  assert.ok(total <= MAX_QUESTION_CHARS);
+  assert.ok(picked.includes(0) && picked.includes(1));
+  const hit = paragraphs.indexOf('배송비는 3,000원입니다');
+  assert.ok(picked.includes(hit) && picked.includes(hit + 1));
+  assert.deepEqual(picked, [...picked].sort((a, b) => a - b));
+  const prompt = buildQuestionPrompt({ title: 't', paragraphs, truncated: false }, '배송비 얼마야');
+  assert.ok(prompt.includes(`[${hit + 1}] 배송비는 3,000원입니다`));
+  assert.ok(prompt.includes('관련 있어 보이는 문단만'));
+});
