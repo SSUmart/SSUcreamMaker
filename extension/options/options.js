@@ -12,7 +12,6 @@ for (const model of NIM_RECOMMENDED_MODELS) {
   nimChoice.lastElementChild.before(new Option(`${model} (추천 후보)`, model));
 }
 
-const ONGEUL_KEY_INPUTS = { Insert: 'ongeul-insert', CapsLock: 'ongeul-capslock', CtrlAlt: 'ongeul-ctrlalt' };
 const COMMAND_KEY_INPUTS = { summary: 'key-summary', ask: 'key-ask', detail: 'key-detail', explain: 'key-explain', menu: 'key-menu' };
 const COMMAND_NAMES = { summary: '페이지 요약', ask: '페이지에 질문하기', detail: '상세 이미지 읽기', explain: '현재 항목 AI 설명', menu: '온글 메뉴' };
 const CHROME_COMMANDS = {
@@ -39,8 +38,7 @@ function showGuide(settings, commands) {
     menu: shortcut('open-menu'),
     stop: shortcut('stop-speech'),
     reread: shortcut('reread-current'),
-    ongeul: guidance.ongeulKeyText(settings.reader.ongeulKeys),
-    keys: Object.fromEntries(Object.entries(settings.reader.commandKeys).map(([k, v]) => [k, guidance.codeText(v)]))
+    keys: guidance.keyNames(settings.reader.commandKeys)
   });
   $('guide-text').replaceChildren(
     ...chapters.flatMap((chapter, i) => {
@@ -52,7 +50,7 @@ function showGuide(settings, commands) {
   const toggle = shortcut('toggle-reader');
   const menu = shortcut('open-menu');
   $('start-toggle').textContent = toggle ? `${toggle} 키를 눌러 온글을 켭니다.` : '온글 켜기 단축키가 지정되어 있지 않습니다. 아래 "크롬 단축키" 안내를 참고해 지정합니다.';
-  $('start-menu').textContent = `${menu ? `${menu} 키` : '온글 키와 M 키'}를 눌러 온글 메뉴를 열고, 첫 항목 "사용 가이드"에서 사용법을 듣습니다.`;
+  $('start-menu').textContent = `${menu || guidance.keyNames(settings.reader.commandKeys).menu} 키를 눌러 온글 메뉴를 열고, 첫 항목 "사용 가이드"에서 사용법을 듣습니다.`;
 }
 
 async function showChromeShortcuts() {
@@ -80,14 +78,10 @@ async function showVoices(selected) {
     : '이 기기에 설치된 한국어 음성이 없습니다. Windows는 설정, 시간 및 언어, 음성에서 한국어 음성을 추가하세요. 추가하기 전에는 브라우저 기본 음성으로 읽습니다.';
 }
 
-const IS_MAC = /Mac/i.test(navigator.platform || navigator.userAgent);
 const RESERVED = globalThis.__ongeul.defaults.reservedCommandKeys;
 
-// 온글 키는 하나 이상, 기능 키는 서로 달라야 한다. 문제가 있으면 안내 문장을 돌려준다.
+// 기능 키는 서로 달라야 하고 다른 명령의 글자와 겹치면 안 된다. 문제가 있으면 안내 문장을 돌려준다.
 function validateReader(reader) {
-  const usable = reader.ongeulKeys.filter((key) => !(IS_MAC && key === 'CapsLock'));
-  if (!reader.ongeulKeys.length) return '온글 키를 하나 이상 고르세요. 온글 키가 없으면 온글 명령을 쓸 수 없습니다.';
-  if (!usable.length) return 'macOS에서는 Caps Lock을 온글 키로 쓸 수 없습니다. Insert나 Control과 Option을 함께 고르세요.';
   const used = new Map();
   for (const [name, code] of Object.entries(reader.commandKeys)) {
     if (RESERVED[code]) {
@@ -128,7 +122,6 @@ function readForm() {
       baseUrl: $('nim-base-url').value.trim() || DEFAULT_SETTINGS.nim.baseUrl
     },
     reader: {
-      ongeulKeys: Object.entries(ONGEUL_KEY_INPUTS).filter(([, id]) => $(id).checked).map(([key]) => key),
       commandKeys: Object.fromEntries(Object.entries(COMMAND_KEY_INPUTS).map(([name, id]) => [name, $(id).value])),
       verbosity: form.elements.verbosity.value || 'auto',
       captionPosition: form.elements.caption.value || 'bottom',
@@ -160,7 +153,6 @@ async function init() {
   showNimCustom();
   $('nim-base-url').value = settings.nim.baseUrl;
   showProviderSection(settings.provider);
-  for (const [key, id] of Object.entries(ONGEUL_KEY_INPUTS)) $(id).checked = settings.reader.ongeulKeys.includes(key);
   for (const [name, id] of Object.entries(COMMAND_KEY_INPUTS)) $(id).value = settings.reader.commandKeys[name];
   form.elements.verbosity.value = settings.reader.verbosity;
   form.elements.caption.value = settings.reader.captionPosition;

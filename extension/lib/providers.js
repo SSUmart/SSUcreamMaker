@@ -6,15 +6,32 @@ const TILE_ORDER_NOTE =
 
 async function apiError(name, res) {
   if (res.status === 401 || res.status === 403) return new Error(`${name} API 키가 올바르지 않습니다.`);
-  if (res.status === 429) return new Error(`${name} 요청 한도를 넘었습니다. 잠시 후 다시 시도해주세요.`);
+  if (res.status === 429) {
+    return new Error(`${name} 요청 한도를 넘었습니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`);
+  }
+  if (res.status === 503) {
+    return new Error(`${name} 서버가 붐빕니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`);
+  }
   const detail = (await res.text().catch(() => '')).slice(0, 200);
   return new Error(`${name} 오류 (${res.status}) ${detail}`.trim());
+}
+
+// 일시적인 오류(503 서버 과부하, 429 요청 한도)는 잠깐 기다렸다가 다시 보낸다. 키·주소·요청 오류(400·401·403·404)는 바로 알린다.
+// 기다리는 시간은 테스트에서 줄일 수 있게 밖으로 둔다.
+export const RETRY = { statuses: [429, 503], delays: [2000, 5000] };
+
+async function fetchWithRetry(url, init) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok || !RETRY.statuses.includes(res.status) || attempt >= RETRY.delays.length) return res;
+    await new Promise((resolve) => setTimeout(resolve, RETRY.delays[attempt]));
+  }
 }
 
 // --- Gemini: 조각 전체를 한 번에 보내 바로 JSON으로 정리한다.
 async function geminiGenerate(config, parts, json) {
   const url = `${GEMINI_BASE}/models/${encodeURIComponent(config.model)}:generateContent`;
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.apiKey },
     body: JSON.stringify({
@@ -55,7 +72,7 @@ const gemini = {
 
 // --- NVIDIA NIM: 다중 이미지 지원이 모델마다 달라 조각별로 글자를 읽은 뒤 텍스트로 정리한다.
 async function nimChat(config, content, maxTokens) {
-  const res = await fetch(`${config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+  const res = await fetchWithRetry(`${config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -96,7 +113,7 @@ async function nimTranscribe(tiles, config, onProgress) {
 }
 
 async function transcribeTile(tile, i, total, config, onProgress) {
-  onProgress(`이미지 조각 ${i + 1}/${total} 읽는 중`);
+  onProgress(`상세 이미지 조각 ${i + 1}/${total} 읽는 중`);
   const text = await nimChat(
     config,
     [

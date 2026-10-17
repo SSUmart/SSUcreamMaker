@@ -1,5 +1,6 @@
 // 읽기 정확성 측정: 평가용 쇼핑몰을 온글 읽기 엔진(model.js)으로 읽기 목록으로 만들고, 사람이 만든 정답표
-// (shop-expected.json, 순서·종류·이름·상태)와 항목 단위로 비교한다. 상태가 바뀐 뒤와 숨겨져 있던 탭도 본다.
+// (shop-expected.json, 순서·종류·이름·상태)와 항목 단위로 비교한다. 상태가 바뀐 뒤와 숨겨져 있던 탭,
+// 상세 이미지 안내(alt="" 상세 이미지)와 상세 이미지 읽기 결과가 있을 때도 본다.
 // 사용법: eval 폴더에서 npm run reader:accuracy   (API 키 불필요)
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -60,6 +61,7 @@ for (const scenario of scenarios) {
   for (const step of scenario.steps) {
     if (step.check) await page.check(step.check);
     if (step.click) await page.click(step.click);
+    if (step.script) await page.evaluate(step.script);
   }
   await page.addScriptTag({ path: MODEL });
   const actual = await page.evaluate((scope) => {

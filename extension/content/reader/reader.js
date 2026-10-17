@@ -11,8 +11,6 @@
   }
   const { model, guidance } = ns;
 
-  // macOS의 CapsLock은 켜고 끌 때만 키 이벤트가 와서 누르고 있는지 알 수 없으므로 온글 키로 쓰지 않는다
-  const IS_MAC = /Mac/i.test(navigator.platform || navigator.userAgent);
   // 한 글자 이동 키 (event.code 기준이라 한글 입력 상태에서도 동작). Shift를 함께 누르면 위쪽으로
   const QUICK_KEYS = {
     KeyH: { test: (item) => item.category === 'heading', label: '제목' },
@@ -28,7 +26,7 @@
     KeyG: { test: (item) => item.category === 'graphic', label: '그래픽' },
     KeyD: { test: (item) => item.category === 'landmark', label: '영역' }
   };
-  // 온글 키 기능 → 서비스 워커가 실행할 기존 AI 기능
+  // 조합키(Alt+Shift) 기능 → 서비스 워커가 실행할 기존 AI 기능
   const AI_COMMANDS = { summary: 'summarize-page', ask: 'ask-page', detail: 'read-detail' };
   const AI_TASKS = { 'summarize-page': '페이지 요약', 'read-detail': '상세 이미지 읽기' };
   // 이 요소에 초점이 가면 글쓰기 모드 (키를 페이지에 그대로 넘김)
@@ -39,13 +37,13 @@
   const ARROW_WIDGETS = '[role="slider"], [role="listbox"], [role="menu"], [role="menubar"], [role="tree"], [role="grid"], [role="spinbutton"]';
   const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
   const PENDING_TIMEOUT = 30_000;
+  const FOCUS_MODE_COMMANDS = new Set(['Space', 'KeyX', 'KeyR']);
 
   let enabled = false;
   let generation = 0;
   let items = [];
   let index = -1;
   let focusMode = false;
-  let heldOngeulKey = false;
   let sayingAll = false;
   let stopWatching = null;
   let liveObserver = null;
@@ -86,15 +84,16 @@
     if (response) shortcuts = response;
   }
 
-  function ongeulKeys() {
-    return settings.reader.ongeulKeys.filter((key) => !(IS_MAC && key === 'CapsLock'));
+  // 온글 명령의 실제 키 이름 ("Alt와 Shift와 S"). 기능 키 글자는 설정을 따른다.
+  function keyNames() {
+    return guidance.keyNames(settings.reader.commandKeys);
   }
 
   // 안내 문구를 읽는다. 자세히·짧게 판단에 쓰는 "읽은 횟수"는 서비스 워커 한 곳에서 센다(탭끼리 덮어쓰지 않게).
   // dropIfStale: 안내 문장을 받아 오는 사이 다른 문장이 나왔으면 이 안내는 읽지 않는다 (예: 결과가 바로 나와 이미 읽는 중)
   async function guide(id, params = {}, { interrupt = false, dropIfStale = false } = {}) {
     const before = ns.output.said;
-    const fullParams = { ...params, toggle: shortcuts.toggle, menu: shortcuts.menu, ongeul: guidance.ongeulKeyText(ongeulKeys()) };
+    const fullParams = { ...params, toggle: shortcuts.toggle, menu: shortcuts.menu, keys: keyNames() };
     const response = await chrome.runtime.sendMessage({ type: 'ongeul-guide-text', id, params: fullParams }).catch(() => null);
     const text = response?.text ?? guidance.message(id, fullParams, { verbosity: settings.reader.verbosity, seen: 0 });
     if (dropIfStale && ns.output.said !== before) return { final: 'end', events: [] };
@@ -102,22 +101,7 @@
   }
 
   function help() {
-    const keys = settings.reader.commandKeys;
-    output.say(
-      guidance.help({
-        ongeul: guidance.ongeulKeyText(ongeulKeys()),
-        menu: shortcuts.menu,
-        toggle: shortcuts.toggle,
-        stop: shortcuts.stop,
-        reread: shortcuts.reread,
-        summary: guidance.codeText(keys.summary),
-        ask: guidance.codeText(keys.ask),
-        detail: guidance.codeText(keys.detail),
-        explain: guidance.codeText(keys.explain),
-        menuKey: guidance.codeText(keys.menu)
-      }),
-      { interrupt: true }
-    );
+    output.say(guidance.help({ ...shortcuts, keys: keyNames() }), { interrupt: true });
   }
 
   // 목록을 다시 만든다. 읽던 요소가 사라졌으면 그 앞뒤 항목을 기준으로 가장 가까운 곳에 머문다.
@@ -321,9 +305,9 @@
     chrome.runtime.sendMessage({ type: 'ongeul-run', command }).catch(() => {});
   }
 
-  function isOngeulKey(event) {
-    const keys = ongeulKeys();
-    return heldOngeulKey || (keys.includes('CtrlAlt') && event.ctrlKey && event.altKey);
+  // 온글 명령: Alt와 Shift를 누른 채 다른 키 (macOS는 Option과 Shift). 크롬 단축키 4개와 같은 조합이다.
+  function isCommandCombo(event) {
+    return event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey;
   }
 
   // 키 처리: 온글이 처리한 키만 페이지로 넘기지 않는다
@@ -331,12 +315,6 @@
     if (!enabled || event.isComposing) return;
     if (!alive()) {
       disable();
-      return;
-    }
-    const keys = ongeulKeys();
-    if ((event.key === 'Insert' && keys.includes('Insert')) || (event.key === 'CapsLock' && keys.includes('CapsLock'))) {
-      heldOngeulKey = true;
-      event.preventDefault();
       return;
     }
     if (ns.guide?.isOpen) {
@@ -351,8 +329,10 @@
     }
     if (sayingAll && !['Shift', 'Alt', 'Meta'].includes(event.key)) stopSpeech();
 
-    if (isOngeulKey(event)) {
-      if (handleOngeulCommand(event)) consume(event);
+    // 글쓰기 모드에서는 Alt+Shift(Option+Shift) 조합을 대부분 페이지에 넘긴다 (macOS 특수 문자 입력, 글자 선택 등).
+    // 모드 전환(Space), 읽기 멈춤(X), 다시 읽기(R)만 온글이 받는다.
+    if (isCommandCombo(event) && (!focusMode || FOCUS_MODE_COMMANDS.has(event.code))) {
+      if (handleCommand(event)) consume(event);
       return;
     }
     if (event.key === 'Control') {
@@ -367,15 +347,6 @@
       return;
     }
     if (handleBrowseKey(event)) consume(event);
-  }
-
-  function onKeyUp(event) {
-    if (event.key === 'Insert' || event.key === 'CapsLock') heldOngeulKey = false;
-  }
-
-  // 창을 떠나면 온글 키를 뗀 것으로 본다 (키를 누른 채 다른 창으로 가면 keyup이 오지 않음)
-  function onBlur() {
-    heldOngeulKey = false;
   }
 
   // 초점이 주소창 등에서 웹페이지로 돌아오면(F6) 기다리던 명령을 실행한다 (30초가 지나면 취소)
@@ -396,18 +367,24 @@
     event.stopImmediatePropagation();
   }
 
-  function handleOngeulCommand(event) {
+  // event.code(키 위치)로 판단하므로 한글 입력 상태에서도 같은 키로 동작한다.
+  // O·X·R은 크롬 단축키가 먼저 받지만, 사용자가 크롬 단축키를 지웠거나 바꿨을 때도 페이지 안에서는 동작하게 한다.
+  function handleCommand(event) {
     const keys = settings.reader.commandKeys;
     switch (event.code) {
-      // 계속 읽기: 온글 키+↓, 또는 온글 키+A (Ctrl+Alt+↓가 화면 회전인 PC를 위해, NVDA 노트북 배열과 같음)
+      // 계속 읽기: ↓, 또는 A (NVDA 노트북 배열과 같음)
       case 'ArrowDown':
       case 'KeyA':
         sayAll();
         return true;
-      // 다시 읽기: 온글 키+Tab, 또는 온글 키+L (Windows의 Ctrl+Alt+Tab은 작업 전환이라 페이지에 오지 않음)
-      case 'Tab':
-      case 'KeyL':
+      case 'KeyR':
         rereadCurrent();
+        return true;
+      case 'KeyX':
+        stopSpeech();
+        return true;
+      case 'KeyO':
+        chrome.runtime.sendMessage({ type: 'ongeul-toggle', enabled: false }).catch(() => {});
         return true;
       // 어디서든 글쓰기 모드로 들어가고 나오기 (슬라이더, 사용자 정의 위젯 조작용)
       case 'Space':
@@ -593,8 +570,6 @@
     stopWatching = model.watch(onPageChange);
     watchLiveRegions();
     window.addEventListener('keydown', onKeyDown, true);
-    window.addEventListener('keyup', onKeyUp, true);
-    window.addEventListener('blur', onBlur);
     window.addEventListener('focus', onWindowFocus);
     document.addEventListener('focusin', onFocusIn, true);
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -612,7 +587,6 @@
     enabled = false;
     generation++;
     sayingAll = false;
-    heldOngeulKey = false;
     ns.menu?.close({ announce: false });
     ns.guide?.close();
     stopWatching?.();
@@ -620,8 +594,6 @@
     liveObserver?.disconnect();
     liveObserver = null;
     window.removeEventListener('keydown', onKeyDown, true);
-    window.removeEventListener('keyup', onKeyUp, true);
-    window.removeEventListener('blur', onBlur);
     window.removeEventListener('focus', onWindowFocus);
     document.removeEventListener('focusin', onFocusIn, true);
     document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -643,7 +615,7 @@
   function moveToElement(el, prefix) {
     rebuild();
     const found = model.indexOfElement(items, el);
-    if (found !== -1) moveTo(found, { prefix });
+    return found !== -1 && moveTo(found, { prefix });
   }
 
   // 서비스 워커가 보내는 명령: 크롬 단축키(메뉴, 다시 읽기, 멈춤)와 탭 전환

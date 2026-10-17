@@ -35,7 +35,7 @@ async function injectReaderIntoOpenTabs() {
 
 // 단축키별로 페이지에 넣을 content script. page-text.js는 요약·질문 응답이 같이 쓴다.
 const COMMAND_FILES = {
-  'read-detail': ['content/detail.js'],
+  'read-detail': ['content/page-text.js', 'content/detail.js'],
   'summarize-page': ['content/page-text.js', 'content/summary.js'],
   'ask-page': ['content/page-text.js', 'content/qa.js'],
   'explain-mode': ['content/page-text.js', 'content/explain.js']
@@ -48,7 +48,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
 });
 
 // 크롬 단축키 4개(기본값)는 웹페이지 밖(주소창 등)에서도 동작해야 하는 것에만 쓴다.
-// 나머지 기능은 온글 키 명령과 온글 메뉴로 실행한다 (크롬은 기본 단축키를 4개까지만 허용).
+// 나머지 기능은 같은 조합(Alt+Shift)의 페이지 안 명령과 온글 메뉴로 실행한다 (크롬은 기본 단축키를 4개까지만 허용).
 const READER_COMMANDS = {
   'toggle-reader': () => toggleReader(),
   'open-menu': (tab) => sendReaderCommand(tab, 'ongeul-open-menu', { action: '온글 메뉴를 열', result: '온글 메뉴가 열립니다.' }),
@@ -65,7 +65,7 @@ function guidanceText(id, params = {}) {
     const shortcuts = await shortcutTexts();
     const text = guidance.message(
       id,
-      { toggle: shortcuts.toggle, menu: shortcuts.menu, ongeul: guidance.ongeulKeyText(settings.reader.ongeulKeys), ...params },
+      { toggle: shortcuts.toggle, menu: shortcuts.menu, keys: guidance.keyNames(settings.reader.commandKeys), ...params },
       { verbosity: settings.reader.verbosity, seen: guidanceSeen[id] ?? 0 }
     );
     guidanceSeen[id] = (guidanceSeen[id] ?? 0) + 1;
@@ -197,7 +197,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// 온글 키 명령(요약, 질문, 상세 이미지 읽기)을 content script가 요청하면 기존 기능을 실행한다
+// 페이지 안 명령(요약, 질문, 상세 이미지 읽기)을 content script가 요청하면 기존 기능을 실행한다
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (message?.type !== 'ongeul-run' || sender.id !== chrome.runtime.id || !sender.tab) return;
   if (COMMAND_FILES[message.command]) runOnTab(sender.tab, message.command);
@@ -222,7 +222,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 const HANDLERS = {
   'extract-detail': (message, progress) => extractDetail(message.urls, progress),
-  'summarize-page': (message) => summarizePage(message.page),
+  'summarize-page': (message, progress) => summarizePage(message.page, progress),
   'ask-page': (message) => askPage(message.page, message.question, message.history),
   'explain-item': (message, progress) => explainItem(message.item, progress),
   'label-item': (message) => labelItem(message.item)
@@ -231,11 +231,28 @@ const HANDLERS = {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handler = HANDLERS[message?.type];
   if (!handler || !sender.tab?.id) return;
+  // 진행 안내는 어느 작업의 것인지(task) 함께 보낸다 (요약 중에 상세 이미지 안내 영역이 읽지 않게)
   const progress = (text) =>
-    chrome.tabs.sendMessage(sender.tab.id, { type: 'progress', text }).catch(() => {});
+    chrome.tabs.sendMessage(sender.tab.id, { type: 'progress', task: message.type, text }).catch(() => {});
   handler(message, progress).then(sendResponse, (error) => sendResponse({ error: error.message }));
   return true;
 });
+
+// 오래 걸리는 AI 요청 동안 다른 진행 안내가 15초 넘게 없으면 지난 시간을 알린다.
+// 멈춘 것처럼 보이지 않게 하되, 같은 문장을 몇 초마다 되풀이하지 않도록 간격을 두고 시간을 넣어 문장을 바꾼다.
+const HEARTBEAT_MS = 15_000;
+function startHeartbeat(progress, label) {
+  const started = Date.now();
+  let last = started;
+  const report = (text) => {
+    last = Date.now();
+    progress(text);
+  };
+  const timer = setInterval(() => {
+    if (Date.now() - last >= HEARTBEAT_MS) report(`${label}, ${Math.round((Date.now() - started) / 1000)}초 지남`);
+  }, 1000);
+  return { report, stop: () => clearInterval(timer) };
+}
 
 async function extractDetail(urls, progress) {
   const active = activeProvider(await loadSettings());
@@ -262,8 +279,16 @@ async function extractDetail(urls, progress) {
   const truncated = tiles.length > MAX_TILES;
   tiles = tiles.slice(0, MAX_TILES);
 
-  progress(`상세 이미지 ${picked.length}개를 ${provider.label}로 읽는 중`);
-  const sections = parseSections(await provider.extract(tiles, active.config, progress));
+  const label = `상세 이미지 ${picked.length}개를 ${provider.label}로 읽는 중`;
+  const heartbeat = startHeartbeat(progress, label);
+  heartbeat.report(`${label}. 보통 1분 안팎 걸립니다`);
+  let text;
+  try {
+    text = await provider.extract(tiles, active.config, heartbeat.report);
+  } finally {
+    heartbeat.stop();
+  }
+  const sections = parseSections(text);
   const result = { sections, imageCount: picked.length, firstUrl: picked[0].url, truncated, failedCount };
   await chrome.storage.session.set({ [cacheKey]: result });
   return result;
@@ -287,7 +312,7 @@ async function loadImages(urls) {
 }
 
 // F4 요약: 같은 페이지 글·같은 모델이면 캐시를 쓴다.
-async function summarizePage(page) {
+async function summarizePage(page, progress = () => {}) {
   const active = activeProvider(await loadSettings());
   if (active.error) return { error: active.error };
   if (!page?.paragraphs?.length) return { error: '요약할 글을 찾지 못했습니다.' };
@@ -296,7 +321,13 @@ async function summarizePage(page) {
   const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
   if (cached) return cached;
 
-  const text = await PROVIDERS[active.name].generateJson(buildSummaryPrompt(page), active.config);
+  const heartbeat = startHeartbeat(progress, '페이지 글을 요약하는 중');
+  let text;
+  try {
+    text = await PROVIDERS[active.name].generateJson(buildSummaryPrompt(page), active.config);
+  } finally {
+    heartbeat.stop();
+  }
   const result = parseSummary(text, page.paragraphs.length);
   await chrome.storage.session.set({ [cacheKey]: result });
   return result;

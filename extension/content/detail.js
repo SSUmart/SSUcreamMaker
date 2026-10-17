@@ -1,11 +1,11 @@
-// 아이콘 클릭이나 단축키로 주입된다. 다시 주입되면 이미 정의된 run만 다시 실행한다.
+// F2 상세 이미지 읽기: 아이콘 클릭이나 단축키로 주입된다(page-text.js 다음). 다시 주입되면 이미 정의된 run만 다시 실행한다.
 (() => {
   if (window.__ssucreamDetail) {
     window.__ssucreamDetail();
     return;
   }
 
-  // 화면에는 보이지 않고 스크린리더만 읽는 스타일
+  // 화면에는 보이지 않고 스크린리더만 읽는 스타일 (진행 안내 영역)
   const SR_ONLY =
     'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;' +
     'clip:rect(0,0,0,0);white-space:nowrap;border:0;';
@@ -64,46 +64,109 @@
     return found;
   }
 
-  function el(tag, text) {
+  // 숨기기·보이기. 사이트 CSS(section{display:block} 등)가 hidden 속성을 덮을 수 있어 display도 직접 바꾼다
+  function setShown(node, shown) {
+    node.hidden = !shown;
+    if (shown) node.style.removeProperty('display');
+    else node.style.setProperty('display', 'none', 'important');
+  }
+
+  function el(tag, text, style) {
     const node = document.createElement(tag);
     if (text) node.textContent = text;
+    if (style) node.style.cssText = style;
     return node;
   }
 
+  // 결과 상자: 첫 상세 이미지 바로 앞에 요약 상자와 같은 모양으로 보여 준다 (눈으로 보는 사용자·보호자·테스터도 확인).
+  // 스크린리더는 제목(h2)과 소제목(h3)·목록으로 읽는다. 접기/펼치기, 닫기 버튼이 있고, 닫아도 AI 결과 모음과
+  // 상세 이미지 읽기 명령으로 AI를 다시 부르지 않고 다시 연다.
   function render(result, images) {
+    const { STYLE } = window.__ssucreamPage;
     document.getElementById('ssucream-detail')?.remove();
 
-    const section = el('section');
+    // display를 지정하면 hidden(닫기)이 먹지 않으므로 빼고(section은 원래 블록), 본문 안에 자리 잡는 상자라
+    // 사이트의 고정 메뉴·탭 위로 올라가지 않게 쌓임 순서(z-index)도 뺀다
+    const section = el('section', null, STYLE.box.replace('display:block;', '').replace('position:relative;z-index:2147483000;', '') +
+        // 제목으로 스크롤할 때 사이트의 고정 머리말·탭에 가리지 않게 위쪽 여백을 둔다
+        'scroll-margin-top:120px;');
     section.id = 'ssucream-detail';
     section.setAttribute('aria-labelledby', 'ssucream-detail-title');
-    section.style.cssText = SR_ONLY;
 
-    const title = el('h2', '상세 이미지 내용, AI 추출');
+    const title = el('h2', '상세 이미지 내용, AI 추출', STYLE.heading);
     title.id = 'ssucream-detail-title';
     title.tabIndex = -1;
-    section.append(title);
 
+    const content = el('div');
+    content.id = 'ssucream-detail-content';
     let note = `상세 이미지 ${result.imageCount}개에서 AI가 읽은 내용입니다. 틀릴 수 있으니 가격 같은 중요한 정보는 판매자에게 확인하세요.`;
     if (result.truncated) note += ' 이미지가 많아 앞부분만 읽었습니다.';
     if (result.failedCount) note += ` 이미지 ${result.failedCount}개는 가져오지 못했습니다.`;
-    section.append(el('p', note));
-
-    if (!result.sections.length) section.append(el('p', '이미지에서 읽을 글자를 찾지 못했습니다.'));
+    content.append(el('p', note, STYLE.note));
+    if (!result.sections.length) content.append(el('p', '이미지에서 읽을 글자를 찾지 못했습니다.', STYLE.text));
     for (const { title: heading, items } of result.sections) {
-      const list = el('ul');
+      const list = el('ul', null, STYLE.list);
       for (const item of items) list.append(el('li', item));
-      section.append(el('h3', heading), list);
+      content.append(el('h3', heading, 'margin:12px 0 4px;font-size:17px;font-weight:700;color:#111;'), list);
+    }
+
+    const fold = el('button', '접기', STYLE.button);
+    fold.type = 'button';
+    fold.setAttribute('aria-expanded', 'true');
+    fold.setAttribute('aria-controls', content.id);
+    fold.addEventListener('click', () => setExpanded(content.hidden));
+    const close = el('button', '닫기', STYLE.button);
+    close.type = 'button';
+    close.addEventListener('click', () => closeBox());
+    const toolbar = el('p', null, 'margin:0 0 8px;');
+    toolbar.append(fold, close);
+    section.append(title, toolbar, content);
+
+    function setExpanded(expanded) {
+      setShown(content, expanded);
+      fold.textContent = expanded ? '접기' : '펼치기';
+      fold.setAttribute('aria-expanded', String(expanded));
     }
 
     const anchor = images.get(result.firstUrl);
     if (anchor) (anchor.closest('a') ?? anchor).before(section);
     else document.body.prepend(section);
 
-    title.focus();
+    // 닫으면 상자를 숨기고 읽기 위치를 상세 이미지 자리로 옮긴다 (그 자리에서 다시 여는 방법을 읽음)
+    function closeBox() {
+      setShown(section, false);
+      const reader = globalThis.__ongeul?.reader;
+      const moved = reader?.enabled && anchor?.isConnected && reader.moveToElement(anchor, '상세 이미지 내용을 닫았습니다.');
+      if (!moved) announce('상세 이미지 내용을 닫았습니다. 상세 이미지 읽기를 다시 실행하면 다시 열립니다.');
+    }
+
+    // 닫거나 접어 둔 상자를 읽지 않고 펼치기만 한다 (요약의 "원문으로 이동"이 상자 안을 가리킬 때)
+    section.ssucreamShow = () => {
+      setShown(section, true);
+      setExpanded(true);
+    };
+
+    // 다시 열기: 펼친 상태로 보여 주고 처음부터 읽는다
+    function reopen() {
+      section.ssucreamShow();
+      section.scrollIntoView({ block: 'start' });
+      title.focus({ preventScroll: true });
+      readResult(section);
+    }
+    section.ssucreamReopen = reopen;
+
+    // 요약·질문 대화상자가 열려 있으면 닫는다 (열린 대화상자 안만 읽으므로 결과 상자를 읽지 못함)
+    document.querySelectorAll('dialog[open][id^="ssucream-"]').forEach((dialog) => dialog.close());
+    section.scrollIntoView({ block: 'start' });
+    title.focus({ preventScroll: true });
     setState('done');
-    // 온글 스크린리더가 켜져 있으면 추출한 내용을 처음부터 끝까지 바로 읽고, 아니면 안내 영역으로 알린다
+    globalThis.__ongeul?.ai?.addResult({ kind: 'detail', title: `상세 이미지 내용, ${result.sections.length}개 항목`, el: section, open: reopen });
+    readResult(section);
+  }
+
+  // 온글 스크린리더가 켜져 있으면 추출한 내용을 처음부터 끝까지 바로 읽고, 아니면 안내 영역으로 알린다
+  function readResult(section) {
     const reader = globalThis.__ongeul?.reader;
-    globalThis.__ongeul?.ai?.addResult({ kind: 'detail', title: `상세 이미지 내용, ${result.sections.length}개 항목`, el: section });
     if (reader?.enabled) {
       // 끝난 진행 안내("읽은 내용 정리 중" 등)가 결과 읽기 사이에 끼지 않게 지운다
       clearTimeout(announceTimer);
@@ -115,6 +178,12 @@
   async function run() {
     if (busy) {
       announce('이미 상세 이미지를 읽는 중입니다.');
+      return;
+    }
+    // 이미 읽은 결과를 닫아 두었으면 AI를 다시 부르지 않고 다시 연다
+    const existing = document.getElementById('ssucream-detail');
+    if (existing?.hidden && existing.ssucreamReopen) {
+      existing.ssucreamReopen();
       return;
     }
     busy = true;
@@ -141,7 +210,7 @@
   }
 
   chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === 'progress') announce(message.text);
+    if (message?.type === 'progress' && message.task === 'extract-detail') announce(message.text);
   });
 
   window.__ssucreamDetail = run;

@@ -12,6 +12,8 @@
   // 한 항목으로 읽기에 너무 긴 글은 문장 단위로 나눈다 (점자 한 줄 40칸, 음성 한 번에 듣기 좋은 길이)
   const MAX_CHUNK = 300;
   const MAX_NAME = 500;
+  // 상세 이미지 후보의 최소 화면 너비 (detail.js collectImages와 같은 기준)
+  const DETAIL_MIN_WIDTH = 300;
 
   // 읽을 때 쓰는 종류 이름 (NVDA·센스리더 한국어 안내를 참고)
   const ROLE_NAMES = {
@@ -443,10 +445,38 @@
   }
 
   // 페이지를 문서 순서대로 훑어 읽기 순서 목록을 만든다.
+  // 쇼핑몰 상세 이미지 후보: 대체 텍스트가 비어(alt="") 장식으로 보이지만 머리말·메뉴·꼬리말 밖의 큰 그림.
+  // 실제로는 글자가 든 정보 이미지인 경우가 많다.
+  function isDetailImage(img) {
+    return (
+      img.getAttribute('alt') === '' &&
+      !img.closest('header, nav, footer') &&
+      img.getBoundingClientRect().width >= DETAIL_MIN_WIDTH
+    );
+  }
+
+  // 상세 이미지 후보가 처음 나오는 자리에서 한 번 읽는 안내. 상세 이미지 읽기를 이미 했으면 그 결과 상자를 읽으므로 안내하지 않는다.
+  function detailHint(root) {
+    const result = document.getElementById('ssucream-detail');
+    if (result && !result.hidden) return '';
+    const images = [...root.querySelectorAll('img[alt=""]')].filter((img) => !hidden(img) && isDetailImage(img));
+    // 서비스 워커의 상세 이미지 판별과 같은 기준: 세로로 긴 그림이 있거나, 같은 너비 그림이 3장 이상 (넓은 배너만 있으면 안내하지 않음)
+    const sizes = images.map((img) => img.getBoundingClientRect());
+    const tall = sizes.some(({ width, height }) => height >= width * 1.2);
+    const sameWidth = sizes.filter(({ width }) => Math.abs(width - sizes[0].width) < 1).length >= 3;
+    if (!tall && !sameWidth) return '';
+    const count = images.length;
+    const key = `${ns.guidance?.keyNames(ns.reader?.settings?.reader?.commandKeys).detail ?? 'Alt와 Shift와 D'} 키`;
+    return result
+      ? `상세 이미지 ${count}개. AI가 읽은 내용을 닫아 두었습니다. ${key}를 누르면 다시 엽니다.`
+      : `상세 이미지 ${count}개, 글자가 든 그림일 수 있습니다. ${key}를 누르면 AI가 읽습니다.`;
+  }
+
   function buildItems(root = readingRoot()) {
     const items = [];
     if (!root) return items;
     let pending = null; // 아직 끝나지 않은 글 항목 { el, text }
+    let detailHintDone = false;
 
     const flush = () => {
       if (!pending) return;
@@ -520,6 +550,13 @@
         if (tag === 'LEGEND' && node.parentElement && tagOf(node.parentElement) === 'FIELDSET') continue;
 
         const role = roleOf(node);
+        // 장식으로 보이는(alt="") 상세 이미지: 첫 자리에서 상세 이미지 읽기를 안내한다 (작은 장식 그림은 그대로 건너뜀)
+        if (tag === 'IMG' && !role && !detailHintDone && isDetailImage(node)) {
+          detailHintDone = true;
+          const hint = detailHint(root);
+          if (hint) push(node, 'text', { name: hint, phrase: hint, detailHint: true });
+          continue;
+        }
         if (role && ATOMIC.has(role)) {
           push(node, role);
           if (SCAN_INSIDE.has(role)) pushInteractive(node);
