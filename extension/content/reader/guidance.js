@@ -56,7 +56,14 @@
   function pressText(shortcut, purpose) {
     return shortcut
       ? `${shortcut} 키를 누르세요`
-      : `${purpose} 단축키가 지정되어 있지 않습니다. 다른 확장 프로그램과 겹쳐 크롬이 지정하지 못한 것입니다. 온글 메뉴의 온글 설정에서 지정 방법을 확인하세요`;
+      : `${purpose} 단축키가 지정되어 있지 않습니다. 다른 확장 프로그램과 겹쳤거나 업데이트로 새로 생긴 단축키라서 크롬이 지정하지 못한 것입니다. 온글 메뉴의 온글 설정에서 지정 방법을 확인하세요`;
+  }
+
+  // 온글 켜기 단축키가 비어 있으면 지정 안내가 필요하다. commands: chrome.commands.getAll()의 결과.
+  // 크롬은 manifest의 기본 단축키(suggested_key)를 최초 설치 때만 지정하므로, 업데이트로 새로 생긴 명령이나
+  // 다른 확장과 겹친 명령은 빈 채로 남는다. 켜기 단축키가 없으면 온글을 켤 수 없어 안내조차 들을 수 없다.
+  function needsShortcutSetup(commands = []) {
+    return !commands.find((c) => c.name === 'toggle-reader')?.shortcut;
   }
 
   // 안내에 넘어온 키 이름 (없으면 기본 기능 키로)
@@ -104,6 +111,16 @@
         `온글을 켜려면 ${pressText(p.toggle, '온글 켜기')}. ` +
         `켠 다음 ${p.menu || keysOf(p).menu} 키를 누르면 온글 메뉴가 열리고, 첫 항목에서 사용 가이드를 들을 수 있습니다. ` +
         '지금 열린 온글 설정 화면에서는 AI 기능, 음성, 점자를 설정할 수 있습니다.'
+    },
+    // 설치·업데이트 뒤 켜기 단축키가 비어 있을 때 서비스 워커가 크롬 단축키 설정 화면을 열고 읽는 안내 (항상 자세히)
+    'shortcut-missing': {
+      always: true,
+      detailed: () =>
+        '온글 단축키가 지정되지 않아 지금은 온글을 켤 수 없습니다. 방금 크롬 단축키 설정 화면을 새 탭으로 열었습니다. ' +
+        '이 화면은 크롬 설정 화면이라 온글이 읽을 수 없으므로, 다른 스크린리더나 주변 사람의 도움을 받으세요. ' +
+        `열린 화면의 온글 항목에서 온글 켜기/끄기에 ${comboText('KeyO')} 키를 지정하세요. ` +
+        `온글 메뉴 열기, 읽기 멈춤, 현재 위치 다시 읽기가 비어 있으면 ${comboText('KeyM')}, ${comboText('KeyX')}, ${comboText('KeyR')} 키를 지정합니다. ` +
+        `지정한 뒤 ${comboText('KeyO')} 키를 누르면 온글이 켜집니다.`
     },
     'reader-off': {
       detailed: (p) => `온글이 꺼졌습니다. 이제 온글이 페이지를 읽지 않습니다. 다시 켜려면 ${pressText(p.toggle, '온글 켜기')}.`,
@@ -235,5 +252,5 @@
     return (detailed ? entry.detailed : entry.short)(params);
   }
 
-  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, help, shortcutText, codeText, comboText, keyNames, pressText };
+  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, help, shortcutText, codeText, comboText, keyNames, pressText, needsShortcutSetup };
 })();

@@ -60,9 +60,11 @@ async function showChromeShortcuts() {
       const li = document.createElement('li');
       const shortcut = commands.find((c) => c.name === name)?.shortcut;
       li.textContent = `${label}: ${shortcut || '지정 안 됨'}`;
+      if (!shortcut) li.className = 'missing';
       return li;
     })
   );
+  $('shortcut-missing').hidden = !globalThis.__ongeul.guidance.needsShortcutSetup(commands);
 }
 
 async function showVoices(selected) {

@@ -23,8 +23,20 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
     guideFromWorker('welcome');
   }
   // 설치·업데이트 전에 열려 있던 탭에는 온글이 없으므로 넣어 준다 (새로고침하지 않아도 읽도록)
-  if (reason === 'install' || reason === 'update') injectReaderIntoOpenTabs();
+  if (reason === 'install' || reason === 'update') {
+    injectReaderIntoOpenTabs();
+    guideShortcutSetup(reason);
+  }
 });
+
+// 크롬은 기본 단축키를 최초 설치 때만 지정해, 업데이트 뒤에는 온글 켜기 단축키가 빌 수 있다.
+// 비어 있으면 크롬 단축키 설정 화면을 열고 할 일을 소리로 알린다. 지정돼 있으면 아무것도 하지 않는다.
+async function guideShortcutSetup(reason) {
+  if (!guidance.needsShortcutSetup(await chrome.commands.getAll())) return;
+  await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }).catch(() => {});
+  // 설치 때는 시작 안내를 끊지 않고 이어서 읽는다
+  speakWithSettings(await guidanceText('shortcut-missing'), { interrupt: reason !== 'install' });
+}
 
 async function injectReaderIntoOpenTabs() {
   const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*', 'file://*/*'] });
