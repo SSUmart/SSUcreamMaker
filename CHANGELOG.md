@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+
+## [26.2.0-beta.2] - 2026-10-17
+26.2.0-beta.1에서 업데이트한 뒤 온글 단축키가 동작하지 않던 문제를 고친 베타입니다. 기존 폴더에 새 파일을 덮어쓴 뒤 `chrome://extensions`에서 새로고침하세요. 설정(API 키 포함)은 그대로 유지됩니다. 새로고침한 뒤 `chrome://extensions/shortcuts`에서 온글 단축키 4개(`Alt+Shift+O`·`M`·`X`·`R`)가 지정돼 있는지 확인하세요
+
 ### Changed
 - 개발용 AI 작업 지침(`CLAUDE.md`)이 협업 규칙 전체를 매번 불러오던 것을, 핵심 금지 규칙·브랜치·커밋 형식만 남기고 나머지는 필요할 때 `collab-rules` 스킬로 불러오도록 변경
 
