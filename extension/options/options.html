@@ -19,11 +19,11 @@
     </ol>
 
     <h2>크롬 단축키</h2>
-    <p>아래 네 단축키는 웹페이지 밖(주소창 등)에서도 동작합니다. 그 밖의 기능은 온글 키 명령이나 온글 메뉴로 실행합니다.</p>
+    <p>온글의 모든 명령은 <strong>Alt+Shift</strong>(macOS는 Option+Shift)와 글자 키를 함께 누릅니다. 아래 네 단축키는 웹페이지 밖(주소창 등)에서도 동작하고, 그 밖의 명령(요약, 질문 등)은 웹페이지 안에서 동작합니다. 모든 기능은 온글 메뉴에서도 고를 수 있습니다.</p>
     <ul id="chrome-shortcuts">
       <!-- options.js가 현재 단축키로 채운다 -->
     </ul>
-    <p>이 네 단축키를 바꾸려면 주소창에 chrome://extensions/shortcuts 를 입력합니다. 이 화면은 크롬 설정 화면이라 온글이 읽을 수 없으므로, 다른 스크린리더나 주변 사람의 도움이 필요합니다. 온글 키와 기능 키는 아래에서 온글로 바꿀 수 있습니다.</p>
+    <p>이 네 단축키를 바꾸려면 주소창에 chrome://extensions/shortcuts 를 입력합니다. 이 화면은 크롬 설정 화면이라 온글이 읽을 수 없으므로, 다른 스크린리더나 주변 사람의 도움이 필요합니다. 기능 키 글자는 아래에서 온글로 바꿀 수 있습니다.</p>
 
     <details id="guide-section">
       <summary>사용 가이드 전체 보기</summary>
@@ -33,17 +33,8 @@
     </details>
 
     <form id="settings-form">
-      <h2>온글 키</h2>
-      <fieldset aria-describedby="ongeul-keys-help">
-        <legend>온글 키로 쓸 키 (하나 이상)</legend>
-        <p><input type="checkbox" id="ongeul-insert" value="Insert"> <label for="ongeul-insert">Insert</label></p>
-        <p><input type="checkbox" id="ongeul-capslock" value="CapsLock"> <label for="ongeul-capslock">Caps Lock (Windows에서만. 누를 때마다 대문자 상태도 바뀝니다)</label></p>
-        <p><input type="checkbox" id="ongeul-ctrlalt" value="CtrlAlt"> <label for="ongeul-ctrlalt">Ctrl과 Alt를 함께 (macOS는 Control과 Option)</label></p>
-      </fieldset>
-      <p id="ongeul-keys-help">온글 키를 누른 채 다른 키를 누르면 온글 명령이 됩니다. 예: 온글 키와 1을 누르면 키 도움말. Insert가 없는 노트북에서는 Ctrl과 Alt를 쓰세요.</p>
-
       <h2>기능 키</h2>
-      <p>온글 키와 함께 눌러 실행할 키입니다. 서로 다른 글자여야 하고, A(계속 읽기), L(현재 항목 다시 읽기), I(AI 결과 모음)는 쓸 수 없습니다.</p>
+      <p id="command-keys-help">Alt+Shift와 함께 눌러 실행할 글자입니다. 서로 다른 글자여야 하고, A(계속 읽기), R(다시 읽기), X(읽기 멈춤), O(켜기/끄기), I(AI 결과 모음)는 쓸 수 없습니다. 그 밖에 Alt+Shift와 아래 화살표는 계속 읽기, 스페이스는 읽기·글쓰기 모드 전환, 1은 키 도움말입니다.</p>
       <p><label for="key-summary">페이지 요약</label> <select id="key-summary" class="command-key"></select></p>
       <p><label for="key-ask">페이지에 질문하기</label> <select id="key-ask" class="command-key"></select></p>
       <p><label for="key-detail">상세 이미지 읽기</label> <select id="key-detail" class="command-key"></select></p>

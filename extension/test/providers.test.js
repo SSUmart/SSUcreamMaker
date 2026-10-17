@@ -1,6 +1,6 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { PROVIDERS } from '../lib/providers.js';
+import { PROVIDERS, RETRY } from '../lib/providers.js';
 import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, mergeSettings } from '../lib/settings.js';
 
 const realFetch = globalThis.fetch;
@@ -43,6 +43,51 @@ test('Gemini: 401이면 API 키 오류 메시지', async () => {
   await assert.rejects(PROVIDERS.gemini.test({ apiKey: 'bad', model: 'm' }), /API 키가 올바르지 않습니다/);
 });
 
+test('503·429는 잠깐 기다렸다가 다시 보낸다 (최대 2번)', async () => {
+  const delays = RETRY.delays;
+  RETRY.delays = [0, 0];
+  try {
+    const ok = { body: { candidates: [{ content: { parts: [{ text: 'OK' }] } }] } };
+    const calls = mockFetch([{ status: 503, body: {} }, { status: 429, body: {} }, ok]);
+    await PROVIDERS.gemini.test({ apiKey: 'k', model: 'm' });
+    assert.equal(calls.length, 3);
+  } finally {
+    RETRY.delays = delays;
+  }
+});
+
+test('503이 계속되면 2번 다시 보낸 뒤 할 일을 알려 주는 오류', async () => {
+  const delays = RETRY.delays;
+  RETRY.delays = [0, 0];
+  try {
+    const calls = mockFetch([{ status: 503, body: {} }, { status: 503, body: {} }, { status: 503, body: {} }]);
+    await assert.rejects(PROVIDERS.gemini.test({ apiKey: 'k', model: 'm' }), /Gemini 서버가 붐빕니다.*다른 모델을 고르세요/);
+    assert.equal(calls.length, 3);
+  } finally {
+    RETRY.delays = delays;
+  }
+});
+
+test('400·401·403·404는 다시 보내지 않는다', async () => {
+  for (const status of [400, 401, 403, 404]) {
+    const calls = mockFetch([{ status, body: {} }]);
+    await assert.rejects(PROVIDERS.gemini.test({ apiKey: 'k', model: 'm' }));
+    assert.equal(calls.length, 1, `${status}`);
+  }
+});
+
+test('NIM도 429는 다시 보낸다 (무료 키의 분당 요청 한도)', async () => {
+  const delays = RETRY.delays;
+  RETRY.delays = [0, 0];
+  try {
+    const calls = mockFetch([{ status: 429, body: {} }, { body: { choices: [{ message: { content: 'OK' } }] } }]);
+    await PROVIDERS.nim.test({ apiKey: 'nv', model: 'x', baseUrl: 'http://localhost:9/v1' });
+    assert.equal(calls.length, 2);
+  } finally {
+    RETRY.delays = delays;
+  }
+});
+
 test('NIM: 조각별로 읽고 글자 없는 조각은 빼고 정리 요청을 보낸다', async () => {
   const calls = mockFetch([
     { body: { choices: [{ message: { content: '<think>음</think>정가 39,000원' } }] } },
@@ -63,7 +108,7 @@ test('NIM: 조각별로 읽고 글자 없는 조각은 빼고 정리 요청을 �
   const finalPrompt = calls[2].body.messages[0].content;
   assert.ok(finalPrompt.includes('정가 39,000원'));
   assert.ok(!finalPrompt.includes('<think>'));
-  assert.deepEqual(progress, ['이미지 조각 1/2 읽는 중', '이미지 조각 2/2 읽는 중', '읽은 내용 정리 중']);
+  assert.deepEqual(progress, ['상세 이미지 조각 1/2 읽는 중', '상세 이미지 조각 2/2 읽는 중', '읽은 내용 정리 중']);
 });
 
 test('NIM: 모든 조각에 글자가 없으면 정리 요청을 생략한다', async () => {

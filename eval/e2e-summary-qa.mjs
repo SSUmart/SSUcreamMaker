@@ -83,12 +83,24 @@ check('수집: 머리말·꼬리말·메뉴 제외', !p0.includes('주 메뉴') 
 check('수집: 표는 행 단위', /\] 배송비 3,000원, 30,000원 이상 구매 시 무료/.test(p0) || /\] 배송비 +3,000원/.test(p0));
 fs.writeFileSync(path.join(OUT, 'summary-prompt.txt'), p0);
 check('요약: 화면에 보임', await page.isVisible('#ssucream-summary'));
+check('요약: 대화상자로 열림 (페이지 레이아웃에 끼어들지 않음)', await page.evaluate(() => {
+  const box = document.getElementById('ssucream-summary');
+  return box.tagName === 'DIALOG' && box.open && box.matches(':modal') && document.body.firstElementChild !== box;
+}));
 check('요약: 제목에 포커스', (await focusedText()) === '페이지 요약, AI 생성');
 const buttons = await page.$$eval('#ssucream-summary li button', (b) => b.map((x) => x.textContent));
 check('요약: 근거 없는 항목엔 버튼 없음', buttons.length === 3 && buttons[2] === '3번 원문으로 이동');
-check('요약: 상세 이미지 미포함 안내', (await page.textContent('#ssucream-summary')).includes('온글 키와 D'));
+check('요약: 상세 이미지 미포함 안내 (실제 키 이름)', (await page.textContent('#ssucream-summary')).includes('Shift와 D 키'));
 await page.screenshot({ path: path.join(OUT, 'summary.png') });
+const summaryText = await page.textContent('#ssucream-summary');
+await page.keyboard.press('Escape');
+check('요약: Esc로 닫힘', !(await page.isVisible('#ssucream-summary')));
+const beforeReopen = prompts.length;
+await inject(['content/page-text.js', 'content/summary.js']);
+await page.waitForSelector('#ssucream-summary[open]');
+check('요약: 다시 열면 같은 내용, AI 다시 안 부름', (await page.textContent('#ssucream-summary')) === summaryText && prompts.length === beforeReopen);
 await page.click('#ssucream-summary li:nth-child(3) button');
+check('원문 이동: 요약 대화상자 닫힘', !(await page.isVisible('#ssucream-summary')));
 check('원문 이동: 닫힌 상품문의 탭이 열림', await page.isVisible('#panel-qna'));
 check('원문 이동: 근거 문단에 포커스', (await focusedText()).includes('탄산수'));
 
@@ -120,11 +132,27 @@ await inject(['content/page-text.js', 'content/summary.js']);
 await page.waitForSelector('#ssucream-summary-title:text("페이지 요약, AI 생성")');
 check('요약 캐시: 같은 페이지면 AI 다시 안 부름', prompts.length === cachedCount);
 
-// 4) 상세 이미지 읽기(F2) 기존 동작
+// 4) 상세 이미지 읽기(F2): 요약 대화상자를 닫고 상세정보 탭으로 돌아간 뒤 실행
+await page.keyboard.press('Escape');
+await page.click('#tab-detail');
 await page.evaluate(async () => { for (let i = 0; i < 30; i++) { window.scrollBy(0, 600); await new Promise((r) => setTimeout(r, 100)); } });
-await inject(['content/detail.js']);
+await inject(['content/page-text.js', 'content/detail.js']);
 await page.waitForFunction(() => ['done', 'error'].includes(document.getElementById('ssucream-status')?.dataset.state), null, { timeout: 60000 });
-check('F2 기존 동작 유지', await page.evaluate(() => document.getElementById('ssucream-status').dataset.state === 'done'));
+check('상세 이미지: 완료', await page.evaluate(() => document.getElementById('ssucream-status').dataset.state === 'done'));
+check('상세 이미지: 결과 상자가 화면에 보임', await page.isVisible('#ssucream-detail h2'));
+check('상세 이미지: 첫 상세 이미지 바로 앞', await page.evaluate(() => document.getElementById('ssucream-detail').nextElementSibling?.tagName === 'IMG'));
+check('상세 이미지: 소제목(h3) 구조', (await page.$$('#ssucream-detail h3')).length >= 1);
+check('상세 이미지: 진행 안내 영역은 숨김(스크린리더 전용)', await page.evaluate(() => document.getElementById('ssucream-status').getBoundingClientRect().width <= 1));
+await page.screenshot({ path: path.join(OUT, 'detail.png') });
+await page.click('#ssucream-detail button:text("접기")');
+check('상세 이미지: 접기', !(await page.isVisible('#ssucream-detail h3')) && (await page.getAttribute('#ssucream-detail button[aria-controls]', 'aria-expanded')) === 'false');
+await page.click('#ssucream-detail button:text("펼치기")');
+check('상세 이미지: 펼치기', await page.isVisible('#ssucream-detail h3'));
+await page.click('#ssucream-detail button:text("닫기")');
+check('상세 이미지: 닫기', !(await page.isVisible('#ssucream-detail')));
+const beforeDetail = prompts.length;
+await inject(['content/page-text.js', 'content/detail.js']);
+check('상세 이미지: 다시 실행하면 AI 없이 다시 열림', (await page.isVisible('#ssucream-detail h3')) && prompts.length === beforeDetail);
 await ctx.close();
 server.close();
 console.log(process.exitCode ? '\n실패한 항목이 있습니다.' : `\n모두 통과. 스크린샷: ${path.relative(process.cwd(), OUT)}`);

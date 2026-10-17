@@ -11,7 +11,7 @@
   const BLOCKS = 'h1,h2,h3,h4,h5,h6,p,li,dt,dd,caption,figcaption,blockquote,pre,tr,summary,legend,label';
   const SKIP =
     'script,style,noscript,template,svg,canvas,iframe,textarea,select,option,nav,aside,' +
-    '[aria-hidden="true"],#ssucream-summary,#ssucream-qa,#ssucream-status,#ssucream-explain,#ssucream-explain-bar';
+    '[aria-hidden="true"],#ssucream-summary,#ssucream-qa,#ssucream-status,#ssucream-explain,#ssucream-explain-bar,#ssucream-detail button';
   const MAX_CHARS = 30_000;
   const MAX_PARAGRAPH_CHARS = 600;
   const MIN_MAIN_CHARS = 200;
@@ -130,7 +130,9 @@
     }
     const details = el.closest('details:not([open])');
     if (details) details.open = true;
-    if (!el.checkVisibility() && !el.closest('#ssucream-detail')) return false;
+    // 닫거나 접어 둔 상세 이미지 결과 상자 안이면 먼저 펼친다
+    el.closest('#ssucream-detail')?.ssucreamShow?.();
+    if (!el.checkVisibility()) return false;
 
     if (!el.matches(FOCUSABLE)) el.tabIndex = -1;
     el.scrollIntoView({ block: 'center' });
@@ -192,5 +194,48 @@
       'background:#fff;border:1px solid #1d4ed8;border-radius:4px;cursor:pointer;'
   };
 
-  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, STYLE };
+  // 대화상자: display를 지정하면 닫힌 대화상자가 숨겨지지 않으므로 상자 스타일에서 빼고,
+  // 상자 스타일의 position:relative가 대화상자 기본 배치(화면 가운데 고정)를 덮지 않게 fixed로 되돌린다.
+  STYLE.dialog =
+    STYLE.box.replace('display:block;', '').replace('margin:16px auto;', 'margin:auto;') +
+    'position:fixed;inset:0;height:fit-content;width:min(640px,92vw);max-height:80vh;overflow:auto;';
+
+  // 요약·질문이 쓰는 화면 가운데 대화상자(<dialog>). 페이지 레이아웃을 건드리지 않는다.
+  // 닫으면 크롬이 열기 전 초점 요소로 초점을 돌려준다. 온글이 그 뒤 다른 곳(글 문단 등)을 읽던 중이었으면
+  // 크롬이 돌려준 초점이 아니라 그 읽던 위치로 되돌린다. Esc로도 닫힌다(<dialog> 기본 동작).
+  // 근거 위치로 가려고 닫을 때는 closeTo를 써서 읽던 위치로 되돌리지 않는다.
+  function createDialog(id, titleText) {
+    const dialog = el('dialog', null, STYLE.dialog);
+    dialog.id = id;
+    dialog.setAttribute('aria-labelledby', `${id}-title`);
+    const title = el('h2', titleText, STYLE.heading);
+    title.id = `${id}-title`;
+    title.tabIndex = -1;
+    dialog.append(title);
+    document.body.append(dialog);
+
+    let readerSpot = null;
+    dialog.addEventListener('close', () => {
+      const reader = globalThis.__ongeul?.reader;
+      const active = document.activeElement;
+      const restored = active && active !== document.body && (active === readerSpot || readerSpot?.contains(active));
+      if (reader?.enabled && readerSpot?.isConnected && !restored) reader.moveToElement(readerSpot);
+      readerSpot = null;
+    });
+
+    function closeTo() {
+      readerSpot = null;
+      dialog.close();
+    }
+
+    function open() {
+      if (dialog.open) return;
+      const reader = globalThis.__ongeul?.reader;
+      readerSpot = reader?.enabled ? reader.items[reader.index]?.el ?? null : null;
+      dialog.showModal();
+    }
+    return { dialog, title, open, closeTo };
+  }
+
+  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, createDialog, STYLE };
 })();

@@ -11,11 +11,13 @@
   const AUTO_DETAILED_TIMES = 3;
   const IS_MAC = /Mac/i.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || '');
 
+  // 온글 명령은 모두 이 조합키와 함께 누른다 (크롬 단축키 4개와 같은 조합, macOS의 Alt는 Option)
+  const MODIFIER = IS_MAC ? 'Option+Shift' : 'Alt+Shift';
+  // 기능 키 기본값 (설정이 아직 없을 때)
+  const DEFAULT_COMMAND_KEYS = { summary: 'KeyS', ask: 'KeyQ', detail: 'KeyD', explain: 'KeyE', menu: 'KeyM' };
+
   // 키 이름을 읽을 때 쓰는 말. 키 조합은 "Alt와 Shift와 O"처럼 읽는다.
   const KEY_NAMES = {
-    Insert: 'Insert',
-    CapsLock: 'Caps Lock',
-    CtrlAlt: IS_MAC ? 'Control과 Option' : 'Ctrl과 Alt',
     ArrowDown: '아래 화살표',
     ArrowUp: '위 화살표',
     Space: '스페이스',
@@ -57,21 +59,40 @@
       : `${purpose} 단축키가 지정되어 있지 않습니다. 다른 확장 프로그램과 겹쳐 크롬이 지정하지 못한 것입니다. 온글 메뉴의 온글 설정에서 지정 방법을 확인하세요`;
   }
 
-  // 사용자가 쓰는 온글 키 이름 ("Insert 또는 Ctrl과 Alt")
-  function ongeulKeyText(keys = ['Insert']) {
-    return keys.map((key) => KEY_NAMES[key] ?? key).join(' 또는 ');
+  // 안내에 넘어온 키 이름 (없으면 기본 기능 키로)
+  const keysOf = (p) => p.keys ?? keyNames();
+
+  // 조합키와 함께 누르는 온글 명령의 읽는 말 ("Alt와 Shift와 S")
+  function comboText(code) {
+    return shortcutText(`${MODIFIER}+${codeText(code)}`);
   }
 
-  // p: 안내에 넣을 값. toggle(켜기/끄기 단축키), menu(메뉴 단축키), ongeul(온글 키 이름) 등.
+  // 온글 명령마다 지금 설정된 실제 키의 읽는 말. 안내·도움말·메뉴·가이드가 모두 이것을 쓴다.
+  function keyNames(commandKeys = {}) {
+    const keys = { ...DEFAULT_COMMAND_KEYS, ...commandKeys };
+    return {
+      ...Object.fromEntries(Object.entries(keys).map(([name, code]) => [name, comboText(code)])),
+      sayAll: comboText('ArrowDown'),
+      sayAllAlt: comboText('KeyA'),
+      reread: comboText('KeyR'),
+      stop: comboText('KeyX'),
+      mode: comboText('Space'),
+      help: comboText('Digit1'),
+      results: comboText('KeyI'),
+      modifier: shortcutText(MODIFIER)
+    };
+  }
+
+  // p: 안내에 넣을 값. toggle(켜기/끄기 단축키), menu(메뉴 단축키), keys(keyNames의 온글 명령 키 이름) 등.
   // 키 이름 뒤에는 조사 대신 "키를"을 붙여 어떤 키 이름이든 자연스럽게 읽히게 한다.
   // action은 "온글 메뉴를 열"처럼 "수 없습니다" 앞에 바로 붙는 말, result는 완성된 문장으로 넘긴다.
   const MESSAGES = {
     'reader-on': {
       detailed: (p) =>
         `온글이 켜졌습니다. 지금 페이지는 ${p.title || '제목 없는 페이지'}입니다. ${p.counts ? `${p.counts}. ` : ''}아래 화살표를 누르면 페이지를 한 항목씩 읽습니다. ` +
-        `${p.menu ? `${p.menu} 키를 누르면 온글 메뉴가 열립니다. ` : '온글 키와 M을 함께 누르면 온글 메뉴가 열립니다. '}` +
+        `${p.menu || keysOf(p).menu} 키를 누르면 온글 메뉴가 열립니다. ` +
         '메뉴의 첫 항목은 사용 가이드이고, 그 아래에서 요약, 질문 같은 기능을 고를 수 있습니다. ' +
-        `온글 키는 ${p.ongeul}이고, 온글 키와 1을 함께 누르면 키 도움말을 듣습니다.`,
+        `${keysOf(p).help} 키를 누르면 키 도움말을 듣습니다.`,
       short: (p) => `온글 켜짐. ${p.title || ''}${p.counts ? `, ${p.counts}` : ''}`
     },
     // 설치 직후 서비스 워커가 읽는 시작 안내 (항상 자세히)
@@ -81,7 +102,7 @@
         '온글이 설치되었습니다. 온글은 웹페이지를 화면 자막, 음성, 점자로 읽어 주고, 읽을 수 없는 부분은 AI로 채우는 스크린리더입니다. ' +
         'NVDA나 센스리더 같은 다른 스크린리더를 쓰고 있다면 먼저 꺼 주세요. ' +
         `온글을 켜려면 ${pressText(p.toggle, '온글 켜기')}. ` +
-        `켠 다음 ${p.menu ? `${p.menu} 키` : '온글 키와 M 키'}를 누르면 온글 메뉴가 열리고, 첫 항목에서 사용 가이드를 들을 수 있습니다. ` +
+        `켠 다음 ${p.menu || keysOf(p).menu} 키를 누르면 온글 메뉴가 열리고, 첫 항목에서 사용 가이드를 들을 수 있습니다. ` +
         '지금 열린 온글 설정 화면에서는 AI 기능, 음성, 점자를 설정할 수 있습니다.'
     },
     'reader-off': {
@@ -138,7 +159,7 @@
     'ai-analyzing': {
       detailed: (p) =>
         `${p.kind} 이름이 없어 읽을 수 없는 부분입니다. AI가 내용을 분석하고 있습니다. 이 자리에 있으면 끝나는 대로 읽어 드리고, ` +
-        '다른 곳으로 이동해도 분석은 계속됩니다. 결과는 온글 키와 I 키를 함께 누르면 AI 결과 모음에서 들을 수 있습니다.',
+        `다른 곳으로 이동해도 분석은 계속됩니다. 결과는 ${keysOf(p).results} 키를 누르면 AI 결과 모음에서 들을 수 있습니다.`,
       short: () => 'AI 분석 중'
     },
     'ai-supplement-off': {
@@ -147,8 +168,8 @@
     },
     'ai-results-empty': {
       always: true,
-      detailed: () =>
-        'AI 결과 모음이 비어 있습니다. 이름 없는 항목을 읽거나, 온글 키와 S로 요약하거나, 온글 키와 Q로 질문하면 결과가 여기에 모입니다.'
+      detailed: (p) =>
+        `AI 결과 모음이 비어 있습니다. 이름 없는 항목을 읽거나, ${keysOf(p).summary} 키로 요약하거나, ${keysOf(p).ask} 키로 질문하면 결과가 여기에 모입니다.`
     },
     'focus-outside-page': {
       always: true,
@@ -191,16 +212,17 @@
   };
 
   function help(p) {
+    const k = keysOf(p);
     return [
-      `온글 키 도움말. 온글 키는 ${p.ongeul}입니다. 온글 키를 누른 채 다른 키를 누르면 온글 명령이 됩니다.`,
-      `${p.menu ? `${p.menu} 키를 누르거나 ` : ''}온글 키와 ${p.menuKey} 키를 함께 누르면 온글 메뉴가 열립니다. 모든 기능을 목록에서 골라 실행할 수 있습니다.`,
+      `키 도움말. 온글 명령은 모두 ${k.modifier}를 누른 채 다른 키를 함께 누릅니다.`,
+      `${p.menu && p.menu !== k.menu ? `${p.menu} 키 또는 ` : ''}${k.menu} 키를 누르면 온글 메뉴가 열립니다. 모든 기능을 목록에서 골라 실행할 수 있습니다.`,
       '읽기. 아래 화살표, 다음 항목. 위 화살표, 이전 항목. Ctrl과 Home, 페이지 처음. Ctrl과 End, 페이지 끝. Ctrl, 읽기 멈춤.',
-      `온글 키와 A 또는 온글 키와 아래 화살표, 지금 위치부터 끝까지 계속 읽기. 온글 키와 L 또는 온글 키와 Tab, 현재 항목 다시 읽기. ${p.reread ? `${p.reread}, 어디서든 현재 위치 다시 읽기. ` : ''}${p.stop ? `${p.stop}, 어디서든 읽기 멈춤.` : ''}`,
+      `${k.sayAll} 또는 ${k.sayAllAlt}, 지금 위치부터 끝까지 계속 읽기. ${p.reread || k.reread}, 어디서든 현재 위치 다시 읽기. ${p.stop || k.stop}, 어디서든 읽기 멈춤.`,
       '한 글자로 이동. H 제목, K 링크, B 버튼, F 입력 요소, E 편집창, X 체크박스, R 라디오 버튼, C 콤보 상자, T 표, L 목록, G 그래픽, D 영역. Shift를 함께 누르면 위쪽으로 찾습니다. 숫자 1부터 6은 그 수준의 제목입니다.',
-      'Enter 또는 스페이스, 지금 항목 누르기. 편집창에서 Enter를 누르면 글쓰기 모드가 되고, Esc를 누르면 읽기 모드로 돌아옵니다. 온글 키와 스페이스로도 두 모드를 바꿉니다.',
-      `기능. 온글 키와 ${p.summary}, 페이지 요약. 온글 키와 ${p.ask}, 페이지에 질문. 온글 키와 ${p.detail}, 상세 이미지 읽기. 온글 키와 ${p.explain}, 현재 항목 AI 설명. 온글 키와 I, AI 결과 모음. 온글 키와 ${p.menuKey}, 온글 메뉴. 온글 키와 1, 이 도움말.`,
+      `Enter 또는 스페이스, 지금 항목 누르기. 편집창에서 Enter를 누르면 글쓰기 모드가 되고, Esc를 누르면 읽기 모드로 돌아옵니다. ${k.mode}로도 두 모드를 바꿉니다.`,
+      `기능. ${k.summary}, 페이지 요약. ${k.ask}, 페이지에 질문. ${k.detail}, 상세 이미지 읽기. ${k.explain}, 현재 항목 AI 설명. ${k.results}, AI 결과 모음. ${k.help}, 이 도움말.`,
       '이름 없는 버튼이나 그림을 읽으면 AI가 자동으로 분석해 이름을 붙이고, AI가 붙인 이름 뒤에는 AI 추정이라고 읽습니다.',
-      `온글을 켜고 끄려면 ${pressText(p.toggle, '온글 켜기')}. 온글 키와 기능 키는 온글 설정에서 바꿀 수 있습니다.`
+      `온글을 켜고 끄려면 ${pressText(p.toggle, '온글 켜기')}. 기능 키 글자는 온글 설정에서 바꿀 수 있습니다.`
     ].join(' ');
   }
 
@@ -213,5 +235,5 @@
     return (detailed ? entry.detailed : entry.short)(params);
   }
 
-  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, message, help, shortcutText, codeText, ongeulKeyText, pressText };
+  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, help, shortcutText, codeText, comboText, keyNames, pressText };
 })();

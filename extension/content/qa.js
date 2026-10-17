@@ -5,23 +5,11 @@
     window.__ssucreamQa();
     return;
   }
-  const { collect, focusSource, announce, el, STYLE } = window.__ssucreamPage;
+  const { collect, focusSource, announce, el, createDialog, STYLE } = window.__ssucreamPage;
   const history = [];
   let busy = false;
 
-  const dialog = el(
-    'dialog',
-    null,
-    // display를 지정하면 닫힌 대화상자가 숨겨지지 않으므로 상자 스타일에서 뺀다.
-    // 공통 상자 스타일의 position:relative가 대화상자 기본 배치(화면 가운데 고정)를 덮지 않게 fixed로 되돌린다.
-    STYLE.box.replace('display:block;', '').replace('margin:16px auto;', 'margin:auto;') +
-      'position:fixed;inset:0;height:fit-content;width:min(640px,92vw);max-height:80vh;overflow:auto;'
-  );
-  dialog.id = 'ssucream-qa';
-  dialog.setAttribute('aria-labelledby', 'ssucream-qa-title');
-
-  const title = el('h2', '페이지에 질문하기', STYLE.heading);
-  title.id = 'ssucream-qa-title';
+  const { dialog, open: showDialog, closeTo } = createDialog('ssucream-qa', '페이지에 질문하기');
   const help = el(
     'p',
     '이 페이지에 적힌 내용만으로 AI가 답합니다. 답은 틀릴 수 있으니 중요한 정보는 근거 위치로 이동해 확인하세요.',
@@ -56,8 +44,7 @@
   close.type = 'button';
   close.addEventListener('click', () => dialog.close());
 
-  dialog.append(title, help, log, form, close);
-  document.body.append(dialog);
+  dialog.append(help, log, form, close);
 
   function addEntry(question) {
     const item = el('li', null, 'margin:0 0 12px;');
@@ -75,7 +62,7 @@
       const button = el('button', '근거 위치로 이동', STYLE.button);
       button.type = 'button';
       button.addEventListener('click', () => {
-        dialog.close();
+        closeTo();
         if (!focusSource(source)) announce('근거 위치를 찾지 못했습니다. 페이지가 바뀌었을 수 있습니다.');
       });
       entry.item.append(button);
@@ -131,7 +118,7 @@
   });
 
   function open() {
-    if (!dialog.open) dialog.showModal();
+    showDialog();
     input.focus();
   }
 

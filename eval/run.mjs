@@ -161,7 +161,7 @@ async function runCase(context, sw, url, testCase) {
     await sw.evaluate(async (pageUrl) => {
       const tabs = await chrome.tabs.query({});
       const tab = tabs.find((t) => t.url === pageUrl);
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/detail.js'] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/page-text.js', 'content/detail.js'] });
     }, page.url());
     await page.waitForFunction(
       () => ['done', 'error'].includes(document.getElementById('ssucream-status')?.dataset.state),

@@ -96,8 +96,7 @@
   // 지금 페이지에 맞는 메뉴 항목. 다른 모듈(점자 전달 테스트 등)은 ns.menuExtensions에 항목을 더한다.
   function mainEntries() {
     const reader = ns.reader;
-    const keys = reader.settings.reader.commandKeys;
-    const withOngeul = (code) => `온글 키와 ${ns.guidance.codeText(code)}`;
+    const keys = ns.guidance.keyNames(reader.settings.reader.commandKeys);
     const run = (command) => () => reader.runAi(command);
     // AI 기능은 웹페이지에서만 쓸 수 있다 (온글 설정 같은 확장 페이지에는 넣을 수 없음)
     const onWebPage = /^(https?|file):$/.test(location.protocol);
@@ -105,13 +104,13 @@
     const list = [{ label: '사용 가이드', action: () => ns.guide.openContents() }];
     if (onWebPage) {
       list.push(
-        { label: '페이지 요약', keyText: withOngeul(keys.summary), action: run('summarize-page') },
-        { label: '페이지에 질문하기', keyText: withOngeul(keys.ask), action: run('ask-page') }
+        { label: '페이지 요약', keyText: keys.summary, action: run('summarize-page') },
+        { label: '페이지에 질문하기', keyText: keys.ask, action: run('ask-page') }
       );
-      if (hasDetailImages()) list.push({ label: '상세 이미지 읽기', keyText: withOngeul(keys.detail), action: run('read-detail') });
+      if (hasDetailImages()) list.push({ label: '상세 이미지 읽기', keyText: keys.detail, action: run('read-detail') });
       list.push(
-        { label: '현재 항목 AI로 설명 듣기', keyText: withOngeul(keys.explain), action: () => ns.ai.explainCurrent() },
-        { label: 'AI 결과 모음', keyText: '온글 키와 I', action: () => ns.ai.openResults() }
+        { label: '현재 항목 AI로 설명 듣기', keyText: keys.explain, action: () => ns.ai.explainCurrent() },
+        { label: 'AI 결과 모음', keyText: keys.results, action: () => ns.ai.openResults() }
       );
     }
     list.push(
@@ -119,7 +118,7 @@
       { label: '링크 목록', action: () => openList('링크 목록', '링크', (item) => item.category === 'link') },
       { label: '영역 목록', action: () => openList('영역 목록', '영역', (item) => item.category === 'landmark') },
       ...(ns.menuExtensions ?? []).flatMap((extend) => extend() ?? []),
-      { label: '키 도움말', keyText: '온글 키와 1', action: () => reader.help() },
+      { label: '키 도움말', keyText: keys.help, action: () => reader.help() },
       {
         label: '온글 설정',
         action: () => chrome.runtime.sendMessage({ type: 'ongeul-open-options' }).catch(() => {})

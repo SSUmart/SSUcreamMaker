@@ -38,8 +38,7 @@
       menu: r?.shortcuts?.menu,
       stop: r?.shortcuts?.stop,
       reread: r?.shortcuts?.reread,
-      ongeul: ns.guidance.ongeulKeyText(r?.settings?.reader?.ongeulKeys ?? ['Insert']),
-      keys: Object.fromEntries(Object.entries(r?.settings?.reader?.commandKeys ?? {}).map(([k, v]) => [k, ns.guidance.codeText(v)]))
+      keys: ns.guidance.keyNames(r?.settings?.reader?.commandKeys)
     };
   }
 

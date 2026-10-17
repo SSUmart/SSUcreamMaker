@@ -2,8 +2,8 @@
 // - 이름이 없어 읽을 수 없는 항목(이름 없는 버튼·링크, alt 없는 그림 등)을 읽으면 "AI 분석 중"이라고 알리고 탐색을 계속하게 한다.
 //   분석이 끝났을 때 아직 그 항목에 있으면 바로 이어 읽고, 다른 곳에 있으면 알리지 않는다(궁금하면 AI 결과 모음에서 확인).
 //   결과는 그 항목의 이름으로 붙어 다시 오면 "…, AI 추정"으로 읽는다. 페이지를 열면 앞쪽 몇 개는 미리 분석한다.
-// - AI 결과 모음(온글 키 + I): 자동 보완, 요약, 상세 이미지 읽기, 질문 답, 항목 설명 결과를 모아 다시 듣는다.
-// - 현재 항목 AI 설명(온글 키 + E): 지금 읽는 항목을 AI가 1~3문장으로 설명한다 (예전 항목 설명 모드를 대신함).
+// - AI 결과 모음(Alt+Shift+I): 자동 보완, 요약, 상세 이미지 읽기, 질문 답, 항목 설명 결과를 모아 다시 듣는다.
+// - 현재 항목 AI 설명(Alt+Shift+E, 기능 키는 설정에서 바꿈): 지금 읽는 항목을 AI가 1~3문장으로 설명한다 (예전 항목 설명 모드를 대신함).
 (() => {
   const ns = (globalThis.__ongeul ??= {});
   if (ns.ai) return;
@@ -143,7 +143,10 @@
         label: entry.title,
         action: () => {
           const r = reader();
-          if (entry.el?.isConnected && entry.el.checkVisibility()) {
+          // 닫을 수 있는 결과(요약 대화상자, 상세 이미지 상자)는 다시 열어 처음부터 읽는다
+          if (entry.open && entry.el?.isConnected) {
+            entry.open();
+          } else if (entry.el?.isConnected && entry.el.checkVisibility()) {
             if (entry.kind === 'summary' || entry.kind === 'detail') r.readElement(entry.el);
             else r.moveToElement(entry.el);
           } else if (entry.text) {

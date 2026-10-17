@@ -36,7 +36,7 @@ export function mergeSettings(stored = {}) {
     ...stored,
     gemini: { ...DEFAULT_SETTINGS.gemini, ...stored.gemini },
     nim,
-    // 온글 스크린리더 설정(온글 키, 기능 키, 안내 자세히, 음성)
+    // 온글 스크린리더 설정(기능 키, 안내 자세히, 음성)
     ...mergeReaderSettings(stored)
   };
 }

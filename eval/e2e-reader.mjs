@@ -174,10 +174,13 @@ check('R → Enter: 라디오 선택', (await press('KeyR')).includes('1/3') && 
 check('E → Enter: 글쓰기 모드', (await press('KeyE')).includes('수량') && (await press('Enter', 400)).includes('글쓰기 모드'));
 check('Esc: 읽기 모드', (await press('Escape', 400)).includes('읽기 모드'));
 check('Shift+T: 표', (await toItem('KeyT', '표,')).includes('5행 2열'));
-check('온글 키+1: 도움말', (await press('Control+Alt+Digit1')).includes('온글 키와 A'));
+await toItem('KeyH', '상세정보, 제목 2');
+c = await press('ArrowDown');
+check('상세 이미지 자리 안내 (실제 키 이름)', c.includes('상세 이미지 4개') && c.includes('Shift와 D 키'), c);
+check('Alt+Shift+1: 도움말 (실제 키 이름)', ((c) => c.includes('Shift와 A') && !c.includes('온글 키와'))(await press('Alt+Shift+Digit1')));
 
 console.log('\n== 온글 메뉴와 사용 가이드');
-c = await press('Control+Alt+KeyM', 400);
+c = await press('Alt+Shift+KeyM', 400);
 check('메뉴 첫 항목은 사용 가이드', c.includes('온글 메뉴') && c.includes('1번, 사용 가이드'), c);
 c = await press('Enter', 400);
 check('사용 가이드 목차', c.includes('온글 사용 가이드 목차') && c.includes('1장, 온글은 무엇인가요'), c);
@@ -203,12 +206,12 @@ check('그 자리에 있으면 결과를 읽음', c.includes('공유하기, AI �
 await page.waitForTimeout(3500); // 미리 분석
 check('옵션 초기화 버튼', (await toItem('KeyB', '초기화')).includes('옵션 초기화, AI 추정, 버튼'), await caption());
 check('div 맨 위로 버튼', (await toItem('KeyB', '맨 위로', 60)).includes('맨 위로, AI 추정, 버튼'), await caption());
-c = await press('Control+Alt+KeyI', 500);
+c = await press('Alt+Shift+KeyI', 500);
 check('AI 결과 모음', c.includes('AI 결과 모음') && c.includes('AI 추정'), c);
 await press('Escape', 300);
 await press('Escape', 300);
 await toItem('KeyB', '공유하기');
-c = await press('Control+Alt+KeyE', 1200);
+c = await press('Alt+Shift+KeyE', 1200);
 check('현재 항목 AI 설명', (await until((t) => t.includes('AI 설명'), 3000)).includes('상품 링크를 공유하는 버튼입니다'), c);
 
 console.log('\n== 교차 검증');
@@ -228,15 +231,23 @@ await page.evaluate(async () => {
   }
   window.scrollTo(0, 0);
 });
-await press('Control+Alt+KeyS', 300);
-c = await until((t) => t.includes('진공 텀블러 상품 페이지입니다'), 6000);
-check('요약 결과를 바로 읽음', !c.startsWith('(못 찾음)'), c);
+await press('Alt+Shift+KeyS', 300);
+// 첫 문장(개요)은 가짜 음성에서 너무 빨리 지나가므로 그다음 안내 문장으로 확인한다
+c = await until((t) => t.includes('AI가 페이지 글을 요약했습니다'), 6000);
+check('요약 결과를 바로 읽음 (대화상자)', !c.startsWith('(못 찾음)') && (await page.evaluate(() => document.querySelector('#ssucream-summary')?.open)), c);
 await press('Control', 200);
-await press('Control+Alt+KeyD', 300);
+// 읽던 위치가 초점을 받지 않는 제목이어도(초점은 앞의 링크에 남음) Esc로 닫으면 그 제목으로 돌아온다
+await press('Escape', 300);
+await toItem('KeyH', '상세정보, 제목 2');
+await press('Alt+Shift+KeyS', 600);
+await press('Control', 200);
+c = await press('Escape', 500);
+check('요약 Esc: 읽던 위치로 돌아옴', c.includes('상세정보, 제목 2'), c);
+await press('Alt+Shift+KeyD', 300);
 c = await until((t) => t.includes('식기세척기'), 10000);
 check('상세 이미지 결과를 바로 읽음', !c.startsWith('(못 찾음)'), c);
 await press('Control', 200);
-await press('Control+Alt+KeyQ', 600);
+await press('Alt+Shift+KeyQ', 600);
 await page.keyboard.type('배송비 얼마야');
 await press('Enter', 300);
 check('질문 답을 읽음', (await until((t) => t.includes('배송비는 3,000원입니다'), 5000)).includes('AI 답변'));
