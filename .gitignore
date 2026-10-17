@@ -10,3 +10,8 @@ dist/
 /.agents/
 # 평가 결과 (공유할 결과는 docs로 옮겨 기록)
 /eval/results/
+
+# Claude 스킬 더미 (외부에서 설치, 저장소에 포함하지 않음). collab-rules는 프로젝트 규칙이라 예외
+/.claude/skills/
+!/.claude/skills/collab-rules/
+/skills-lock.json
