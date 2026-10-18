@@ -176,3 +176,29 @@ test('설정: AI 꺼짐, 키 없음, 정상', () => {
   assert.equal(ok.name, 'nim');
   assert.equal(ok.config.baseUrl, DEFAULT_SETTINGS.nim.baseUrl);
 });
+
+// 오류 안내는 사용자가 듣는 문장이라 서버 응답 원문(영어, 주소·쿼리)을 넣지 않고 한국어로 알린다
+test('오류 안내: 서버 응답 원문 대신 상태별 한국어', async () => {
+  const config = { apiKey: 'k', model: 'm', baseUrl: 'http://x/v1' };
+  const reply = (status, text) => (globalThis.fetch = async () => new Response(text, { status }));
+  const quiet = console.warn;
+  console.warn = () => {};
+  try {
+    reply(500, '<html>Internal Server Error https://x.y/?key=abc</html>');
+    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /서버에 문제가 생겼습니다 \(오류 500\)/.test(e.message) && !/html|key=/.test(e.message));
+    reply(400, '{"error":{"message":"Invalid model https://x.y/?key=abc"}}');
+    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /NVIDIA NIM이 요청을 받지 않았습니다/.test(e.message) && !/Invalid|key=/.test(e.message));
+    reply(400, '{"error":{"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}');
+    await assert.rejects(PROVIDERS.gemini.generateJson('p', config), /Gemini API 키가 올바르지 않습니다/);
+    // 성공 응답인데 본문이 JSON이 아님
+    reply(200, 'this is not json');
+    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /응답을 읽지 못했습니다/.test(e.message) && !/Unexpected|token/.test(e.message));
+    // 연결 실패 (인터넷 끊김, 잘못된 주소)
+    globalThis.fetch = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /서버에 연결하지 못했습니다/.test(e.message) && !/Failed/.test(e.message));
+  } finally {
+    console.warn = quiet;
+  }
+});

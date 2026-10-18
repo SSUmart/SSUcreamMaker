@@ -37,7 +37,10 @@
   const ARROW_WIDGETS = '[role="slider"], [role="listbox"], [role="menu"], [role="menubar"], [role="tree"], [role="grid"], [role="spinbutton"]';
   const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
   const PENDING_TIMEOUT = 30_000;
-  const FOCUS_MODE_COMMANDS = new Set(['Space', 'KeyX', 'KeyR']);
+  // 글쓰기 모드에서 온글 명령 대신 페이지에 넘기는 조합 (Alt+Shift+↓는 편집창의 문단 단위 선택)
+  const FOCUS_MODE_PASS = new Set(['ArrowDown']);
+  // 점자에서 알림이 아니라 항목 내용으로 보이는 안내 (첫 항목 이름을 함께 읽음)
+  const CONTENT_GUIDES = new Set(['menu-opened', 'list-opened']);
 
   let enabled = false;
   let generation = 0;
@@ -91,17 +94,18 @@
 
   // 안내 문구를 읽는다. 자세히·짧게 판단에 쓰는 "읽은 횟수"는 서비스 워커 한 곳에서 센다(탭끼리 덮어쓰지 않게).
   // dropIfStale: 안내 문장을 받아 오는 사이 다른 문장이 나왔으면 이 안내는 읽지 않는다 (예: 결과가 바로 나와 이미 읽는 중)
-  async function guide(id, params = {}, { interrupt = false, dropIfStale = false } = {}) {
+  // 안내 문구는 점자에서 잠깐 보여 주는 알림(message)이다. 메뉴·목록이 열렸다는 안내는 첫 항목을 함께 읽으므로 항목 내용으로 둔다.
+  async function guide(id, params = {}, { interrupt = false, dropIfStale = false, message = !CONTENT_GUIDES.has(id) } = {}) {
     const before = ns.output.said;
     const fullParams = { ...params, toggle: shortcuts.toggle, menu: shortcuts.menu, keys: keyNames() };
     const response = await chrome.runtime.sendMessage({ type: 'ongeul-guide-text', id, params: fullParams }).catch(() => null);
     const text = response?.text ?? guidance.message(id, fullParams, { verbosity: settings.reader.verbosity, seen: 0 });
     if (dropIfStale && ns.output.said !== before) return { final: 'end', events: [] };
-    return output.say(text, { interrupt });
+    return output.say(text, { interrupt, message });
   }
 
   function help() {
-    output.say(guidance.help({ ...shortcuts, keys: keyNames() }), { interrupt: true });
+    output.say(guidance.help({ ...shortcuts, keys: keyNames() }), { interrupt: true, message: true });
   }
 
   // 목록을 다시 만든다. 읽던 요소가 사라졌으면 그 앞뒤 항목을 기준으로 가장 가까운 곳에 머문다.
@@ -157,7 +161,7 @@
     // 초점을 옮기지 않는 대화상자가 열리면 대화상자 이름을 알리고 그 처음부터 읽게 한다
     if (rootChanged && model.readingRoot() !== document.body && !model.readingRoot().contains(document.activeElement)) {
       index = -1;
-      output.say(dialogPrefix(), { interrupt: true });
+      output.say(dialogPrefix(), { interrupt: true, message: true });
     }
   }
 
@@ -255,11 +259,14 @@
   }
 
   // 계속 읽기: 목록이 중간에 다시 만들어져도 읽는 요소를 기준으로 위치를 다시 찾는다
+  // 계속 읽기를 다시 시작하면 앞선 계속 읽기가 늦게 끝나므로, 자기 차례(run)일 때만 "읽는 중" 표시를 끈다
+  let sayAllRun = 0;
   async function sayAll(list = items.slice(Math.max(index, 0))) {
+    const run = ++sayAllRun;
     sayingAll = true;
     try {
       await output.sayAll(list, (offset) => {
-        if (!sayingAll) return;
+        if (!sayingAll || run !== sayAllRun) return;
         const el = list[offset].el;
         const found = model.indexOfElement(items, el, { exact: true });
         if (found !== -1) index = found;
@@ -267,7 +274,7 @@
         el.scrollIntoView?.({ block: 'center', behavior: 'instant' });
       });
     } finally {
-      sayingAll = false;
+      if (run === sayAllRun) sayingAll = false;
     }
   }
 
@@ -329,11 +336,14 @@
     }
     if (sayingAll && !['Shift', 'Alt', 'Meta'].includes(event.key)) stopSpeech();
 
-    // 글쓰기 모드에서는 Alt+Shift(Option+Shift) 조합을 대부분 페이지에 넘긴다 (macOS 특수 문자 입력, 글자 선택 등).
-    // 모드 전환(Space), 읽기 멈춤(X), 다시 읽기(R)만 온글이 받는다.
-    if (isCommandCombo(event) && (!focusMode || FOCUS_MODE_COMMANDS.has(event.code))) {
-      if (handleCommand(event)) consume(event);
-      return;
+    // 온글 명령은 글쓰기 모드(편집창, 선택 상자 등)에서도 받는다. 명령으로 쓰지 않는 Alt+Shift(Option+Shift) 조합은
+    // 페이지에 그대로 넘기므로, macOS에서 명령 글자가 아닌 특수 문자는 계속 입력할 수 있다.
+    if (isCommandCombo(event) && !(focusMode && FOCUS_MODE_PASS.has(event.code))) {
+      if (handleCommand(event)) {
+        consume(event);
+        return;
+      }
+      if (!focusMode) return;
     }
     if (event.key === 'Control') {
       stopSpeech();
@@ -474,16 +484,18 @@
       focusOnly = el;
       item = ns.ai?.decorate(model.itemFor(el)) ?? model.itemFor(el);
     }
-    output.focus(item);
-    // 모달 대화상자가 막 열렸으면 대화상자 이름을 먼저 읽는다
-    const prefix = rootChanged ? dialogPrefix() : '';
-    output.say(prefix ? `${prefix}, ${item.phrase}` : item.phrase, { interrupt: true });
-    ns.ai?.onItemRead?.(item);
+    // 모드를 먼저 바꾼 뒤 읽는다 (자막의 "읽기 모드/글쓰기 모드" 표시가 읽는 항목과 맞도록).
+    // 글쓰기 모드 안내는 서비스 워커에서 받아 오므로 항목 이름 뒤에 이어서 읽힌다
     if (el.matches(EDITABLE) || el.matches(ARROW_WIDGETS)) {
       if (!focusMode) enterFocusMode(null);
     } else {
       leaveFocusMode(false);
     }
+    output.focus(item);
+    // 모달 대화상자가 막 열렸으면 대화상자 이름을 먼저 읽는다
+    const prefix = rootChanged ? dialogPrefix() : '';
+    output.say(prefix ? `${prefix}, ${item.phrase}` : item.phrase, { interrupt: true });
+    ns.ai?.onItemRead?.(item);
   }
 
   // 실시간 안내 영역(role=status/alert, aria-live)의 새 글을 읽는다.
@@ -503,7 +515,7 @@
       while (waiting.length && enabled && myGeneration === generation) {
         const { region, text } = waiting.shift();
         if (!region.isConnected || textOf(region) !== text) continue;
-        await output.say(text, { interrupt: false });
+        await output.say(text, { interrupt: false, message: true });
       }
       speaking = false;
     };
@@ -518,7 +530,7 @@
       lastText.set(region, text);
       const assertive = region.getAttribute('aria-live') === 'assertive' || region.getAttribute('role') === 'alert';
       if (assertive) {
-        output.say(text, { interrupt: true });
+        output.say(text, { interrupt: true, message: true });
         return;
       }
       const queued = waiting.find((entry) => entry.region === region);
@@ -578,7 +590,11 @@
     ns.braille?.refreshAdmin();
     // 보이는 탭만 말한다 (뒤에 있는 탭들이 한꺼번에 말하지 않도록)
     if (document.visibilityState !== 'visible') return;
-    if (reason === 'toggle') guide('reader-on', { title: document.title, counts: pageCounts() }, { interrupt: true });
+    if (reason === 'toggle') {
+      // 켜기 안내가 점자에서 사라지면 페이지 정보로 돌아가도록
+      ns.braille?.setContent?.(pageSummary());
+      guide('reader-on', { title: document.title, counts: pageCounts() }, { interrupt: true });
+    }
     else output.say(pageSummary(), { interrupt: true });
   }
 

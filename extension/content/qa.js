@@ -5,11 +5,11 @@
     window.__ssucreamQa();
     return;
   }
-  const { collect, focusSource, announce, el, createDialog, STYLE } = window.__ssucreamPage;
+  const { collect, focusSource, announce, el, createDialog, friendlyError, STYLE } = window.__ssucreamPage;
   const history = [];
   let busy = false;
 
-  const { dialog, open: showDialog, closeTo } = createDialog('ssucream-qa', '페이지에 질문하기');
+  const { dialog, open: showDialog, closeTo, announce: announceInDialog } = createDialog('ssucream-qa', '페이지에 질문하기');
   const help = el(
     'p',
     '이 페이지에 적힌 내용만으로 AI가 답합니다. 답은 틀릴 수 있으니 중요한 정보는 근거 위치로 이동해 확인하세요.',
@@ -67,13 +67,17 @@
       });
       entry.item.append(button);
     }
+    // 기다리는 동안 대화상자를 닫았으면 요약처럼 다시 열어 답을 읽는다
+    if (!dialog.open) showDialog();
     entry.answer.focus();
-    // 답 문단에는 이미 초점이 있어 focus()로는 다시 읽히지 않으므로, 온글이 켜져 있으면 답을 직접 읽게 한다
+    // 답 문단에는 이미 초점이 있어 focus()로는 다시 읽히지 않으므로, 온글이 켜져 있으면 답을 직접 읽게 하고,
+    // 꺼져 있으면(다른 스크린리더) 대화상자 안의 안내 영역으로 답과 오류를 알린다
     const reader = globalThis.__ongeul?.reader;
     if (!result.error) {
       globalThis.__ongeul?.ai?.addResult({ kind: 'answer', title: `${entry.question}, 답변`, el: entry.answer, text: entry.answer.textContent });
     }
     if (reader?.enabled) reader.readElement(entry.answer);
+    else announceInDialog(entry.answer.textContent);
   }
 
   form.addEventListener('submit', async (event) => {
@@ -95,7 +99,7 @@
     entry.answer.focus();
     // 온글이 켜져 있으면 초점을 옮긴 "답을 찾는 중" 문단을 온글이 읽으므로 안내 영역으로 또 알리지 않는다
     // (답이 빨리 오면 늦게 도착한 이 안내가 답 읽기를 방해함)
-    if (!globalThis.__ongeul?.reader?.enabled) announce('답을 찾는 중입니다.');
+    if (!globalThis.__ongeul?.reader?.enabled) announceInDialog('답을 찾는 중입니다.');
     try {
       // 요약·상세 이미지 추출 결과가 그 사이 생겼을 수 있어 질문할 때마다 새로 모은다.
       const page = collect();
@@ -111,7 +115,7 @@
         input.value = '';
       }
     } catch (err) {
-      showAnswer(entry, { error: err.message }, { elements: [] });
+      showAnswer(entry, { error: friendlyError(err) }, { elements: [] });
     } finally {
       busy = false;
     }

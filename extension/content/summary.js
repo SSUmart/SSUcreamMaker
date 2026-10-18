@@ -1,12 +1,13 @@
 // F4 내용 요약: 단축키로 주입된다. 다시 주입되면 이미 정의된 run만 다시 실행한다.
 // 요약은 질문하기와 같은 화면 가운데 대화상자로 보여 주고(페이지 레이아웃을 건드리지 않음), 결과·오류 모두 그 안에 남긴다(점자 우선).
-// 같은 페이지에서 다시 실행하면 AI를 다시 부르지 않고 마지막 요약을 다시 연다.
+// 같은 페이지에서 다시 실행하면 AI를 다시 부르지 않고 마지막 요약을 다시 연다. 그 사이 페이지 글이 바뀌었으면
+// (상세 이미지를 읽었거나 탭·옵션을 바꾼 경우 등) 새로 요약한다.
 (() => {
   if (window.__ssucreamSummary) {
     window.__ssucreamSummary();
     return;
   }
-  const { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, createDialog, STYLE } = window.__ssucreamPage;
+  const { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, createDialog, friendlyError, STYLE } = window.__ssucreamPage;
   const { dialog, title, open: showDialog, closeTo } = createDialog('ssucream-summary', '페이지 요약');
   const body = el('div');
   const close = el('button', '요약 닫기', STYLE.button);
@@ -15,8 +16,10 @@
   dialog.append(body, close);
 
   let busy = false;
-  // 마지막으로 끝난 요약의 페이지 주소 (같은 페이지면 다시 열기만 한다)
+  // 마지막으로 끝난 요약의 페이지 주소와 그때 보낸 글 (둘 다 같으면 다시 열기만 한다)
   let doneUrl = '';
+  let doneText = '';
+  const textOf = (page) => JSON.stringify([page.payload.title, page.payload.paragraphs]);
 
   // 대화상자 내용을 바꾸고 (닫혀 있으면 열고) 제목으로 초점을 옮긴다.
   function show(titleText, build) {
@@ -37,8 +40,8 @@
   }
 
   function reopen() {
-    // 그 사이 다른 요약을 하다 실패했으면 다시 요약한다
-    if (doneUrl !== location.href) {
+    // 그 사이 다른 요약을 하다 실패했거나 페이지 글이 바뀌었으면 다시 요약한다
+    if (doneUrl !== location.href || doneText !== textOf(collect())) {
       run();
       return;
     }
@@ -81,6 +84,7 @@
       box.append(list);
     });
     doneUrl = location.href;
+    doneText = textOf(page);
     globalThis.__ongeul?.ai?.addResult({ kind: 'summary', title: `페이지 요약, ${result.items.length}개 항목`, el: dialog, open: reopen });
     readAll();
   }
@@ -97,13 +101,14 @@
       announce('이미 요약하는 중입니다.');
       return;
     }
-    if (doneUrl === location.href) {
+    if (doneUrl === location.href && doneText === textOf(collect())) {
       reopen();
       return;
     }
     busy = true;
     // 새로 요약하는 동안이나 실패하면 대화상자 내용이 바뀌므로 "마지막 요약"이 아니게 된다
     doneUrl = '';
+    doneText = '';
     try {
       const page = collect();
       if (!page.payload.paragraphs.length) {
@@ -118,7 +123,7 @@
       if (result?.error) renderError(result.error);
       else renderResult(result, page);
     } catch (error) {
-      renderError(`오류가 발생했습니다. ${error.message}`);
+      renderError(friendlyError(error));
     } finally {
       busy = false;
     }

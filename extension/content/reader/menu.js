@@ -194,6 +194,10 @@
     if (!open) return;
     open = false;
     panel.hidden = true;
+    // 점자: 닫았다는 알림이 사라지면 메뉴 항목이 아니라 읽던 위치를 보이도록
+    const r = ns.reader;
+    const item = r?.items?.[r.index];
+    if (item) ns.braille?.setContent?.(item.phrase);
     if (announce) guide('menu-closed', {}, { interrupt: true });
   }
 
@@ -224,7 +228,7 @@
         return true;
       }
     }
-    say(`첫 글자 ${jamo ?? latin}, 해당 항목 없음. 지금 위치는 ${entries[active].label}입니다.`, { interrupt: true });
+    say(`첫 글자 ${jamo ?? latin}, 해당 항목 없음. 지금 위치는 ${entries[active].label}입니다.`, { interrupt: true, message: true });
     return true;
   }
 

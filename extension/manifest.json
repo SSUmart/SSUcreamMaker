@@ -77,13 +77,13 @@
       "description": "현재 위치 다시 읽기 (어디서든)"
     },
     "read-detail": {
-      "description": "상세 이미지 읽기 (온글이 켜져 있으면 Alt+Shift+D로도 실행)"
+      "description": "상세 이미지 읽기 (온글이 켜져 있으면 기본 기능 키 Alt+Shift+D로도 실행, 기능 키는 온글 설정에서 바꿀 수 있음)"
     },
     "summarize-page": {
-      "description": "페이지 요약 (온글이 켜져 있으면 Alt+Shift+S로도 실행)"
+      "description": "페이지 요약 (온글이 켜져 있으면 기본 기능 키 Alt+Shift+S로도 실행, 기능 키는 온글 설정에서 바꿀 수 있음)"
     },
     "ask-page": {
-      "description": "페이지에 질문하기 (온글이 켜져 있으면 Alt+Shift+Q로도 실행)"
+      "description": "페이지에 질문하기 (온글이 켜져 있으면 기본 기능 키 Alt+Shift+Q로도 실행, 기능 키는 온글 설정에서 바꿀 수 있음)"
     },
     "explain-mode": {
       "description": "항목 설명 모드 켜기/끄기 (켜진 동안 클릭한 항목을 설명)"

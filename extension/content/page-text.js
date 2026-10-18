@@ -11,6 +11,8 @@
   const BLOCKS = 'h1,h2,h3,h4,h5,h6,p,li,dt,dd,caption,figcaption,blockquote,pre,tr,summary,legend,label';
   const SKIP =
     'script,style,noscript,template,svg,canvas,iframe,textarea,select,option,nav,aside,' +
+    // 사용자가 글을 쓰는 편집 영역(웹메일 작성창, 댓글·문서 편집기)은 AI로 보내지 않는다 (입력창 값과 같은 이유)
+    '[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="searchbox"],[role="combobox"],' +
     '[aria-hidden="true"],#ssucream-summary,#ssucream-qa,#ssucream-status,#ssucream-explain,#ssucream-explain-bar,#ssucream-detail button';
   const MAX_CHARS = 30_000;
   const MAX_PARAGRAPH_CHARS = 600;
@@ -18,7 +20,7 @@
 
   // 사이트 머리·꼬리말은 빼되, 본문(article) 안의 header·footer는 남긴다.
   function skipped(el) {
-    if (el.closest(SKIP)) return true;
+    if (el.closest(SKIP) || el.isContentEditable) return true;
     const edge = el.closest('header, footer');
     return Boolean(edge && !edge.closest('main, article, [role="main"]'));
   }
@@ -211,8 +213,19 @@
     const title = el('h2', titleText, STYLE.heading);
     title.id = `${id}-title`;
     title.tabIndex = -1;
-    dialog.append(title);
+    // 대화상자가 열려 있으면 바깥(페이지의 안내 영역)은 다른 스크린리더에게 보이지 않으므로(inert),
+    // 대화상자 안에 따로 안내 영역을 둔다
+    const status = el('div');
+    status.setAttribute('role', 'status');
+    status.style.cssText = SR_ONLY;
+    dialog.append(title, status);
     document.body.append(dialog);
+    let statusTimer = null;
+    function announceInside(text) {
+      status.textContent = '';
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => (status.textContent = text), 100);
+    }
 
     let readerSpot = null;
     dialog.addEventListener('close', () => {
@@ -223,9 +236,13 @@
       readerSpot = null;
     });
 
+    // 원문·근거 위치로 이동하며 닫을 때. 다른 기능(상세 이미지 결과 읽기)이 사용자가 고른 위치를 덮지 않도록 표시를 남긴다
     function closeTo() {
       readerSpot = null;
+      dialog.dataset.closedToSource = 'true';
       dialog.close();
+      // close 이벤트 처리가 모두 끝난 뒤 지운다
+      setTimeout(() => delete dialog.dataset.closedToSource, 0);
     }
 
     function open() {
@@ -234,8 +251,18 @@
       readerSpot = reader?.enabled ? reader.items[reader.index]?.el ?? null : null;
       dialog.showModal();
     }
-    return { dialog, title, open, closeTo };
+    // 다른 기능(상세 이미지)이 대화상자가 열려 있을 때 안내할 수 있도록 대화상자에 붙여 둔다
+    dialog.ssucreamAnnounce = announceInside;
+    return { dialog, title, open, closeTo, announce: announceInside };
   }
 
-  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, createDialog, STYLE };
+  // 사용자가 듣는 오류 문장. 서비스 워커와 연결이 끊긴 경우 등 브라우저의 영어 오류는 한국어 안내로 바꾼다
+  function friendlyError(error) {
+    const text = error?.message ?? String(error ?? '');
+    if (/[가-힣]/.test(text)) return text;
+    console.warn('온글 기능 오류', error);
+    return '온글과 연결이 끊겼습니다. 페이지를 새로고침(F5)한 뒤 다시 시도하세요.';
+  }
+
+  window.__ssucreamPage = { collect, focusSource, hasUnreadDetailImages, announce, clearStatus, el, createDialog, friendlyError, STYLE };
 })();

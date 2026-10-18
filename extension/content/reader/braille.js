@@ -123,19 +123,91 @@
     renderPanel();
   }
 
-  // 온글이 읽은 글을 점자로 보낸다 (output.say가 부른다)
-  function write(text) {
+  function setText(text) {
     state.text = text ?? '';
     state.translation = hangulBraille.translate(state.text, { grade: settings().grade });
     state.lines = splitLines(state.translation.cells, transport.cells);
     state.line = 0;
+  }
+
+  // ---- 점자 알림 (NVDA의 점자 메시지와 같은 방식) ----
+  // 안내 문구·페이지 알림은 디스플레이에 잠깐(4초) 보여 준 뒤, 그 전에 읽던 항목과 읽던 줄로 돌아간다.
+  // 알림이 길면 줄 넘기기로 알림 안을 읽고(누를 때마다 4초를 다시 셈), 커서 이동 버튼은 알림을 닫고 돌아간다.
+  // 항목 내용(이동한 항목, 계속 읽기, 메뉴 항목 등)이 새로 오면 알림은 바로 끝나고 새 내용을 보인다.
+  const MESSAGE_MS = 4000;
+  let message = null; // { saved: 알림 전 상태, timer }
+  const snapshot = () => ({ text: state.text, translation: state.translation, lines: state.lines, line: state.line });
+
+  function startMessageTimer() {
+    clearTimeout(message.timer);
+    message.timer = setTimeout(() => endMessage({ restore: true }), MESSAGE_MS);
+  }
+
+  function endMessage({ restore }) {
+    if (!message) return false;
+    clearTimeout(message.timer);
+    const { saved } = message;
+    message = null;
+    if (restore) {
+      Object.assign(state, saved);
+      sendLine();
+    }
+    return true;
+  }
+
+  // 항목 내용을 점자로 보낸다 (output.say가 부른다)
+  function write(text) {
+    endMessage({ restore: false });
+    setText(text);
     return sendLine();
+  }
+
+  // 알림을 잠깐 보인다. 알림이 이어서 오면 새 알림으로 바꾸고, 돌아갈 곳은 처음 알림 전 내용 그대로 둔다
+  function flash(text) {
+    if (!message) message = { saved: snapshot(), timer: 0 };
+    setText(text);
+    startMessageTimer();
+    return sendLine();
+  }
+
+  // 알림이 끝나면 돌아갈 항목 내용을 바꾼다 (메뉴를 닫으면 메뉴 항목 대신 읽던 위치로 돌아가도록)
+  function setContent(text) {
+    if (!message) return write(text);
+    const current = snapshot();
+    setText(text);
+    message.saved = snapshot();
+    Object.assign(state, current);
+    return undefined;
+  }
+
+  // 칸 수·점자 규칙 설정이 바뀌면 지금 글(과 알림이 끝나면 돌아갈 글)을 새 설정으로 다시 나눈다.
+  // 읽던 줄은 그 줄의 첫 글자가 들어 있는 새 줄로 옮긴다 (칸 수가 달라도 같은 글자부터 읽도록)
+  let layout = '';
+  function relayout(view) {
+    const firstChar = view.translation.source[view.lines[view.line]?.start] ?? 0;
+    const translation = hangulBraille.translate(view.text, { grade: settings().grade });
+    const lines = splitLines(translation.cells, transport.cells);
+    const at = translation.source.findIndex((charIndex) => charIndex >= firstChar);
+    const line = at === -1 ? 0 : Math.max(0, lines.findIndex((l) => at >= l.start && at < Math.max(l.end, l.start + 1)));
+    return { text: view.text, translation, lines, line };
+  }
+
+  function refreshLayout() {
+    const now = `${settings().cells}/${settings().grade}`;
+    if (now === layout) return;
+    const first = !layout;
+    layout = now;
+    if (first || !state.lines.length) return;
+    if (message) message.saved = relayout(message.saved);
+    Object.assign(state, relayout(snapshot()));
+    sendLine();
   }
 
   function pan(delta) {
     const next = state.line + delta;
     if (next < 0 || next >= state.lines.length) return false;
     state.line = next;
+    if (message) startMessageTimer();
     sendLine();
     return true;
   }
@@ -145,6 +217,11 @@
     state.lastInput = { ...event, at: new Date() };
     if (event.type === 'pan') pan(event.direction);
     if (event.type === 'routing') {
+      // 알림이 떠 있으면 알림만 닫고 읽던 줄로 돌아간다
+      if (endMessage({ restore: true })) {
+        renderPanel();
+        return;
+      }
       // NVDA처럼: 커서 이동 버튼으로 링크·버튼을 누르고, 그 밖의 항목은 다시 읽는다
       ns.reader?.routeCurrent?.();
     }
@@ -193,6 +270,7 @@
 
   // 관리자 도구가 켜져 있을 때만 버튼을 보인다 (온글이 켜질 때와 설정이 바뀔 때 부름)
   function refreshAdmin() {
+    refreshLayout();
     if (!ensureUi()) return;
     const admin = settings().adminTools;
     toggleButton.hidden = !admin;
@@ -280,6 +358,13 @@
 
   ns.braille = {
     write,
+    flash,
+    setContent,
+    // 온글을 끌 때 남은 알림 타이머를 지운다
+    clearMessage: () => endMessage({ restore: false }),
+    get showingMessage() {
+      return Boolean(message);
+    },
     pan,
     refreshAdmin,
     togglePanel,

@@ -240,13 +240,22 @@ const HANDLERS = {
   'label-item': (message) => labelItem(message.item)
 };
 
+// 사용자가 듣는 오류 문장. 온글이 만든 한국어 오류는 그대로, 그 밖의 예상하지 못한 오류(영어 원문)는 일반 안내로 바꾸고
+// 원문은 서비스 워커 콘솔에만 남긴다
+function userError(error) {
+  const text = error?.message ?? String(error);
+  if (/[가-힣]/.test(text)) return text;
+  console.warn('AI 기능 처리 중 예상하지 못한 오류', error);
+  return '처리하는 중 알 수 없는 오류가 났습니다. 잠시 뒤 다시 시도하세요.';
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handler = HANDLERS[message?.type];
   if (!handler || !sender.tab?.id) return;
   // 진행 안내는 어느 작업의 것인지(task) 함께 보낸다 (요약 중에 상세 이미지 안내 영역이 읽지 않게)
   const progress = (text) =>
     chrome.tabs.sendMessage(sender.tab.id, { type: 'progress', task: message.type, text }).catch(() => {});
-  handler(message, progress).then(sendResponse, (error) => sendResponse({ error: error.message }));
+  handler(message, progress).then(sendResponse, (error) => sendResponse({ error: userError(error) }));
   return true;
 });
 
@@ -256,14 +265,23 @@ const HEARTBEAT_MS = 15_000;
 function startHeartbeat(progress, label) {
   const started = Date.now();
   let last = started;
+  let stopped = false;
+  // 작업이 끝난(실패한) 뒤에 늦게 온 진행 안내는 보내지 않는다 (오류 안내를 덮지 않도록)
   const report = (text) => {
+    if (stopped) return;
     last = Date.now();
     progress(text);
   };
   const timer = setInterval(() => {
     if (Date.now() - last >= HEARTBEAT_MS) report(`${label}, ${Math.round((Date.now() - started) / 1000)}초 지남`);
   }, 1000);
-  return { report, stop: () => clearInterval(timer) };
+  return {
+    report,
+    stop: () => {
+      stopped = true;
+      clearInterval(timer);
+    }
+  };
 }
 
 async function extractDetail(urls, progress) {
