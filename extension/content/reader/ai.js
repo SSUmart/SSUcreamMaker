@@ -150,9 +150,9 @@
             if (entry.kind === 'summary' || entry.kind === 'detail') r.readElement(entry.el);
             else r.moveToElement(entry.el);
           } else if (entry.text) {
-            say(entry.text, { interrupt: true });
+            say(entry.text, { interrupt: true, message: true });
           } else {
-            say(`${entry.title}. 이 결과의 위치를 페이지에서 찾을 수 없습니다.`, { interrupt: true });
+            say(`${entry.title}. 이 결과의 위치를 페이지에서 찾을 수 없습니다.`, { interrupt: true, message: true });
           }
         }
       }))
@@ -160,22 +160,33 @@
   }
 
   // 현재 항목 AI 설명 (예전 항목 설명 모드를 대신함)
+  // 설명을 기다리는 동안 다시 누르면 요청을 또 보내지 않는다 (요청 2번, 결과 2번 읽기 방지)
+  let explaining = false;
   async function explainCurrent() {
     const r = reader();
     const item = r?.items[r.index];
     if (!item) {
-      say('설명할 항목이 없습니다. 아래 화살표로 항목으로 이동한 뒤 다시 누르세요.', { interrupt: true });
+      say('설명할 항목이 없습니다. 아래 화살표로 항목으로 이동한 뒤 다시 누르세요.', { interrupt: true, message: true });
       return;
     }
+    if (explaining) {
+      say('이미 현재 항목 설명을 만드는 중입니다. 끝나면 바로 읽어 드립니다.', { interrupt: true, message: true });
+      return;
+    }
+    explaining = true;
     r.guide('ai-requested', { task: '현재 항목 설명' }, { interrupt: true, dropIfStale: true });
     try {
       const response = await chrome.runtime.sendMessage({ type: 'explain-item', item: ns.describe.describeElement(item.el, item) });
       if (!response || response.error) throw new Error(response?.error ?? '응답이 없습니다.');
       const text = `AI 설명: ${response.description}`;
       addResult({ kind: 'explain', title: `${item.phrase}, 설명`, el: item.el, text });
-      say(text, { interrupt: true });
+      say(text, { interrupt: true, message: true });
     } catch (error) {
-      say(`현재 항목 설명 실패. ${error.message}`, { interrupt: true });
+      // 브라우저의 영어 오류(연결 끊김 등)는 한국어로
+      const reason = /[가-힣]/.test(error.message) ? error.message : '온글과 연결이 끊겼습니다. 페이지를 새로고침(F5)한 뒤 다시 시도하세요.';
+      say(`현재 항목 설명 실패. ${reason}`, { interrupt: true, message: true });
+    } finally {
+      explaining = false;
     }
   }
 

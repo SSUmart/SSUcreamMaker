@@ -103,12 +103,26 @@
   const QUOTE_CLOSE = { '"': cells('356'), '”': cells('356'), "'": cells('356', '3'), '’': cells('356', '3') };
   // 모르는 글자: 6점 모두 (점자 사용자가 "여기 글자가 있다"는 것만 알 수 있게)
   const UNKNOWN = cell('123456');
+  // 따로 쓰인 자모(ㅋㅋ, ㅠㅠ, ㄱㄴㄷ): 글자마다 앞에 온표, 자음은 받침으로 (제8항).
+  // 낱말 중간이나 끝에 붙은 자음은 456점을 앞세워 받침으로 (제10항, 제23항)
+  const ONPYO = cell('123456');
+  const JAMO_ATTACHED = cell('456');
+  // 로마자 낱말 안의 아포스트로피 (제61항, It's, don't)
+  const APOSTROPHE = cell('3');
   const SPACE = 0;
 
   const isHangul = (ch) => {
     const code = ch?.charCodeAt(0);
     return code >= 0xac00 && code <= 0xd7a3;
   };
+  // 한글 호환 자모 (ㄱ~ㅎ 자음, ㅏ~ㅣ 모음)
+  const isJamo = (ch) => {
+    const code = ch?.charCodeAt(0);
+    return code >= 0x3131 && code <= 0x3163;
+  };
+  const isJamoConsonant = (ch) => isJamo(ch) && ch.charCodeAt(0) < 0x314f;
+  // 자음을 받침으로. ㄸ ㅃ ㅉ처럼 받침이 없는 자음은 된소리표 + 예사소리 받침
+  const jamoCells = (ch) => (isJamoConsonant(ch) ? FINAL[ch] ?? [TENSE_MARK, ...FINAL[TENSE[ch]]] : VOWEL[ch]);
 
   function decompose(ch) {
     const code = ch.charCodeAt(0) - 0xac00;
@@ -167,11 +181,20 @@
     let inNumber = false;
     let inRoman = false;
     let quoteOpen = { '"': false, "'": false };
+    // 바로 앞 자음 자모가 낱말에 붙어 456점으로 적혔는지 (주ㄹㄹ처럼 이어지는 자음도 붙여 적는다)
+    let jamoAttached = false;
 
     for (let i = 0; i < chars.length; i++) {
       const ch = chars[i];
       const next = chars[i + 1];
       const prev = chars[i - 1];
+
+      // 로마자 사이의 ' 와 ’는 따옴표가 아니라 아포스트로피 (로마자를 끊지 않고, 따옴표 짝도 바꾸지 않는다)
+      if ((ch === "'" || ch === '’') && /[A-Za-z]/.test(prev ?? '') && /[A-Za-z]/.test(next ?? '')) {
+        emit([APOSTROPHE], i);
+        continue;
+      }
+      if (!isJamo(ch)) jamoAttached = false;
 
       // 로마자가 끝나면 로마자 종료표 (제29항). 띄어 쓴 다음 낱말도 로마자면 한 덩어리로 보고 마지막에만 적는다.
       // 적지 않는 경우: 숫자가 이어질 때(제35항), 한글식 쉼표·쌍점·쌍반점·줄표가 올 때(제33항),
@@ -215,6 +238,15 @@
         const upper = (c) => /[A-Z]/.test(c ?? '');
         if (upper(ch) && !upper(prev)) emit(upper(next) ? [CAPITAL, CAPITAL] : [CAPITAL], i);
         emit([cell(LETTER[ch.toLowerCase()])], i);
+        prevSyllable = null;
+        continue;
+      }
+
+      if (isJamo(ch)) {
+        const attached = isJamoConsonant(ch) && (isHangul(prev) || (jamoAttached && isJamoConsonant(prev)));
+        emit([attached ? JAMO_ATTACHED : ONPYO, ...jamoCells(ch)], i);
+        jamoAttached = attached;
+        inNumber = false;
         prevSyllable = null;
         continue;
       }

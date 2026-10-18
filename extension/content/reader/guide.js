@@ -128,12 +128,12 @@
         paragraph = 0;
         readParagraph(`${chapterIndex + 1}장, ${list[chapterIndex].title}. `);
       } else {
-        say('사용 가이드의 끝입니다. Esc를 누르면 목차로 돌아갑니다.', { interrupt: true });
+        say('사용 가이드의 끝입니다. Esc를 누르면 목차로 돌아갑니다.', { interrupt: true, message: true });
       }
       return;
     }
     if (next < 0) {
-      say(`${chapterIndex + 1}장의 처음입니다. Esc를 누르면 목차에서 다른 장을 고를 수 있습니다.`, { interrupt: true });
+      say(`${chapterIndex + 1}장의 처음입니다. Esc를 누르면 목차에서 다른 장을 고를 수 있습니다.`, { interrupt: true, message: true });
       return;
     }
     paragraph = next;

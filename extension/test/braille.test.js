@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import '../content/reader/defaults.js';
@@ -105,6 +105,23 @@ test('1종: 약자를 쓰지 않음', () => {
   assert.equal(dots('그래서', { grade: 1 }), '4-246-5-1235-6-234');
 });
 
+test('따로 쓰인 자모: 온표와 받침 (제8항), 낱말에 붙은 자음 (제10항, 제23항)', () => {
+  // 규정 예문: 삼각형 ㄱㄴㄷ, 낫 놓고 ㄱ자도 모른다, [봉주ㄹ흐]
+  assert.equal(dots('ㄱㄴㄷ'), '123456-1-123456-25-123456-35');
+  assert.equal(dots('ㄱ자도'), '123456-1-46-24-136');
+  assert.equal(dots('봉주ㄹ흐'), '45-123456-46-134-456-2-245-246');
+  // 웹 글에 흔한 낱자
+  assert.equal(dots('ㅋㅋ'), '123456-235-123456-235');
+  assert.equal(dots('ㅠㅠ'), '123456-146-123456-146');
+  assert.deepEqual(hangulBraille.translate('ㅋㅋ').unknown, []);
+});
+
+test("로마자 사이의 아포스트로피는 3점 (제61항), 따옴표 짝을 바꾸지 않음", () => {
+  assert.equal(dots("It's"), '356-6-24-2345-3-234-256');
+  // 아포스트로피 뒤의 작은따옴표도 여는 것·닫는 것이 바르게
+  assert.equal(dots("It's '좋다'"), '356-6-24-2345-3-234-256-빈칸-6-236-46-136-356-24-356-3');
+});
+
 test('원문 위치와 바꾸지 못한 글자', () => {
   const result = hangulBraille.translate('가 ★');
   assert.deepEqual(result.source, [0, 1, 2]);
@@ -116,4 +133,101 @@ test('디스플레이 한 줄 나누기: 칸 수 안에서 낱말 사이로 끊�
   const cells = [1, 1, 0, 2, 2, 2, 0, 3, 3];
   assert.deepEqual(braille.splitLines(cells, 5), [{ start: 0, end: 3 }, { start: 3, end: 7 }, { start: 7, end: 9 }]);
   assert.deepEqual(braille.splitLines([], 40), [{ start: 0, end: 0 }]);
+});
+
+test('점자 알림: 4초 보인 뒤 읽던 항목과 읽던 줄로 돌아감 (NVDA 점자 메시지)', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const long = '가나다라마바사 '.repeat(12);
+    braille.write(long);
+    assert.ok(braille.state.lines.length >= 3);
+    braille.pan(1);
+    braille.pan(1);
+    braille.flash('장바구니에 담았습니다');
+    assert.equal(braille.state.text, '장바구니에 담았습니다');
+    assert.equal(braille.state.line, 0);
+    assert.equal(braille.showingMessage, true);
+    // 알림이 이어서 오면 새 알림으로 바꾸고, 돌아갈 곳은 그대로
+    braille.flash('남은 시간 5분');
+    mock.timers.tick(3999);
+    assert.equal(braille.state.text, '남은 시간 5분');
+    mock.timers.tick(1);
+    assert.equal(braille.state.text, long);
+    assert.equal(braille.state.line, 2);
+    assert.equal(braille.showingMessage, false);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('점자 알림: 줄 넘기기는 알림 안에서(시간 다시 셈), 커서 이동 버튼은 알림을 닫음, 새 항목이 오면 알림 끝', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    braille.write('항목 하나');
+    const longMessage = '온글 키 도움말입니다 '.repeat(10);
+    braille.flash(longMessage);
+    mock.timers.tick(3000);
+    assert.equal(braille.pan(1), true);
+    assert.equal(braille.state.line, 1);
+    mock.timers.tick(3000);
+    assert.equal(braille.state.text, longMessage);
+    braille.transport.press({ type: 'routing', cell: 0 });
+    assert.equal(braille.state.text, '항목 하나');
+    assert.equal(braille.showingMessage, false);
+    braille.flash('페이지 끝입니다');
+    braille.write('다음 항목, 링크');
+    mock.timers.tick(5000);
+    assert.equal(braille.state.text, '다음 항목, 링크');
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('점자 알림: 알림 중에 돌아갈 내용을 바꿀 수 있음 (메뉴를 닫으면 읽던 위치로)', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    braille.write('사용 가이드, 1/9');
+    braille.flash('메뉴를 닫았습니다');
+    braille.setContent('장바구니 담기, 버튼');
+    assert.equal(braille.state.text, '메뉴를 닫았습니다');
+    mock.timers.tick(4000);
+    assert.equal(braille.state.text, '장바구니 담기, 버튼');
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('점자 칸 수를 바꾸면 지금 글을 새 칸 수로 다시 나누고, 읽던 글자부터 보임 (알림이 끝나 돌아갈 글도)', async () => {
+  const ns = globalThis.__ongeul;
+  // 전송 결과(lastWrite)는 기기에 쓰기를 마친 뒤 기록된다
+  const sent = () => new Promise((resolve) => setImmediate(resolve));
+  const long = '가나다라마바사아자차카타파하 '.repeat(8);
+  try {
+    ns.reader = { settings: { braille: { cells: 40 } } };
+    braille.refreshAdmin();
+    braille.write(long);
+    braille.pan(1);
+    const firstChar = braille.state.translation.source[braille.state.lines[braille.state.line].start];
+    braille.flash('알림');
+    ns.reader = { settings: { braille: { cells: 20 } } };
+    braille.refreshAdmin();
+    await sent();
+    assert.equal(braille.state.lastWrite.ok, true);
+    assert.equal(braille.state.lastWrite.bytes.length, 20);
+    // 알림이 끝나면 돌아가는 글도 20칸으로 나뉘어 있고, 읽던 글자가 든 줄로 돌아감
+    braille.transport.press({ type: 'routing', cell: 0 });
+    await sent();
+    assert.equal(braille.state.text, long);
+    assert.equal(braille.state.lastWrite.ok, true);
+    assert.ok(braille.state.lines.every(({ start, end }) => end - start <= 20));
+    const { start, end } = braille.state.lines[braille.state.line];
+    const chars = braille.state.translation.source.slice(start, end);
+    assert.ok(chars.includes(firstChar));
+    assert.equal(braille.pan(1), true);
+    await sent();
+    assert.equal(braille.state.lastWrite.ok, true);
+    assert.equal(braille.state.lastWrite.bytes.length, 20);
+  } finally {
+    delete ns.reader;
+  }
 });

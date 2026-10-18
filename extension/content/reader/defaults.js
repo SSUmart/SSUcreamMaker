@@ -1,6 +1,17 @@
 // 온글 스크린리더 설정 기본값. content script와 lib/settings.js(import로 불러옴)가 같이 쓴다.
 (() => {
   const ns = (globalThis.__ongeul ??= {});
+  // 확장을 업데이트하거나(개발 중 새로고침 포함) 다시 넣으면 예전 온글 모듈이 페이지에 남는다. 주입 순서상 이 파일이
+  // 맨 처음 실행되므로, 예전 온글의 연결이 끊겼으면 끄고 모듈을 모두 비워 새 파일로 다시 정의되게 한다.
+  // (reader.js만 새로 정의되고 나머지는 예전 것이 남아, 바뀐 모듈 사이 함수가 없어 안내가 조용히 실패하지 않도록)
+  if (ns.reader && !ns.reader.alive()) {
+    try {
+      ns.reader.disable();
+    } catch {
+      // 예전 온글이 이미 망가져 있어도 새로 정의하는 것은 계속한다
+    }
+    for (const key of Object.keys(ns)) delete ns[key];
+  }
   if (ns.defaults) return;
 
   ns.defaults = {

@@ -134,7 +134,9 @@
   // 이어 읽는 문장은 계속 읽기를 멈추지 않는다 (끊는 문장과 멈춤만 계속 읽기를 멈춤).
   const MAX_CAPTION = 600;
   let said = 0;
-  function say(text, { interrupt = true, append = !interrupt, ownSequence = false } = {}) {
+  // message: 안내 문구·알림이면 true. 점자에서는 잠깐 보여 주고 읽던 항목으로 돌아간다(NVDA의 점자 메시지).
+  // 화면 자막과 음성은 message와 상관없이 같다.
+  function say(text, { interrupt = true, append = !interrupt, ownSequence = false, message = false } = {}) {
     if (!text) return Promise.resolve({ final: 'end', events: [] });
     said++;
     if (interrupt && !ownSequence) sequence++;
@@ -142,7 +144,8 @@
     const previous = captionText?.textContent ?? '';
     const shown = append && previous && !caption?.hidden ? `${previous} ${text}`.slice(-MAX_CAPTION) : text;
     setCaption(shown);
-    ns.braille?.write?.(shown);
+    if (message) ns.braille?.flash?.(text);
+    else ns.braille?.write?.(shown);
     return chrome.runtime
       .sendMessage({ type: 'ongeul-say', text, interrupt })
       .then((result) => ({ ...result, id }))
@@ -185,6 +188,7 @@
     host?.remove();
     root = null;
     ringTarget = null;
+    ns.braille?.clearMessage?.();
   }
 
   // 읽기 중인 음성만 멈추고 서비스 워커에는 알리지 않는다 (서비스 워커가 다른 안내를 읽는 중일 때)

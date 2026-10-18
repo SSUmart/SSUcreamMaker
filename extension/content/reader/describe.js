@@ -82,10 +82,15 @@
   }
 
   // 클래스·아이디·주소에 든 단서 (예: btn-cart, icon-trash). AI 근거와 파괴적 동작 교차 검증에 쓴다.
+  // 주소처럼 생긴 값은 쿼리(?…)와 조각(#…)을 떼고 보낸다 (서명·토큰·회원 번호 같은 값이 붙어 있을 수 있음).
+  // 그림 주소는 data: 주소면 내용 대신 종류만 남긴다. 아이콘 링크(#icon-trash)는 조각이 이름이라 그대로 둔다.
+  const withoutQuery = (value) => (value ? value.split(/[?#]/)[0] : value);
+  const imageHint = (src) => (src?.startsWith('data:') ? 'data 그림' : withoutQuery(src));
+
   function hintsOf(el) {
-    const parts = [el.id, el.getAttribute('class'), el.getAttribute('name'), el.getAttribute('data-action')];
+    const parts = [el.id, el.getAttribute('class'), el.getAttribute('name'), withoutQuery(el.getAttribute('data-action'))];
     el.querySelectorAll('use, i, span[class], svg[class], img').forEach((child) => {
-      parts.push(child.getAttribute('href') || child.getAttribute('xlink:href'), child.getAttribute('class'), child.getAttribute('src'));
+      parts.push(child.getAttribute('href') || child.getAttribute('xlink:href'), child.getAttribute('class'), imageHint(child.getAttribute('src')));
     });
     if (el.matches('a[href]')) parts.push(linkOf(el));
     const form = el.closest('form');

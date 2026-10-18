@@ -59,7 +59,8 @@ async function showChromeShortcuts() {
     ...Object.entries(CHROME_COMMANDS).map(([name, label]) => {
       const li = document.createElement('li');
       const shortcut = commands.find((c) => c.name === name)?.shortcut;
-      li.textContent = `${label}: ${shortcut || '지정 안 됨'}`;
+      // macOS는 크롬이 ⌥⇧O 같은 기호로 주므로, 읽을 수 있는 키 이름(Option과 Shift와 O)으로 바꿔 보여 준다
+      li.textContent = `${label}: ${shortcut ? globalThis.__ongeul.guidance.shortcutText(shortcut) : '지정 안 됨'}`;
       if (!shortcut) li.className = 'missing';
       return li;
     })
@@ -82,12 +83,17 @@ async function showVoices(selected) {
 
 const RESERVED = globalThis.__ongeul.defaults.reservedCommandKeys;
 
+// 영문 글자 이름을 읽는 소리에 맞춘 조사: 엘·엠·엔·알은 받침이 있어 "은", 나머지는 "는"
+function keyWithTopic(letter) {
+  return `${letter}${'LMNR'.includes(letter) ? '은' : '는'}`;
+}
+
 // 기능 키는 서로 달라야 하고 다른 명령의 글자와 겹치면 안 된다. 문제가 있으면 안내 문장을 돌려준다.
 function validateReader(reader) {
   const used = new Map();
   for (const [name, code] of Object.entries(reader.commandKeys)) {
     if (RESERVED[code]) {
-      return `${COMMAND_NAMES[name]}의 기능 키 ${code.slice(3)}는 이미 ${RESERVED[code]}에 쓰는 키입니다. 다른 글자를 고르세요.`;
+      return `${COMMAND_NAMES[name]}의 기능 키 ${keyWithTopic(code.slice(3))} 이미 ${RESERVED[code]}에 쓰는 키입니다. 다른 글자를 고르세요.`;
     }
     if (used.has(code)) {
       return `${COMMAND_NAMES[used.get(code)]}, ${COMMAND_NAMES[name]}의 기능 키가 둘 다 ${code.slice(3)}입니다. 서로 다른 글자를 고르세요.`;

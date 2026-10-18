@@ -31,6 +31,19 @@
     statusRegion().dataset.state = state;
   }
 
+  // 요약·질문 대화상자가 열려 있는지 (열려 있는 동안은 대화상자가 우선이라 진행 안내를 읽지 않는다)
+  const openDialog = () => document.querySelector('dialog[open][id^="ssucream-"]');
+
+  // 끝났다·실패했다는 안내: 대화상자가 열려 있어도 들리도록 온글이 켜져 있으면 온글이 이어서 읽고,
+  // 꺼져 있으면 대화상자 안의 안내 영역으로 알린다 (대화상자가 열려 있으면 바깥 안내 영역은 다른 스크린리더에 보이지 않음)
+  function notify(text) {
+    const dialog = openDialog();
+    const reader = globalThis.__ongeul?.reader;
+    if (dialog && reader?.enabled) reader.say(text, { interrupt: false, message: true });
+    else if (dialog?.ssucreamAnnounce) dialog.ssucreamAnnounce(text);
+    else announce(text);
+  }
+
   let announceTimer = null;
   function announce(text) {
     const region = statusRegion();
@@ -155,13 +168,36 @@
     }
     section.ssucreamReopen = reopen;
 
-    // 요약·질문 대화상자가 열려 있으면 닫는다 (열린 대화상자 안만 읽으므로 결과 상자를 읽지 못함)
-    document.querySelectorAll('dialog[open][id^="ssucream-"]').forEach((dialog) => dialog.close());
-    section.scrollIntoView({ block: 'start' });
-    title.focus({ preventScroll: true });
     setState('done');
     globalThis.__ongeul?.ai?.addResult({ kind: 'detail', title: `상세 이미지 내용, ${result.sections.length}개 항목`, el: section, open: reopen });
-    readResult(section);
+    const showResult = () => {
+      section.scrollIntoView({ block: 'start' });
+      title.focus({ preventScroll: true });
+      readResult(section);
+    };
+    // 요약·질문 대화상자가 열려 있으면 닫지 않고 끝났다는 것만 알린다. 사용자가 대화상자를 닫으면 그때 결과를 읽는다.
+    // 원문·근거 위치로 이동하며 닫았으면 사용자가 고른 위치를 그대로 두고, 결과를 들을 곳만 알려 준다.
+    const dialog = openDialog();
+    if (!dialog) {
+      showResult();
+      return;
+    }
+    notify('상세 이미지 읽기가 끝났습니다. 대화상자를 닫으면 결과를 읽어 드립니다.');
+    dialog.addEventListener(
+      'close',
+      () => {
+        if (!dialog.dataset.closedToSource) {
+          showResult();
+          return;
+        }
+        const keys = globalThis.__ongeul?.guidance?.keyNames?.(globalThis.__ongeul?.reader?.settings?.reader?.commandKeys);
+        const text = `상세 이미지 읽기 결과는 ${keys?.results ?? 'Alt와 Shift와 I'} 키를 누르면 AI 결과 모음에서 들을 수 있습니다.`;
+        const reader = globalThis.__ongeul?.reader;
+        if (reader?.enabled) reader.say(text, { interrupt: false, message: true });
+        else announce(text);
+      },
+      { once: true }
+    );
   }
 
   // 온글 스크린리더가 켜져 있으면 추출한 내용을 처음부터 끝까지 바로 읽고, 아니면 안내 영역으로 알린다
@@ -190,7 +226,7 @@
     setState('running');
     const fail = (text) => {
       setState('error');
-      announce(text);
+      notify(text);
     };
     try {
       const images = collectImages();
@@ -198,19 +234,21 @@
         fail('이 페이지에서 이미지를 찾지 못했습니다.');
         return;
       }
-      announce('상세 이미지를 찾는 중입니다.');
+      if (!openDialog()) announce('상세 이미지를 찾는 중입니다.');
       const result = await chrome.runtime.sendMessage({ type: 'extract-detail', urls: [...images.keys()] });
       if (result?.error) fail(result.error);
       else render(result, images);
     } catch (error) {
-      fail(`오류가 발생했습니다. ${error.message}`);
+      fail(window.__ssucreamPage.friendlyError(error));
     } finally {
       busy = false;
     }
   }
 
   chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === 'progress' && message.task === 'extract-detail') announce(message.text);
+    // 끝난 작업의 늦은 진행 안내는 무시한다 (오류·결과 안내를 덮지 않도록).
+    // 요약·질문 대화상자가 열려 있으면 진행 안내는 읽지 않는다 (대화상자를 읽는 중에 끼어들지 않게)
+    if (message?.type === 'progress' && message.task === 'extract-detail' && busy && !openDialog()) announce(message.text);
   });
 
   window.__ssucreamDetail = run;
