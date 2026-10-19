@@ -66,13 +66,14 @@ flowchart TD
 
 ### 참고 영상
 
-시청각장애인이 점자정보단말기(점자 디스플레이)로 실제로 소통하는 모습을 볼 수 있는 영상입니다.
+시각장애인이 스크린리더로 컴퓨터를 쓰는 모습과, 글과 그림을 손끝으로 읽게 하는 촉각 디스플레이 기술을 볼 수 있는 영상입니다.
 
 | 영상 | 내용 |
 |---|---|
-| [![KBS 시청각장애인을 아십니까 영상 미리보기](https://img.youtube.com/vi/jExIQsDwt_s/hqdefault.jpg)](https://www.youtube.com/watch?v=jExIQsDwt_s) | [[이런뉴스] "빛도, 소리도 차단된 사람들" 시청각장애인을 아십니까](https://www.youtube.com/watch?v=jExIQsDwt_s)<br/>KBS News, 2025년 6월, 6분 52초<br/>국회에서 시청각장애인이 점자정보단말기를 손으로 읽으며 발언하고, 다른 시청각장애인들은 손을 맞잡는 촉수화로 내용을 전달받음 |
-| [![CBS 점자정보 단말기 영상 미리보기](https://img.youtube.com/vi/IRJ4dteEp40/hqdefault.jpg)](https://www.youtube.com/watch?v=IRJ4dteEp40) | [[CBS 뉴스] '점자정보 단말기'…높은 가격에 고통 받는 시청각장애인들](https://www.youtube.com/watch?v=IRJ4dteEp40)<br/>CBS크리스천노컷뉴스, 2021년 10월, 3분 27초<br/>시청각장애인이 점자정보단말기로 카카오톡을 주고받고 뉴스를 보는 모습과 기기 가격 부담 문제 |
-| [![Haben Girma 소개 영상 미리보기](https://img.youtube.com/vi/f1RQcWaw7Zg/hqdefault.jpg)](https://www.youtube.com/watch?v=f1RQcWaw7Zg) | [Meet The First Deaf-Blind Harvard Law Grad, Haben Girma](https://www.youtube.com/watch?v=f1RQcWaw7Zg) (영어)<br/>Oxygen, 2016년 10월, 4분 37초<br/>하버드 로스쿨 첫 시청각장애인 졸업생의 일상. 상대가 키보드로 치면 점자 디스플레이로 읽고 말로 답하는 장면 |
+| [![원샷한솔 시각장애인의 컴퓨터 소개 영상 미리보기](https://img.youtube.com/vi/MbBwacqukQ0/hqdefault.jpg)](https://www.youtube.com/watch?v=MbBwacqukQ0) | [모두가 보면 놀라는 저의 컴퓨터를 소개합니다! 시각장애인은 컴퓨터를 어떻게 할까?](https://www.youtube.com/watch?v=MbBwacqukQ0)<br/>원샷한솔OneshotHansol, 2021년 6월, 6분 3초<br/>시각장애인 유튜버가 센스리더(스크린리더)로 컴퓨터를 쓰는 방법을 소개 |
+| [![STUDIO DEAR J 시각장애인 작가 브이로그 영상 미리보기](https://img.youtube.com/vi/ZPqzWLEVEHI/hqdefault.jpg)](https://www.youtube.com/watch?v=ZPqzWLEVEHI) | [작가 일상 브이로그ㅣ시각장애인 작가는 어떻게 컴퓨터와 태블릿을 사용할까?(메일, 인스타 업로드) with 스크린 리더 화면 낭독](https://www.youtube.com/watch?v=ZPqzWLEVEHI)<br/>조이로 환생한 별빛정인 STUDIO DEAR J, 2021년 7월, 9분 54초<br/>시각장애인 작가가 스크린리더의 화면 낭독을 들으며 컴퓨터와 태블릿으로 메일을 보내고 인스타그램에 글을 올리는 작업 일상 |
+| [![YTN 사이언스 촉각 디스플레이 기술 영상 미리보기](https://img.youtube.com/vi/PWMdc1sPQ7s/hqdefault.jpg)](https://www.youtube.com/watch?v=PWMdc1sPQ7s) | [[최강기업] 손끝으로 만나는 콘텐츠! 촉각 디스플레이 기술 / YTN 사이언스](https://www.youtube.com/watch?v=PWMdc1sPQ7s)<br/>YTN 사이언스, 2026년 1월, 6분 42초<br/>책은 물론 만화와 동영상까지 손끝으로 느낄 수 있게 하는 촉각 디스플레이를 개발한 기업 소개 |
+| [![탐구땃쥐 닷패드 쇼츠 영상 미리보기](https://img.youtube.com/vi/E9ytqC1poNc/hqdefault.jpg)](https://www.youtube.com/shorts/E9ytqC1poNc) | [그림을 손끝으로 읽게 하는 대한민국의 기술, 닷패드](https://www.youtube.com/shorts/E9ytqC1poNc) (쇼츠)<br/>탐구땃쥐, 2026년 10월, 40초<br/>한국 기업 닷의 촉각 디스플레이 "닷패드"가 작은 핀을 움직여 그림과 도형을 표현하고, 점자 표시부로 글도 함께 읽게 하는 모습 |
 
 ## 설치
 
