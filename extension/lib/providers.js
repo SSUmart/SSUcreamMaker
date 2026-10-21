@@ -1,4 +1,4 @@
-import { STRUCTURE_PROMPT, TRANSCRIBE_PROMPT } from './structure.js';
+import { STRUCTURE_PROMPT, TRANSCRIBE_PROMPT, isNoText } from './structure.js';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const TILE_ORDER_NOTE =
@@ -169,7 +169,7 @@ async function transcribeTile(tile, i, total, config, onProgress) {
     ],
     2048
   );
-  return text === '없음' ? null : text;
+  return isNoText(text) ? null : text;
 }
 
 const nim = {
