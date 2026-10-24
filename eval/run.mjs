@@ -115,9 +115,19 @@ async function renderFixture(context, { width, lines }) {
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#222';
-      ctx.font = 'bold 40px sans-serif';
-      lines.forEach((line, i) => ctx.fillText(line, 60, 120 + i * lineHeight));
+      // 줄은 글자만 쓰거나, 실제 상세 이미지에서 AI가 자주 틀리는 모양(취소선, 작은·흐린 글씨, 색 배경)을 객체로 준다
+      lines.forEach((line, i) => {
+        const { text, size = 40, color = '#222', bg, strike } = typeof line === 'string' ? { text: line } : line;
+        const y = 120 + i * lineHeight;
+        if (bg) {
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, y - lineHeight / 2 - size / 2, canvas.width, lineHeight);
+        }
+        ctx.fillStyle = color;
+        ctx.font = `bold ${size}px sans-serif`;
+        ctx.fillText(text, 60, y);
+        if (strike) ctx.fillRect(60, y - size / 3, ctx.measureText(text).width, Math.max(2, size / 12));
+      });
       return canvas.toDataURL('image/png').split(',')[1];
     },
     [width, lines]
