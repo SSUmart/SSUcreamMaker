@@ -1,6 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { PROVIDERS, RETRY } from '../lib/providers.js';
+import { RAW_ERROR } from '../lib/errors.js';
 import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, mergeSettings } from '../lib/settings.js';
 
 const realFetch = globalThis.fetch;
@@ -185,7 +186,7 @@ test('오류 안내: 서버 응답 원문 대신 상태별 한국어', async () 
   console.warn = () => {};
   try {
     reply(500, '<html>Internal Server Error https://x.y/?key=abc</html>');
-    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /서버에 문제가 생겼습니다 \(오류 500\)/.test(e.message) && !/html|key=/.test(e.message));
+    await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /서버에 문제가 생겼습니다/.test(e.message) && !/html|key=|500/.test(e.message) && e.status === 500);
     reply(400, '{"error":{"message":"Invalid model https://x.y/?key=abc"}}');
     await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /NVIDIA NIM이 요청을 받지 않았습니다/.test(e.message) && !/Invalid|key=/.test(e.message));
     reply(400, '{"error":{"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}');
@@ -200,5 +201,37 @@ test('오류 안내: 서버 응답 원문 대신 상태별 한국어', async () 
     await assert.rejects(PROVIDERS.nim.generateJson('p', config), (e) => /서버에 연결하지 못했습니다/.test(e.message) && !/Failed/.test(e.message));
   } finally {
     console.warn = quiet;
+  }
+});
+
+// 사용자는 오류 코드 대신 무슨 일이 났는지와 할 일을 듣는다. 코드는 error.status로만 남긴다
+test('오류 안내: 어떤 상태 코드든 코드·원문 없이 할 일을 알린다', async () => {
+  const config = { apiKey: 'k', model: 'm', baseUrl: 'http://x/v1' };
+  const quiet = console.warn;
+  console.warn = () => {};
+  const delays = RETRY.delays;
+  RETRY.delays = [];
+  try {
+    // 실제로 사용자에게 원문이 그대로 보였던 Gemini 503 응답
+    const overloaded = '{ "error": { "code": 503, "message": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.", "status": "UNAVAILABLE" } }';
+    for (const status of [400, 401, 403, 404, 408, 418, 429, 500, 502, 503, 504]) {
+      for (const name of ['gemini', 'nim']) {
+        globalThis.fetch = async () => new Response(status === 503 ? overloaded : '{"error":{"code":' + status + '}}', { status });
+        await assert.rejects(PROVIDERS[name].generateJson('p', config), (e) => {
+          assert.ok(!RAW_ERROR.test(e.message), `${name} ${status}: ${e.message}`);
+          assert.ok(!e.message.includes(String(status)), `${name} ${status}: 코드가 보임 ${e.message}`);
+          assert.match(e.message, /다시 시도하|온글 설정에서/, `${name} ${status}: 할 일이 없음`);
+          assert.equal(e.status, status);
+          return true;
+        });
+      }
+    }
+    globalThis.fetch = async () => new Response(overloaded, { status: 503 });
+    await assert.rejects(PROVIDERS.gemini.generateJson('p', config), {
+      message: 'Gemini 서버가 붐빕니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.'
+    });
+  } finally {
+    console.warn = quiet;
+    RETRY.delays = delays;
   }
 });

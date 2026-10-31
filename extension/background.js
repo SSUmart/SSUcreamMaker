@@ -2,6 +2,7 @@ import { activeProvider, loadSettings } from './lib/settings.js';
 import { pickDetailImages } from './lib/detect.js';
 import { cutTiles } from './lib/tiles.js';
 import { PROVIDERS } from './lib/providers.js';
+import { userMessage } from './lib/errors.js';
 import { parseSections } from './lib/structure.js';
 import { buildQuestionPrompt, buildSummaryPrompt, parseAnswer, parseSummary } from './lib/answer.js';
 import { MAX_EXPLAIN_TILES, buildExplainPrompt, buildLabelPrompt, parseExplanation, parseLabel } from './lib/explain.js';
@@ -240,14 +241,9 @@ const HANDLERS = {
   'label-item': (message) => labelItem(message.item)
 };
 
-// 사용자가 듣는 오류 문장. 온글이 만든 한국어 오류는 그대로, 그 밖의 예상하지 못한 오류(영어 원문)는 일반 안내로 바꾸고
-// 원문은 서비스 워커 콘솔에만 남긴다
-function userError(error) {
-  const text = error?.message ?? String(error);
-  if (/[가-힣]/.test(text)) return text;
-  console.warn('AI 기능 처리 중 예상하지 못한 오류', error);
-  return '처리하는 중 알 수 없는 오류가 났습니다. 잠시 뒤 다시 시도하세요.';
-}
+// 사용자가 듣는 오류 문장. 온글이 만든 한국어 오류는 그대로, 그 밖의 오류(영어 원문, 오류 코드, JSON)는 일반 안내로 바꾸고
+// 원문은 서비스 워커 콘솔에만 남긴다 (lib/errors.js)
+const userError = (error) => userMessage(error);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handler = HANDLERS[message?.type];

@@ -256,11 +256,16 @@
     return { dialog, title, open, closeTo, announce: announceInside };
   }
 
-  // 사용자가 듣는 오류 문장. 서비스 워커와 연결이 끊긴 경우 등 브라우저의 영어 오류는 한국어 안내로 바꾼다
+  // 사용자가 듣는 오류 문장. 서비스 워커와 연결이 끊긴 경우 등 브라우저의 영어 오류, 오류 코드·JSON이 섞인 원문은 한국어 안내로 바꾼다.
+  // RAW_ERROR는 lib/errors.js와 같게 둔다 (content script는 모듈을 불러올 수 없음. 같은지는 테스트가 확인)
+  const RAW_ERROR = /[{}<>[\]]|https?:|\(\s*(오류\s*)?[1-5]\d\d\s*\)|오류\s*[1-5]\d\d|\b(error|status|code|exception|unavailable|invalid)\b/i;
   function friendlyError(error) {
     const text = error?.message ?? String(error ?? '');
-    if (/[가-힣]/.test(text)) return text;
+    const korean = /[가-힣]/.test(text);
+    if (korean && !RAW_ERROR.test(text)) return text;
     console.warn('온글 기능 오류', error);
+    // 한국어 안내에 원문이 섞인 경우는 연결 문제가 아니므로 일반 안내로 (lib/errors.js의 GENERIC_ERROR와 같은 문장)
+    if (korean) return '처리하는 중 알 수 없는 오류가 났습니다. 잠시 뒤 다시 시도하세요.';
     return '온글과 연결이 끊겼습니다. 페이지를 새로고침(F5)한 뒤 다시 시도하세요.';
   }
 

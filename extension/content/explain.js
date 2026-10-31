@@ -6,7 +6,7 @@
     window.__ssucreamExplain();
     return;
   }
-  const { announce, el, STYLE } = window.__ssucreamPage;
+  const { announce, el, friendlyError, STYLE } = window.__ssucreamPage;
 
   const OWN = '#ssucream-explain, #ssucream-explain-bar';
   // 가장 가까운 조작 요소를 고르고, 없으면 글·그림 단위 요소를 고른다.
@@ -247,7 +247,7 @@
     try {
       show((await chrome.runtime.sendMessage({ type: 'explain-item', item })) ?? { error: '응답이 없습니다.' });
     } catch (error) {
-      show({ error: error.message });
+      show({ error: friendlyError(error) });
     } finally {
       busy = false;
     }
