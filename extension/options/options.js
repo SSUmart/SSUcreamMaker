@@ -1,5 +1,6 @@
 import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, loadSettings, saveSettings } from '../lib/settings.js';
 import { PROVIDERS } from '../lib/providers.js';
+import { userMessage } from '../lib/errors.js';
 import { listVoices, pickKoreanVoice, speak } from '../lib/speech.js';
 
 const $ = (id) => document.getElementById(id);
@@ -217,7 +218,7 @@ $('test-button').addEventListener('click', async () => {
     await provider.test(active.config);
     status.textContent = `${provider.label} 연결에 성공했습니다.`;
   } catch (error) {
-    status.textContent = `연결 실패. ${error.message}`;
+    status.textContent = `연결 실패. ${userMessage(error)}`;
   }
 });
 

@@ -4,26 +4,28 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const TILE_ORDER_NOTE =
   '이미지 조각은 위에서 아래 순서이며 경계가 조금씩 겹칩니다. 겹쳐서 반복된 글자는 한 번만 쓰세요.';
 
-// 오류 안내는 사용자가 듣는 문장이므로 서버 응답 원문(영어, 주소·쿼리가 들어 있을 수 있음)은 읽지 않고 상태별 한국어로 알린다.
-// 원문은 개발자가 볼 수 있게 서비스 워커 콘솔에만 남긴다.
+// 오류 안내는 사용자가 듣는 문장이므로 서버 응답 원문(영어, 주소·쿼리가 들어 있을 수 있음)과 오류 코드는 넣지 않고
+// 무슨 일이 났는지와 할 일만 한국어로 알린다. 코드와 원문은 개발자가 볼 수 있게 서비스 워커 콘솔과 error.status에만 남긴다.
 async function apiError(name, res) {
   const body = await res.text().catch(() => '');
   console.warn(`${name} 오류 응답 (${res.status})`, body.slice(0, 500));
-  if (res.status === 401 || res.status === 403 || /API_KEY_INVALID|API key not valid/i.test(body)) {
-    return new Error(`${name} API 키가 올바르지 않습니다. 온글 설정에서 API 키를 확인하세요.`);
+  const error = new Error(apiErrorMessage(name, res.status, body));
+  error.status = res.status;
+  return error;
+}
+
+function apiErrorMessage(name, status, body) {
+  if (status === 401 || status === 403 || /API_KEY_INVALID|API key not valid/i.test(body)) {
+    return `${name} API 키가 올바르지 않습니다. 온글 설정에서 API 키를 확인하세요.`;
   }
-  if (res.status === 429) {
-    return new Error(`${name} 요청 한도를 넘었습니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`);
-  }
-  if (res.status === 503) {
-    return new Error(`${name} 서버가 붐빕니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`);
-  }
+  if (status === 429) return `${name} 요청 한도를 넘었습니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`;
+  if (status === 503) return `${name} 서버가 붐빕니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`;
   // 조사: Gemini(제미나이)는 '가', NVIDIA NIM(엔아이엠)은 받침이 있어 '이'
   const subject = `${name}${/NIM$/.test(name) ? '이' : '가'}`;
-  if (res.status === 400) return new Error(`${subject} 요청을 받지 않았습니다 (오류 400). 온글 설정에서 모델 이름을 확인하세요.`);
-  if (res.status === 404) return new Error(`${name}에서 모델이나 API 주소를 찾지 못했습니다 (오류 404). 온글 설정에서 모델과 API 주소를 확인하세요.`);
-  if (res.status >= 500) return new Error(`${name} 서버에 문제가 생겼습니다 (오류 ${res.status}). 잠시 뒤 다시 시도하세요.`);
-  return new Error(`${name} 요청이 실패했습니다 (오류 ${res.status}). 잠시 뒤 다시 시도하세요.`);
+  if (status === 400) return `${subject} 요청을 받지 않았습니다. 온글 설정에서 모델 이름을 확인하세요.`;
+  if (status === 404) return `${name}에서 모델이나 API 주소를 찾지 못했습니다. 온글 설정에서 모델과 API 주소를 확인하세요.`;
+  if (status >= 500) return `${name} 서버에 문제가 생겼습니다. 잠시 뒤 다시 시도하세요.`;
+  return `${name} 요청이 실패했습니다. 잠시 뒤 다시 시도하세요.`;
 }
 
 // 응답 본문을 JSON으로 읽는다. 형식이 깨졌으면 영어 해석 오류 대신 한국어로 알린다
@@ -129,7 +131,7 @@ async function nimChat(config, content, maxTokens) {
   if (!res.ok) throw await apiError('NVIDIA NIM', res);
   const body = await readJson('NVIDIA NIM', res);
   const text = body.choices?.[0]?.message?.content;
-  if (!text) throw new Error('NVIDIA NIM 응답이 비어 있습니다.');
+  if (!text) throw new Error('NVIDIA NIM 응답이 비어 있습니다. 잠시 뒤 다시 시도하세요.');
   // 추론형 모델이 붙이는 생각 과정은 버린다.
   return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
