@@ -1,0 +1,56 @@
+{
+  "about": "A1 자동 보완 정답지. 요소마다 만든 용도가 정답이다. accept는 AI 이름에 이 말 중 하나가 들어 있으면 맞음(띄어쓰기 무시). destructive는 잘못 읽으면 되돌리기 어려운 동작(삭제·취소·결제·탈퇴·로그아웃)이다. hint는 온글이 AI에 보내는 단서가 얼마나 있는지(class 등 단서 있음: hint, 단서 없음: none, 그림: image).",
+  "status": "초안",
+  "madeBy": "Claude (요소를 만든 용도에서 옮김, AI 결과를 보기 전에 작성)",
+  "madeAt": "2026-10-31",
+  "reviewedBy": [],
+  "pages": [
+    {
+      "page": "/shop/index.html",
+      "items": [
+        { "id": "shop-share", "selector": "#share", "truth": "공유하기", "accept": ["공유"], "hint": "hint" },
+        { "id": "shop-reset", "selector": "#reset-options", "truth": "옵션 초기화", "accept": ["초기화", "삭제", "지우", "비우", "제거", "휴지통"], "destructive": true, "hint": "hint" },
+        { "id": "shop-recent", "selector": ".recent-item", "truth": "세 가지 색상 텀블러 사진(최근 본 상품)", "accept": ["텀블러", "최근 본"], "hint": "image" },
+        { "id": "shop-top", "selector": ".top-btn", "truth": "맨 위로", "accept": ["맨위", "위로", "처음으로", "top"], "hint": "hint" }
+      ]
+    },
+    {
+      "page": "/shop/unnamed.html",
+      "items": [
+        { "id": "menu", "selector": "[data-eval=menu]", "truth": "메뉴 열기", "accept": ["메뉴"], "hint": "hint" },
+        { "id": "search", "selector": "[data-eval=search]", "truth": "검색", "accept": ["검색"], "hint": "hint" },
+        { "id": "cart", "selector": "[data-eval=cart]", "truth": "장바구니", "accept": ["장바구니", "카트"], "hint": "hint" },
+        { "id": "mypage", "selector": "[data-eval=mypage]", "truth": "마이페이지", "accept": ["마이페이지", "내정보", "내 정보", "마이"], "hint": "hint" },
+        { "id": "prev", "selector": "[data-eval=prev]", "truth": "이전 사진", "accept": ["이전"], "hint": "hint" },
+        { "id": "next", "selector": "[data-eval=next]", "truth": "다음 사진", "accept": ["다음"], "hint": "hint" },
+        { "id": "zoom", "selector": "[data-eval=zoom]", "truth": "사진 확대", "accept": ["확대", "크게"], "hint": "hint" },
+        { "id": "share-kakao", "selector": "[data-eval=share-kakao]", "truth": "카카오톡 공유", "accept": ["카카오", "공유"], "hint": "hint" },
+        { "id": "wish-nohint", "selector": "[data-eval=wish-nohint]", "truth": "찜하기", "accept": ["찜", "좋아요", "관심", "위시"], "hint": "none" },
+        { "id": "coupon", "selector": "[data-eval=coupon]", "truth": "쿠폰 받기", "accept": ["쿠폰"], "hint": "hint" },
+        { "id": "alarm", "selector": "[data-eval=alarm]", "truth": "재입고 알림 신청", "accept": ["알림"], "hint": "hint" },
+        { "id": "manual", "selector": "[data-eval=manual]", "truth": "사용 설명서 내려받기", "accept": ["설명서", "매뉴얼", "다운로드", "내려받"], "hint": "hint" },
+        { "id": "qty-minus", "selector": "[data-eval=qty-minus]", "truth": "수량 줄이기", "accept": ["줄이", "빼기", "감소", "수량 -", "마이너스"], "hint": "hint" },
+        { "id": "qty-plus", "selector": "[data-eval=qty-plus]", "truth": "수량 늘리기", "accept": ["늘리", "더하기", "증가", "추가", "플러스"], "hint": "hint" },
+        { "id": "remove-item", "selector": "[data-eval=remove-item]", "truth": "상품 삭제", "accept": ["삭제", "제거", "빼기", "지우"], "destructive": true, "hint": "hint" },
+        { "id": "delete-selected", "selector": "[data-eval=delete-selected]", "truth": "선택 상품 삭제", "accept": ["삭제", "제거", "지우"], "destructive": true, "hint": "hint" },
+        { "id": "clear-cart", "selector": "[data-eval=clear-cart]", "truth": "장바구니 비우기", "accept": ["비우", "전체 삭제", "모두 삭제", "삭제"], "destructive": true, "hint": "hint" },
+        { "id": "checkout", "selector": "[data-eval=checkout]", "truth": "결제하기", "accept": ["결제", "주문", "구매"], "destructive": true, "hint": "hint" },
+        { "id": "track", "selector": "[data-eval=track]", "truth": "배송 조회", "accept": ["배송조회", "배송 조회", "배송 추적", "배송추적", "배송 현황"], "hint": "hint" },
+        { "id": "cancel-order", "selector": "[data-eval=cancel-order]", "truth": "주문 취소", "accept": ["취소"], "destructive": true, "hint": "hint" },
+        { "id": "like", "selector": "[data-eval=like]", "truth": "도움돼요(리뷰 추천)", "accept": ["도움", "좋아요", "추천", "공감"], "hint": "hint" },
+        { "id": "report", "selector": "[data-eval=report]", "truth": "리뷰 신고", "accept": ["신고"], "hint": "hint" },
+        { "id": "write", "selector": "[data-eval=write]", "truth": "리뷰 쓰기", "accept": ["쓰기", "작성", "글쓰기"], "hint": "hint" },
+        { "id": "zipcode", "selector": "[data-eval=zipcode]", "truth": "주소 검색(우편번호 찾기)", "accept": ["주소", "우편번호"], "hint": "hint" },
+        { "id": "toggle-pw", "selector": "[data-eval=toggle-pw]", "truth": "비밀번호 보기", "accept": ["비밀번호 보", "비밀번호 표시", "보기", "표시"], "hint": "hint" },
+        { "id": "thumb-white", "selector": "[data-eval=thumb-white]", "truth": "화이트 텀블러 사진(상품 링크)", "accept": ["텀블러", "화이트", "흰"], "hint": "image" },
+        { "id": "thumb-lid", "selector": "[data-eval=thumb-lid]", "truth": "텀블러 뚜껑 사진(상품 링크)", "accept": ["뚜껑"], "hint": "image" },
+        { "id": "thumb-coldhot", "selector": "[data-eval=thumb-coldhot]", "truth": "보온·보냉 사진(상품 링크)", "accept": ["보온", "보냉", "얼음", "따뜻", "차가", "텀블러"], "hint": "image" },
+        { "id": "logout", "selector": "[data-eval=logout]", "truth": "로그아웃", "accept": ["로그아웃"], "destructive": true, "hint": "hint" },
+        { "id": "withdraw", "selector": "[data-eval=withdraw]", "truth": "회원 탈퇴", "accept": ["탈퇴"], "destructive": true, "hint": "hint" },
+        { "id": "close", "selector": "[data-eval=close]", "truth": "닫기", "accept": ["닫기", "닫"], "hint": "hint" },
+        { "id": "unknown-nohint", "selector": "[data-eval=unknown-nohint]", "truth": "더보기(알 수 없음이 정답에 가까움)", "accept": ["더보기", "더 보기", "메뉴"], "hint": "none" },
+        { "id": "go-top", "selector": "[data-eval=go-top]", "truth": "맨 위로", "accept": ["맨위", "위로", "처음으로", "top"], "hint": "hint" }
+      ]
+    }
+  ]
+}

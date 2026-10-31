@@ -190,5 +190,6 @@
     }
   }
 
-  ns.ai = { decorate, onItemRead, prefetch, addResult, openResults, explainCurrent, results };
+  // finalLabel은 평가 도구(eval/ai-eval.mjs)가 사용자가 실제로 듣는 이름으로 채점할 때도 쓴다
+  ns.ai = { decorate, onItemRead, prefetch, addResult, openResults, explainCurrent, results, finalLabel };
 })();

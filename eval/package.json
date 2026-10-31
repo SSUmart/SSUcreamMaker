@@ -10,7 +10,8 @@
     "braille": "node braille/compare.mjs",
     "shop": "node shop/serve.mjs",
     "shop:build": "node shop/build-detail.mjs",
-    "reader:accuracy": "node reader/accuracy.mjs"
+    "reader:accuracy": "node reader/accuracy.mjs",
+    "ai-eval": "node ai-eval.mjs"
   },
   "devDependencies": {
     "playwright": "1.52.0"

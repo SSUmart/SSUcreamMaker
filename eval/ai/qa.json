@@ -1,0 +1,25 @@
+{
+  "about": "A4 질문 응답 정답지 (평가용 쇼핑몰 /shop/). must는 답에 모두 들어가야 하는 사실이고, 각 사실은 말 후보 중 하나가 들어 있으면 된다(띄어쓰기·쉼표 무시). must가 null이면 페이지 글에 답이 없는 질문이라 '찾지 못함'이 정답이다. alsoOk는 답이 없는 질문에서 지어낸 답이 아니라고 볼 말(예: 이미지를 보라고 안내). evidence는 근거 문단에 들어 있어야 할 글. detailMust는 상세 이미지를 읽은 뒤(--detail) 정답이다(상세 이미지 원문 eval/shop/detail/detail.html).",
+  "status": "초안",
+  "madeBy": "Claude (온글이 수집한 페이지 글과 상세 이미지 원문에서 옮김, AI 결과를 보기 전에 작성)",
+  "madeAt": "2026-10-31",
+  "reviewedBy": [],
+  "page": "/shop/index.html",
+  "questions": [
+    { "id": "price", "question": "이 상품 판매가가 얼마야?", "must": [["24,900원"]], "evidence": "판매가 24,900원" },
+    { "id": "discount", "question": "할인은 몇 퍼센트야?", "must": [["22%", "22퍼센트"]], "evidence": "할인율 22%" },
+    { "id": "shipping", "question": "배송비는 얼마야?", "must": [["3,000원"], ["30,000원"]], "evidence": "배송비 3,000원" },
+    { "id": "capacity", "question": "용량이 얼마야?", "must": [["500ml", "500밀리"]], "evidence": "500ml" },
+    { "id": "colors", "question": "색상은 뭐가 있어?", "must": [["화이트", "흰"], ["블랙", "검"], ["세이지그린", "세이지 그린"]], "evidence": "세이지그린" },
+    { "id": "model", "question": "모델명이 뭐야?", "must": [["SB-TM500"]], "evidence": "SB-TM500" },
+    { "id": "country", "question": "어느 나라에서 만들었어?", "must": [["대한민국", "한국"]], "evidence": "제조국" },
+    { "id": "rating", "question": "리뷰 평균 별점이 몇 점이야?", "must": [["4.5"]], "evidence": "4.5점" },
+    { "id": "soda", "question": "탄산수 담아도 돼?", "must": [["권하지 않", "권장하지 않", "안 됩", "안됩", "피하", "않는 것이 좋", "담지 마", "좋지 않"]], "evidence": "탄산수" },
+    { "id": "engraving", "question": "각인 서비스 있어?", "must": [["제공하지 않", "없습니다", "없어요", "하지 않"]], "evidence": "각인" },
+    { "id": "warranty", "question": "보증 기간은 몇 년이야?", "must": null, "detailMust": null },
+    { "id": "dishwasher", "question": "식기세척기에 넣어도 돼?", "must": null, "detailMust": [["사용하지 마", "넣지 마", "안 됩", "안됩", "사용할 수 없", "권하지 않", "피하"]] },
+    { "id": "weight", "question": "무게가 얼마야?", "must": null, "detailMust": [["320g"]] },
+    { "id": "return-days", "question": "교환이나 반품은 며칠 안에 신청해야 해?", "must": null, "alsoOk": ["이미지"], "detailMust": [["7일"]] },
+    { "id": "same-day", "question": "몇 시 전에 주문하면 당일 출고돼?", "must": null, "alsoOk": ["이미지"], "detailMust": [["오후 2시", "14시", "2시"]] }
+  ]
+}

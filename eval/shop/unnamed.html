@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이름 없는 요소 모음 : 솔빛리빙</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="shop.css">
+<!--
+  AI 자동 보완(A1) 평가용 페이지. 실제 쇼핑몰에서 흔한 "이름 없는 요소"(아이콘만 있는 버튼, 대체 텍스트 없는 사진 링크,
+  클릭 처리기만 있는 div)를 모았다. 요소마다 만든 용도가 정답이며, 정답은 eval/ai/label.json에 있다.
+  data-eval은 평가 도구가 요소를 찾는 표시이고 AI에는 보내지 않는다(온글이 보내는 단서는 id, class, name, data-action, 링크 주소, 안의 그림).
+  링크는 실제로 이동하지 않는 가짜 주소다.
+-->
+</head>
+<body>
+<main id="main" class="page">
+  <h1>이름 없는 요소 모음</h1>
+  <p>평가용 가상 쇼핑몰입니다. 실제로 판매하지 않습니다.</p>
+
+  <section>
+    <h2>상단 메뉴</h2>
+    <button type="button" class="btn-menu icon-btn" data-eval="menu"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor"/></svg></button>
+    <form action="search.html" class="search-mini">
+      <input type="search" name="q" placeholder="상품 검색">
+      <button type="submit" class="btn-search icon-btn" data-eval="search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5" stroke="currentColor" fill="none"/><path d="M12 12l4 4" stroke="currentColor"/></svg></button>
+    </form>
+    <a href="cart.html" class="icon-cart icon-btn" data-eval="cart"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3h3l2 10h9l2-7H6" stroke="currentColor" fill="none"/></svg></a>
+    <a href="mypage.html" class="icon-btn" data-eval="mypage"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="4"/><path d="M2 19c1-5 15-5 16 0"/></svg></a>
+  </section>
+
+  <section>
+    <h2>상품 사진</h2>
+    <button type="button" class="slick-prev slick-arrow" data-eval="prev"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2L5 8l6 6" stroke="currentColor" fill="none"/></svg></button>
+    <img src="images/product-white.jpg" width="240" height="240" alt="화이트 텀블러 정면 사진">
+    <button type="button" class="slick-next slick-arrow" data-eval="next"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2l6 6-6 6" stroke="currentColor" fill="none"/></svg></button>
+    <button type="button" class="btn-zoom icon-btn" data-eval="zoom"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5" stroke="currentColor" fill="none"/><path d="M12 12l4 4M6 8h4M8 6v4" stroke="currentColor"/></svg></button>
+    <button type="button" class="share-kakao icon-btn" data-eval="share-kakao"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="9" rx="8" ry="6"/></svg></button>
+    <button type="button" class="icon-btn" data-eval="wish-nohint"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17L3 10a4 4 0 016-5l1 1 1-1a4 4 0 016 5z"/></svg></button>
+  </section>
+
+  <section>
+    <h2>쿠폰과 알림</h2>
+    <p>첫 구매 10% 할인 쿠폰</p>
+    <button type="button" class="btn-coupon-download icon-btn" data-eval="coupon"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v10M5 8l4 4 4-4M3 16h12" stroke="currentColor" fill="none"/></svg></button>
+    <p>재입고 알림</p>
+    <button type="button" class="btn-alarm icon-btn" aria-pressed="false" data-eval="alarm"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 13V8a5 5 0 0110 0v5l1 1H3zM7 16h4"/></svg></button>
+    <a href="files/manual.pdf" class="icon-download icon-btn" data-eval="manual"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v10M5 8l4 4 4-4M3 16h12" stroke="currentColor" fill="none"/></svg></a>
+    <span>사용 설명서</span>
+  </section>
+
+  <section>
+    <h2>장바구니</h2>
+    <ul>
+      <li>
+        <img src="images/product-white.jpg" width="60" height="60" alt="화이트 텀블러">
+        솔빛 데일리 진공 텀블러 500ml, 화이트, 24,900원
+        <button type="button" class="qty-minus" data-eval="qty-minus"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10" stroke="currentColor"/></svg></button>
+        <span>1</span>
+        <button type="button" class="qty-plus" data-eval="qty-plus"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10M7 2v10" stroke="currentColor"/></svg></button>
+        <button type="button" class="btn-remove-item icon-btn" data-eval="remove-item"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor"/></svg></button>
+      </li>
+    </ul>
+    <button type="button" class="btn-delete-selected" data-eval="delete-selected"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M7 5V3h4v2M5 5l1 11h6l1-11" stroke="currentColor" fill="none"/></svg></button>
+    <button type="button" class="btn-clear-cart" data-eval="clear-cart"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 3h3l2 10h9l2-7H6M8 7l5 4M13 7l-5 4" stroke="currentColor" fill="none"/></svg></button>
+    <p>총 결제 금액 24,900원</p>
+    <button type="button" class="btn-checkout" data-eval="checkout"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="5" width="16" height="11" rx="2"/></svg></button>
+  </section>
+
+  <section>
+    <h2>주문 내역</h2>
+    <p>2026년 10월 28일 주문, 솔빛 데일리 진공 텀블러 500ml, 결제 완료</p>
+    <a href="order/track.html?id=1028" class="btn-track icon-btn" data-eval="track"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M1 5h11v9H1zM12 8h4l3 3v3h-7"/></svg></a>
+    <button type="button" class="btn-cancel-order" data-eval="cancel-order"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="currentColor" fill="none"/><path d="M5 5l8 8" stroke="currentColor"/></svg></button>
+  </section>
+
+  <section>
+    <h2>리뷰</h2>
+    <p>아침에 담은 커피가 점심까지 따뜻해요.</p>
+    <button type="button" class="btn-like icon-btn" data-eval="like"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 7h3v7H2zM5 7l3-5c1 0 2 1 1.5 2.5L9 7h4l-1 7H5" stroke="currentColor" fill="none"/></svg></button> <span>12</span>
+    <button type="button" class="btn-report" data-eval="report"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 15V2h9l-2 3 2 3H3" stroke="currentColor" fill="none"/></svg></button>
+    <button type="button" class="btn-write icon-btn" data-eval="write"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15l1-4 8-8 3 3-8 8z" stroke="currentColor" fill="none"/></svg></button>
+  </section>
+
+  <section>
+    <h2>배송지 입력</h2>
+    <label for="addr">주소</label>
+    <input id="addr" type="text" readonly>
+    <button type="button" class="btn-zipcode" data-eval="zipcode"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5" stroke="currentColor" fill="none"/><path d="M12 12l4 4" stroke="currentColor"/></svg></button>
+    <label for="pw">비밀번호</label>
+    <input id="pw" type="password">
+    <button type="button" class="btn-toggle-pw" data-eval="toggle-pw"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1 9c4-6 12-6 16 0-4 6-12 6-16 0z" stroke="currentColor" fill="none"/><circle cx="9" cy="9" r="2"/></svg></button>
+  </section>
+
+  <section>
+    <h2>함께 보면 좋은 상품</h2>
+    <a href="index.html?color=white" class="goods-thumb" data-eval="thumb-white"><img src="images/product-white.jpg" width="96" height="96"></a>
+    <a href="index.html?view=lid" class="goods-thumb" data-eval="thumb-lid"><img src="images/lid-detail.jpg" width="96" height="96"></a>
+    <a href="index.html?view=temp" data-eval="thumb-coldhot"><img src="images/cold-hot.jpg" width="96" height="96"></a>
+  </section>
+
+  <section>
+    <h2>회원</h2>
+    <a href="logout.html" class="icon-btn" data-eval="logout"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M7 3H3v12h4M11 5l4 4-4 4M15 9H7" stroke="currentColor" fill="none"/></svg></a>
+    <a href="member/withdraw.html" data-eval="withdraw"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7" cy="6" r="3"/><path d="M1 16c1-4 11-4 12 0M12 8h5" stroke="currentColor"/></svg></a>
+  </section>
+
+  <section>
+    <h2>도움말 창</h2>
+    <div role="dialog" aria-label="배송 안내">
+      <p>오후 2시 이전 주문은 당일 출고합니다.</p>
+      <button type="button" class="modal-close" data-eval="close"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor"/></svg></button>
+    </div>
+    <button type="button" class="icon-btn" data-eval="unknown-nohint"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="4" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="14" cy="9" r="1.5"/></svg></button>
+  </section>
+</main>
+<div class="go-top" onclick="window.scrollTo({ top: 0 })" data-eval="go-top"></div>
+</body>
+</html>
