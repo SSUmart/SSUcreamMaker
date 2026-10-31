@@ -7,7 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { scoreCase, summarize, toMarkdown } from './score.js';
+import { execFileSync } from 'node:child_process';
+import { scoreCase, summarize, summarizeCases, toMarkdown } from './score.js';
 import { serveShop } from './shop/serve.mjs';
 import { NIM_RECOMMENDED_MODELS } from '../extension/lib/settings.js';
 
@@ -21,9 +22,16 @@ const { values: args } = parseArgs({
     cases: { type: 'string', default: path.join(here, 'cases.json') },
     only: { type: 'string' },
     headed: { type: 'boolean', default: false },
-    mock: { type: 'boolean', default: false }
+    mock: { type: 'boolean', default: false },
+    repeat: { type: 'string', default: '1' }
   }
 });
+
+const REPEAT = Number(args.repeat);
+if (!Number.isInteger(REPEAT) || REPEAT < 1) {
+  console.error('--repeat 는 1 이상의 정수여야 합니다');
+  process.exit(1);
+}
 
 // 공급자 설정은 환경 변수에서 읽는다. 키를 파일에 쓰지 않기 위함.
 function providerSettings(name, mockBaseUrl) {
@@ -63,6 +71,22 @@ function chooseProviders() {
     throw new Error('GEMINI_API_KEY 또는 NVIDIA_API_KEY 환경 변수가 필요합니다. 도구 점검만 하려면 --mock');
   }
   return found;
+}
+
+// 결과만 보고도 어떤 조건에서 돌렸는지 알 수 있게 코드 버전을 남긴다.
+// 커밋하지 않은 변경이 있으면 dirty로 표시한다(그 결과는 커밋만으로 다시 만들 수 없다).
+function gitVersion() {
+  const git = (...cmd) => execFileSync('git', cmd, { cwd: here, encoding: 'utf8' }).trim();
+  try {
+    return { commit: git('rev-parse', '--short', 'HEAD'), dirty: git('status', '--porcelain', '--untracked-files=no') !== '' };
+  } catch {
+    return { commit: null, dirty: null };
+  }
+}
+
+// 공급자 설정에서 모델 이름만 뽑는다. API 키는 결과 파일에 남기지 않는다.
+function modelOf(settings) {
+  return settings[settings.provider]?.model ?? null;
 }
 
 const MOCK_SECTIONS = JSON.stringify({
@@ -231,24 +255,48 @@ async function main() {
       fixtureImages.set(c.id, await renderFixture(context, c.fixture));
     }
 
+    const startedAt = new Date();
+    const models = {};
     const results = [];
     for (const provider of providers) {
       const settings = { aiEnabled: true, ...providerSettings(provider, `${base}/mock/v1`) };
+      models[provider] = modelOf(settings);
       await sw.evaluate((s) => chrome.storage.local.set({ settings: s }), settings);
-      for (const c of cases) {
-        // 캐시를 비워 매번 실제로 AI를 호출한 시간을 잰다.
-        await sw.evaluate(() => chrome.storage.session.clear());
-        const url = c.fixture ? `${base}/fixture/${c.id}.html` : c.page ? base + c.page : c.url;
-        console.error(`[${provider}] ${c.id} 실행 중`);
-        results.push({ provider, caseId: c.id, ...(await runCase(context, sw, url, c)) });
+      // 회차를 바깥에 두어 한 사례를 몰아서 돌리지 않는다. 그 순간의 API 상태가 한 사례에만 몰리지 않게 하기 위함.
+      for (let run = 1; run <= REPEAT; run++) {
+        for (const c of cases) {
+          // 캐시를 비워 매번 실제로 AI를 호출한 시간을 잰다.
+          await sw.evaluate(() => chrome.storage.session.clear());
+          const url = c.fixture ? `${base}/fixture/${c.id}.html` : c.page ? base + c.page : c.url;
+          console.error(`[${provider}] ${c.id} 실행 중${REPEAT > 1 ? ` (${run}/${REPEAT})` : ''}`);
+          results.push({ provider, caseId: c.id, run, ...(await runCase(context, sw, url, c)) });
+        }
       }
     }
 
+    const meta = {
+      startedAt: startedAt.toISOString(),
+      finishedAt: new Date().toISOString(),
+      ...gitVersion(),
+      models,
+      repeat: REPEAT,
+      cases: path.relative(here, args.cases),
+      headed: args.headed,
+      // 영구 컨텍스트는 browser()가 null이라 확장의 서비스 워커에서 읽는다. userAgent는 뒷자리를 0으로 감춘다
+      chromium: await sw.evaluate(async () => {
+        const { fullVersionList = [] } = (await navigator.userAgentData?.getHighEntropyValues(['fullVersionList'])) ?? {};
+        return fullVersionList.find((b) => b.brand === 'Chromium')?.version ?? null;
+      }),
+      node: process.version
+    };
     const summary = summarize(results);
+    const byCase = summarizeCases(results);
     const resultsDir = path.join(here, 'results');
     fs.mkdirSync(resultsDir, { recursive: true });
-    const file = path.join(resultsDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
-    fs.writeFileSync(file, JSON.stringify({ providers, summary, results }, null, 2));
+    const file = path.join(resultsDir, `${startedAt.toISOString().replace(/[:.]/g, '-')}.json`);
+    fs.writeFileSync(file, JSON.stringify({ meta, providers, summary, byCase, results }, null, 2));
+    const modelText = Object.entries(models).map(([p, m]) => `${p} ${m}`).join(', ');
+    console.error(`\n코드 ${meta.commit ?? '알 수 없음'}${meta.dirty ? ' (커밋하지 않은 변경 있음)' : ''}, 모델 ${modelText}, ${REPEAT}회`);
     console.log(toMarkdown(summary, results));
     console.error(`\n결과 저장: ${path.relative(process.cwd(), file)}`);
   } finally {
