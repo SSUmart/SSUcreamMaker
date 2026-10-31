@@ -59,3 +59,16 @@ test('자동 보완 이름: 응답 정리', () => {
   assert.deepEqual(parseLabel('{"label":"닫기"}'), { label: '닫기', confident: true });
   assert.throws(() => parseLabel('{"label":""}'), /형식이 올바르지 않습니다/);
 });
+
+test('설명 프롬프트: 그림이 있으면 종류만 말하지 말고 보이는 것을 설명하라고 한다', () => {
+  const prompt = buildExplainPrompt({ pageTitle: '텀블러', kind: '그래픽', name: '화이트 텀블러 정면 사진' }, { hasImage: true });
+  assert.ok(prompt.includes('종류만 말하지 말고'));
+  assert.ok(!prompt.includes('불러오지 못했습니다'));
+});
+
+test('설명 프롬프트: 그림을 불러오지 못했으면 그림 내용을 지어내지 말라고 한다', () => {
+  const prompt = buildExplainPrompt({ pageTitle: '텀블러', kind: '그래픽', name: '' }, { imageMissing: true });
+  assert.ok(prompt.includes('그림을 불러오지 못했습니다'));
+  assert.ok(prompt.includes('지어내지 말고'));
+  assert.ok(!prompt.includes('종류만 말하지 말고'));
+});

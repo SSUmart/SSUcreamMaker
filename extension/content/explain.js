@@ -259,6 +259,7 @@
     } else {
       result.textContent = `${response.description} (AI 설명)`;
       let text = 'AI가 만든 설명이라 틀릴 수 있습니다.';
+      if (response.imageMissing) text += ' 그림을 불러오지 못해 이름과 주변 글로만 설명했습니다.';
       if (response.imageTruncated) text += ' 그림이 길어 앞부분만 읽었습니다.';
       note.textContent = text;
     }
