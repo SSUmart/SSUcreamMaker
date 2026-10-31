@@ -15,7 +15,8 @@ const FIELDS = [
   ['context', '주변 글']
 ];
 
-export function buildExplainPrompt(item, { hasImage = false } = {}) {
+// hasImage: 그림을 함께 보냄. imageMissing: 그림이 있는 항목인데 불러오지 못함(그림 내용을 지어내지 않게 알린다)
+export function buildExplainPrompt(item, { hasImage = false, imageMissing = false } = {}) {
   const lines = FIELDS.filter(([key]) => item[key] && !(key === 'text' && item.text === item.name)).map(
     ([key, label]) => `${label}: ${item[key]}`
   );
@@ -28,7 +29,13 @@ export function buildExplainPrompt(item, { hasImage = false } = {}) {
     '- 스크린리더와 점자로 읽습니다. 1~3문장으로 짧게 쓰고 이모지, 장식 문구, 마크다운 기호는 쓰지 마세요.',
     '- 첫 문장에는 무엇인지 쓰세요. 버튼, 링크, 입력창이면 누르거나 입력했을 때 무엇이 되는지는 정보로 알 수 있을 때만 덧붙이세요.',
     ...(hasImage
-      ? ['- 이 항목에는 그림이 있습니다. 그림(또는 그림에서 읽은 글자)이 함께 주어지니 그림 속 핵심 내용을 설명에 넣으세요.']
+      ? [
+          '- 이 항목에는 그림이 있습니다. 그림이 함께 주어지니 "이미지입니다", "사진입니다"처럼 종류만 말하지 말고 그림에 보이는 것을 설명하세요.',
+          '- 무엇이 보이는지(사물, 사람, 장면), 색과 모양, 그림 속 글자 순서로 핵심만 쓰세요. 확실하지 않은 부분은 "~로 보입니다"라고 쓰세요.'
+        ]
+      : []),
+    ...(imageMissing
+      ? ['- 이 항목은 그림이지만 그림을 불러오지 못했습니다. 그림 내용은 지어내지 말고 이름과 주변 글로만 설명하세요.']
       : []),
     '반드시 다음 JSON 형식으로만 답하세요:',
     '{"description":"장바구니 담기 버튼입니다. 누르면 고른 색상과 수량을 장바구니에 담습니다."}',

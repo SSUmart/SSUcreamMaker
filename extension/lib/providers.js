@@ -193,11 +193,21 @@ const nim = {
     // 요약·답변은 짧으므로 답 길이 상한을 낮춰 기다리는 시간을 줄인다
     return nimChat(config, prompt, 1024);
   },
-  // 항목 설명: 그림이 있으면 조각별로 글자를 먼저 읽어 글로 붙인다.
+  // 항목 설명·자동 보완: 그림 자체를 함께 보낸다. 글자만 옮겨 적어 보내면 글자 없는 사진은 "(글자 없음)"만 남아
+  // AI가 무엇이 찍혔는지 모른 채 "이미지입니다"라고만 답한다.
+  // NIM 이미지 모델은 요청 하나에 그림 한 장만 받는 경우가 많아 첫 조각을 붙이고, 조각이 여러 개(긴 그림)면 모든 조각의 글자를 먼저 읽어 함께 보낸다.
   async describe(prompt, tiles, config, onProgress = () => {}) {
     if (!tiles.length) return nimChat(config, prompt, 1024);
-    const texts = await nimTranscribe(tiles, config, onProgress);
-    return nimChat(config, `${prompt}\n\n그림에서 읽은 글자:\n${texts.join('\n\n') || '(글자 없음)'}`, 1024);
+    const texts = tiles.length > 1 ? await nimTranscribe(tiles, config, onProgress) : [];
+    const text = texts.length ? `${prompt}\n\n그림 조각 전체에서 읽은 글자:\n${texts.join('\n\n')}` : prompt;
+    return nimChat(
+      config,
+      [
+        { type: 'image_url', image_url: { url: `data:${tiles[0].mimeType};base64,${tiles[0].data}` } },
+        { type: 'text', text }
+      ],
+      1024
+    );
   },
   async test(config) {
     await nimChat(config, 'OK라고만 답하세요.', 16);

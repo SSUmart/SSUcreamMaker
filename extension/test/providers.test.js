@@ -136,7 +136,7 @@ test('글만 보내기: Gemini는 JSON 모드, NIM은 텍스트 메시지 하나
   assert.equal(calls[1].body.messages[0].content, '질문');
 });
 
-test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM은 그림 글자를 먼저 읽어 붙인다', async () => {
+test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM도 그림을 함께 보낸다', async () => {
   const answer = '{"description":"장바구니 담기 버튼입니다."}';
   let calls = mockFetch([{ body: { candidates: [{ content: { parts: [{ text: answer }] } }] } }]);
   assert.equal(await PROVIDERS.gemini.describe('설명 요청', tiles, { apiKey: 'k', model: 'm' }), answer);
@@ -144,7 +144,17 @@ test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM은 그
   assert.equal(parts[0].text, '설명 요청');
   assert.deepEqual(parts.slice(1).map((p) => p.inlineData.data), ['AAA', 'BBB']);
 
+  // 그림 한 장(사진 등): 글자만 옮겨 적지 않고 그림 자체를 설명 요청과 함께 보낸다 (글자 없는 사진도 설명하도록)
   const config = { apiKey: 'nv', model: 'm', baseUrl: 'http://localhost:9/v1' };
+  calls = mockFetch([{ body: { choices: [{ message: { content: answer } }] } }]);
+  assert.equal(await PROVIDERS.nim.describe('설명 요청', tiles.slice(0, 1), config), answer);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].body.messages[0].content, [
+    { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAA' } },
+    { type: 'text', text: '설명 요청' }
+  ]);
+
+  // 긴 그림(조각 여러 개): 조각마다 글자를 먼저 읽고, 첫 조각 그림과 함께 보낸다
   calls = mockFetch([
     { body: { choices: [{ message: { content: '할인가 24,900원' } }] } },
     { body: { choices: [{ message: { content: '없음' } }] } },
@@ -152,7 +162,10 @@ test('항목 설명: Gemini는 글과 그림 조각을 한 요청에, NIM은 그
   ]);
   assert.equal(await PROVIDERS.nim.describe('설명 요청', tiles, config), answer);
   assert.equal(calls.length, 3);
-  assert.equal(calls[2].body.messages[0].content, '설명 요청\n\n그림에서 읽은 글자:\n할인가 24,900원');
+  assert.deepEqual(calls[2].body.messages[0].content, [
+    { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAA' } },
+    { type: 'text', text: '설명 요청\n\n그림 조각 전체에서 읽은 글자:\n할인가 24,900원' }
+  ]);
 
   // 그림이 없으면 요청 한 번
   calls = mockFetch([{ body: { choices: [{ message: { content: answer } }] } }]);

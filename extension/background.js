@@ -398,10 +398,11 @@ async function explainItem(item, progress) {
   }
 
   progress(`${provider.label}로 설명을 만드는 중`);
-  const prompt = buildExplainPrompt(item, { hasImage: tiles.length > 0 });
+  const prompt = buildExplainPrompt(item, { hasImage: tiles.length > 0, imageMissing: Boolean(item.imageUrl) && !tiles.length });
   const result = {
     ...parseExplanation(await provider.describe(prompt, tiles, active.config, progress)),
     imageRead: tiles.length > 0,
+    imageMissing: Boolean(item.imageUrl) && !tiles.length,
     imageTruncated
   };
   // 그림을 못 읽은 결과는 일시적인 실패일 수 있어 저장하지 않는다(다시 누르면 다시 시도).

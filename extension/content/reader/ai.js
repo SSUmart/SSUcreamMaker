@@ -11,7 +11,8 @@
   const PREFETCH = 5;
   const MAX_AUTO_PER_PAGE = 30;
   // 파괴적 동작 단서: 요소의 클래스·아이디·주소 등에 이런 말이 있는데 AI 이름에 그런 뜻이 없으면 "용도 불명확"으로 읽는다
-  const DESTRUCTIVE_HINT = /(delete|remove|trash|cancel|withdraw|leave|unsubscribe|logout|signout|payment|checkout|purchase|삭제|취소|탈퇴|결제|구매|해지)/i;
+  // clear·empty는 clearfix처럼 흔한 CSS 클래스에도 들어 있어 장바구니·전체 같은 말과 붙은 경우만 본다
+  const DESTRUCTIVE_HINT = /(delete|remove|trash|cancel|withdraw|leave|unsubscribe|logout|signout|payment|checkout|purchase|(?:clear|empty)[-_]?(?:all|cart|basket|bag|list)|(?:cart|basket|bag)[-_]?(?:clear|empty)|삭제|취소|탈퇴|결제|구매|해지|비우)/i;
   const DESTRUCTIVE_WORD = /(삭제|지우|제거|취소|탈퇴|결제|구매|주문|로그아웃|해지|비우|휴지통|초기화)/;
 
   const labels = new WeakMap(); // 요소 → { label, confident }
@@ -178,7 +179,9 @@
     try {
       const response = await chrome.runtime.sendMessage({ type: 'explain-item', item: ns.describe.describeElement(item.el, item) });
       if (!response || response.error) throw new Error(response?.error ?? '응답이 없습니다.');
-      const text = `AI 설명: ${response.description}`;
+      let text = `AI 설명: ${response.description}`;
+      if (response.imageMissing) text += ' 그림을 불러오지 못해 이름과 주변 글로만 설명했습니다.';
+      if (response.imageTruncated) text += ' 그림이 길어 앞부분만 봤습니다.';
       addResult({ kind: 'explain', title: `${item.phrase}, 설명`, el: item.el, text });
       say(text, { interrupt: true, message: true });
     } catch (error) {
