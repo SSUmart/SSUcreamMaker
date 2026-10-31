@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .omc/
+# Codex(oh-my-codex) 실행 상태
+.omx/
 .env
 .env.*
 !.env.example
