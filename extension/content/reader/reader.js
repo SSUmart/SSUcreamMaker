@@ -1,7 +1,7 @@
 // 온글 스크린리더 본체(R2): 읽기 위치(가상 커서), 읽기·글쓰기 모드, NVDA·센스리더 방식 키 명령.
 // 모든 페이지에 content script로 들어가고, 온글이 켜져 있을 때만(storage.local의 readerEnabled) 동작한다.
 // 읽은 문장은 __ongeul.output(화면 오버레이·음성·점자)으로 보내고, 안내 문구는 __ongeul.guidance에서 고른다.
-// 주입 순서: defaults.js → guidance.js → model.js → output.js → menu.js → reader.js
+// 주입 순서: defaults.js → guidance.js → model.js → output.js → menu.js → input-language.js → reader.js
 (() => {
   const ns = (globalThis.__ongeul ??= {});
   // 확장을 업데이트하면 예전 온글이 페이지에 남는다. 예전 것이 연결이 끊겼으면 끄고 새로 정의한다.
@@ -37,6 +37,8 @@
   const ARROW_WIDGETS = '[role="slider"], [role="listbox"], [role="menu"], [role="menubar"], [role="tree"], [role="grid"], [role="spinbutton"]';
   const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
   const PENDING_TIMEOUT = 30_000;
+  // 지금 입력 언어(한글·영어) 추정. 한/영 키 안내에 쓴다 (input-language.js)
+  const inputLanguage = ns.inputLanguage.createTracker();
   // 글쓰기 모드에서 온글 명령 대신 페이지에 넘기는 조합 (Alt+Shift+↓는 편집창의 문단 단위 선택)
   const FOCUS_MODE_PASS = new Set(['ArrowDown']);
   // 점자에서 알림이 아니라 항목 내용으로 보이는 안내 (첫 항목 이름을 함께 읽음)
@@ -340,11 +342,14 @@
 
   // 키 처리: 온글이 처리한 키만 페이지로 넘기지 않는다
   function onKeyDown(event) {
-    if (!enabled || event.isComposing) return;
+    if (!enabled) return;
     if (!alive()) {
       disable();
       return;
     }
+    // 한/영 키와 입력 언어는 메뉴·가이드가 열려 있어도, 한글을 조합하는 중에도 살핀다 (키는 그대로 페이지에 넘김)
+    noteInputLanguage(event);
+    if (event.isComposing) return;
     if (ns.guide?.isOpen) {
       if (ns.guide.handleKey(event)) consume(event);
       else if (event.key === 'Control') stopSpeech();
@@ -378,6 +383,29 @@
       return;
     }
     if (handleBrowseKey(event)) consume(event);
+  }
+
+  // 한/영 키를 누르면 바뀐 입력 언어를 읽고, 편집창에서 글자를 누르면 지금 입력 언어를 알아 둔다.
+  // 알아 둔 언어는 다른 탭·페이지도 쓰도록 저장한다 (입력 언어는 페이지가 바뀌어도 그대로이므로)
+  function noteInputLanguage(event) {
+    const before = inputLanguage.language;
+    let text = null;
+    if (ns.inputLanguage.isToggleKey(event)) text = inputLanguage.press(event);
+    else if (isTextEntry(event.target)) text = inputLanguage.learn(event);
+    if (text) output.say(text, { interrupt: true, message: true });
+    if (inputLanguage.language && inputLanguage.language !== before) {
+      chrome.storage.local.set({ inputLanguage: inputLanguage.language }).catch(() => {});
+    }
+  }
+
+  // 입력기가 동작하는 글자 입력 칸 (선택 상자 등은 입력 언어와 관계없음)
+  // macOS 크롬은 Caps Lock을 keyup으로만 보낼 때가 있어 keyup도 살핀다 (한/영 키만, 나머지 keyup은 무시)
+  function onKeyUp(event) {
+    if (enabled && ns.inputLanguage.isToggleKey(event)) noteInputLanguage(event);
+  }
+
+  function isTextEntry(el) {
+    return Boolean(el?.isContentEditable || (el?.matches?.(EDITABLE) && el.tagName !== 'SELECT'));
   }
 
   // 초점이 주소창 등에서 웹페이지로 돌아오면(F6) 기다리던 명령을 실행한다 (30초가 지나면 취소)
@@ -592,6 +620,9 @@
     enabled = true;
     const myGeneration = ++generation;
     await loadSettings();
+    // 켜는 사이 한/영 키를 눌러 이미 알게 됐으면 저장된 예전 값으로 덮지 않는다
+    const { inputLanguage: storedLanguage } = await chrome.storage.local.get('inputLanguage');
+    if (!inputLanguage.language) inputLanguage.set(storedLanguage);
     // 설정을 읽는 사이 꺼졌거나 다시 켜졌으면 여기서 멈춘다 (감시자가 겹쳐 붙지 않게)
     if (!enabled || myGeneration !== generation) return;
     stopWatching?.();
@@ -603,6 +634,7 @@
     stopWatching = model.watch(onPageChange);
     watchLiveRegions();
     window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
     window.addEventListener('focus', onWindowFocus);
     document.addEventListener('focusin', onFocusIn, true);
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -632,6 +664,7 @@
     liveObserver?.disconnect();
     liveObserver = null;
     window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('focus', onWindowFocus);
     document.removeEventListener('focusin', onFocusIn, true);
     document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -640,6 +673,8 @@
     ns.output.hide();
     focusMode = false;
     pendingOnFocus = null;
+    // 꺼져 있는 동안 바꾼 한/영은 알 수 없다 (저장된 값은 서비스 워커가 지운다)
+    inputLanguage.reset();
   }
 
   // 점자 디스플레이의 커서 이동 버튼: 링크·버튼 같은 조작 요소면 누르고, 그 밖의 항목은 다시 읽는다 (NVDA와 같음)
@@ -713,6 +748,7 @@
       else disable();
     }
     if (changes.settings && enabled) loadSettings();
+    if (changes.inputLanguage) inputLanguage.set(changes.inputLanguage.newValue);
   });
   chrome.runtime.onMessage.addListener(onMessage);
 

@@ -37,6 +37,7 @@ npm run shop
 | `H` `K` `B` `F` | 다음 제목·링크·버튼·입력 요소 (`Shift`와 함께 누르면 이전) |
 | `Enter` / `Space` | 누르기 |
 | `Alt+Shift+1` | 키 도움말 |
+| `한/영` (macOS는 `Caps Lock`) | 바뀐 입력 언어(한글 입력·영어 입력) 읽기 |
 
 온글 명령은 모두 `Alt+Shift`와 글자 키를 함께 누릅니다. macOS에서 `Alt`는 `Option` 키입니다. 온글은 안내할 때 "Alt와 Shift와 S"처럼 실제 키 이름을 읽습니다.
 

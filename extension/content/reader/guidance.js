@@ -295,6 +295,7 @@
       { label: '글쓰기 모드, 편집창에서', keyText: 'Enter' },
       { label: '글쓰기 모드에서 읽기 모드로 돌아오기', keyText: 'Esc' },
       { label: '읽기 모드와 글쓰기 모드 바꾸기', keyText: k.mode },
+      { label: '입력 언어 바꾸기, 바뀐 언어를 한글 입력 또는 영어 입력으로 읽음', keyText: IS_MAC ? 'Caps Lock' : '한/영' },
       { label: '페이지 요약', keyText: k.summary },
       { label: '페이지에 질문', keyText: k.ask },
       { label: '상세 이미지 읽기', keyText: k.detail },
