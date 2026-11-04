@@ -152,6 +152,8 @@ async function toggleReader(force) {
   chrome.tts.stop();
   await chrome.storage.local.set({ readerEnabled: next });
   if (!next) {
+    // 꺼져 있는 동안 바꾼 한/영은 온글이 알 수 없으므로, 다시 켜면 입력 언어를 모르는 상태에서 시작한다
+    await chrome.storage.local.remove('inputLanguage');
     await guideFromWorker('reader-off');
     return;
   }

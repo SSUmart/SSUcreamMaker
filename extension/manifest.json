@@ -47,6 +47,7 @@
         "content/reader/guide-content.js",
         "content/reader/guide.js",
         "content/reader/menu.js",
+        "content/reader/input-language.js",
         "content/reader/reader.js"
       ],
       "run_at": "document_idle"
