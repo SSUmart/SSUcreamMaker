@@ -40,7 +40,7 @@
   // 글쓰기 모드에서 온글 명령 대신 페이지에 넘기는 조합 (Alt+Shift+↓는 편집창의 문단 단위 선택)
   const FOCUS_MODE_PASS = new Set(['ArrowDown']);
   // 점자에서 알림이 아니라 항목 내용으로 보이는 안내 (첫 항목 이름을 함께 읽음)
-  const CONTENT_GUIDES = new Set(['menu-opened', 'list-opened']);
+  const CONTENT_GUIDES = new Set(['menu-opened', 'list-opened', 'help-opened', 'newtab-ask']);
 
   let enabled = false;
   let generation = 0;
@@ -104,8 +104,29 @@
     return output.say(text, { interrupt, message });
   }
 
+  // 키 도움말은 목록으로 띄워 하나씩 듣는다 (한 번에 쭉 읽으면 놓친 곳만 다시 들을 수 없음)
   function help() {
-    output.say(guidance.help({ ...shortcuts, keys: keyNames() }), { interrupt: true, message: true });
+    ns.menu.openHelp();
+  }
+
+  // 온글을 처음 켰을 때 한 번: 새 탭을 google.com으로 바꾼 이유를 알리고 되돌릴지 묻는다.
+  // 여러 탭이 한꺼번에 켜져도 한 번만 묻도록 서비스 워커가 정한다. 앞 안내(켜짐, 페이지 정보)에 이어서 읽는다.
+  async function askNewTabOnce() {
+    const response = await chrome.runtime.sendMessage({ type: 'ongeul-claim-newtab-question' }).catch(() => null);
+    if (!response?.ask || !enabled || document.visibilityState !== 'visible') return;
+    const answer = (newTab, id) => () => {
+      chrome.runtime.sendMessage({ type: 'ongeul-set-newtab', newTab }).catch(() => {});
+      guide(id, {}, { interrupt: true });
+    };
+    ns.menu.openChoice(
+      '새 탭 설정',
+      'newtab-ask',
+      [
+        { label: 'google.com 그대로 쓰기', hint: '추천, 새 탭에서도 온글이 읽습니다', action: answer('google', 'newtab-kept') },
+        { label: '크롬 기본 새 탭으로 되돌리기', hint: '새 탭에서는 온글이 읽지 못합니다', action: answer('chrome', 'newtab-reverted') }
+      ],
+      { cancel: answer('google', 'newtab-kept') }
+    );
   }
 
   // 목록을 다시 만든다. 읽던 요소가 사라졌으면 그 앞뒤 항목을 기준으로 가장 가까운 곳에 머문다.
@@ -596,6 +617,7 @@
       guide('reader-on', { title: document.title, counts: pageCounts() }, { interrupt: true });
     }
     else output.say(pageSummary(), { interrupt: true });
+    askNewTabOnce();
   }
 
   function disable() {

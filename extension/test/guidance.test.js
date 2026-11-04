@@ -36,3 +36,37 @@ test('단축키 지정 안내는 위치, 읽을 수 없는 화면, 지정할 키
   assert.ok(text.includes(`온글 켜기/끄기에 ${on} 키를 지정하세요`));
   assert.ok(text.includes(`지정한 뒤 ${on} 키를 누르면 온글이 켜집니다`));
 });
+
+test('키 도움말은 키 하나를 한 항목으로 나눈 목록이다 (하나씩 다시 들을 수 있게)', () => {
+  const keys = guidance.keyNames({ summary: 'KeyY' });
+  const entries = guidance.helpEntries({ keys, toggle: 'Alt와 Shift와 O' });
+  assert.ok(entries.length > 20);
+  for (const entry of entries) assert.ok(entry.label && !entry.action);
+  assert.deepEqual(entries.find((e) => e.label === '페이지 요약'), { label: '페이지 요약', keyText: keys.summary });
+  assert.equal(entries.find((e) => e.label === '다음 제목으로 이동').keyText, 'H');
+  assert.equal(entries.find((e) => e.label === '온글 켜고 끄기').keyText, 'Alt와 Shift와 O');
+});
+
+test('키 도움말 안내는 하나씩 듣는 법과 Esc로 돌아갈 곳을 알린다', () => {
+  const fromMenu = guidance.message('help-opened', { count: 37, position: 1, label: '첫 항목', back: true });
+  assert.match(fromMenu, /37개 중 1번, 첫 항목/);
+  assert.match(fromMenu, /위아래 화살표로 하나씩/);
+  assert.match(fromMenu, /온글 메뉴로 돌아갑니다/);
+  assert.match(guidance.message('help-opened', { count: 37, position: 1, label: 'x' }), /도움말을 닫고 읽던 위치로/);
+});
+
+test('새 탭 질문은 바꾼 내용, 이유, 되돌렸을 때 문제, 고르는 법을 읽는다', () => {
+  const text = guidance.message('newtab-ask', { count: 2, position: 1, label: 'google.com 그대로 쓰기' }, { verbosity: 'short', seen: 9 });
+  assert.match(text, /google\.com으로 바꿨습니다/);
+  assert.match(text, /온글이 내용을 읽지 못하고/);
+  assert.match(text, /되돌릴까요\?/);
+  assert.match(text, /주소창에 직접 입력해야/);
+  assert.match(text, /2개 중 1번, google\.com 그대로 쓰기/);
+});
+
+test('크롬 기본 새 탭 안내는 할 수 있는 일과 바꾸는 법을 알리고, 켜짐 안내를 앞에 붙인다', () => {
+  const text = guidance.message('new-tab-unreadable', { prefix: '온글이 켜졌습니다.' });
+  assert.ok(text.startsWith('온글이 켜졌습니다. 새 탭.'));
+  assert.match(text, /주소나 검색어를 입력하고 Enter/);
+  assert.match(text, /온글 설정에서 새 탭 항목/);
+});

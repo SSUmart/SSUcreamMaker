@@ -19,6 +19,7 @@
     .menu li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-radius: 6px; }
     .menu li.active { background: #1d4ed8; color: #fff; }
     .menu .key { font-size: 14px; opacity: 0.8; white-space: nowrap; }
+    .menu .hint { display: block; font-size: 14px; opacity: 0.85; }
   `;
 
   // 2벌식 자판에서 키 위치(event.code)에 해당하는 한글 자음 (첫 글자 이동용)
@@ -33,7 +34,9 @@
   let titleEl = null;
   let listEl = null;
   let open = false;
-  let mode = 'main'; // main(온글 메뉴) 또는 list(제목·링크 목록)
+  let mode = 'main'; // main(온글 메뉴) 또는 list(제목·링크 목록, 키 도움말 등)
+  let backToMenu = true; // list에서 Esc를 누르면 온글 메뉴로 돌아갈지(아니면 닫기)
+  let onCancel = null; // list를 Esc로 닫을 때 할 일 (새 탭 질문 등)
   let entries = [];
   let active = 0;
   let listTitle = '';
@@ -72,6 +75,12 @@
         li.className = i === active ? 'active' : '';
         const label = document.createElement('span');
         label.textContent = entry.label;
+        if (entry.hint) {
+          const hint = document.createElement('span');
+          hint.className = 'hint';
+          hint.textContent = entry.hint;
+          label.append(hint);
+        }
         li.append(label);
         if (entry.keyText) {
           const key = document.createElement('span');
@@ -85,8 +94,10 @@
     listEl.children[active]?.scrollIntoView({ block: 'nearest' });
   }
 
+  // 설명(hint)은 안내를 짧게 듣기로 한 사용자에게는 읽지 않는다 (화면에는 늘 보임)
   function spoken(entry) {
-    return entry.keyText ? `${entry.label}, ${entry.keyText}` : entry.label;
+    const short = ns.reader?.settings?.reader?.verbosity === 'short';
+    return [entry.label, entry.keyText, short ? '' : entry.hint].filter(Boolean).join(', ');
   }
 
   function announceActive() {
@@ -114,11 +125,28 @@
       );
     }
     list.push(
-      { label: '제목 목록', action: () => openList('제목 목록', '제목', (item) => item.category === 'heading') },
-      { label: '링크 목록', action: () => openList('링크 목록', '링크', (item) => item.category === 'link') },
-      { label: '영역 목록', action: () => openList('영역 목록', '영역', (item) => item.category === 'landmark') },
+      {
+        label: '제목 목록',
+        hint: '페이지의 큰 제목과 소제목만 모아 듣고, 고르면 그 제목으로 이동',
+        action: () => openList('제목 목록', '제목', (item) => item.category === 'heading')
+      },
+      {
+        label: '링크 목록',
+        hint: '다른 페이지로 가는 링크만 모아 듣고, 고르면 그 링크로 이동',
+        action: () => openList('링크 목록', '링크', (item) => item.category === 'link')
+      },
+      {
+        label: '영역 목록',
+        hint: '머리말, 메뉴, 본문, 검색, 바닥글처럼 페이지를 나눈 구역을 모아 듣고, 고르면 그 구역 처음으로 이동',
+        action: () => openList('영역 목록', '영역', (item) => item.category === 'landmark')
+      },
       ...(ns.menuExtensions ?? []).flatMap((extend) => extend() ?? []),
-      { label: '키 도움말', keyText: keys.help, action: () => reader.help() },
+      {
+        label: '키 도움말',
+        keyText: keys.help,
+        hint: '온글 키를 목록으로 하나씩 듣기',
+        action: () => openHelp({ back: true })
+      },
       {
         label: '온글 설정',
         action: () => chrome.runtime.sendMessage({ type: 'ongeul-open-options' }).catch(() => {})
@@ -163,8 +191,7 @@
   // 목록 하나를 메뉴처럼 띄운다 (AI 결과 모음 등). entries: { label, action }
   function openEntries(title, list) {
     if (!ns.reader?.enabled || !list.length) return;
-    mode = 'list';
-    listTitle = title;
+    setList(title);
     show(list);
     ns.output.raise?.();
     guide('list-opened', { title, count: entries.length, position: 1, label: entries[0].label }, { interrupt: true });
@@ -179,8 +206,7 @@
       openMenu({ interrupt: false });
       return;
     }
-    mode = 'list';
-    listTitle = title;
+    setList(title);
     show(
       items.map((item) => ({
         label: item.role === 'heading' ? `${item.name || '이름 없음'}, 제목 ${item.level}` : item.phrase,
@@ -188,6 +214,34 @@
       }))
     );
     guide('list-opened', { title, count: entries.length, position: 1, label: entries[0].label }, { interrupt: true });
+  }
+
+  function setList(title, { back = true, cancel = null } = {}) {
+    mode = 'list';
+    listTitle = title;
+    backToMenu = back;
+    onCancel = cancel;
+  }
+
+  // 키 도움말: 키 하나를 한 항목으로 띄워 위아래 화살표로 하나씩 듣는다. back: Esc로 온글 메뉴로 돌아갈지
+  function openHelp({ back = false } = {}) {
+    const r = ns.reader;
+    if (!r?.enabled) return;
+    const list = ns.guidance.helpEntries({ ...r.shortcuts, keys: ns.guidance.keyNames(r.settings.reader.commandKeys) });
+    setList('키 도움말', { back });
+    show(list);
+    ns.output.raise?.();
+    guide('help-opened', { count: entries.length, position: 1, label: spoken(entries[0]), back }, { interrupt: true });
+  }
+
+  // 질문 하나와 고를 답을 목록으로 띄운다 (새 탭 질문). guideId의 안내가 질문을 읽고 첫 답을 이어서 읽는다.
+  // cancel: Esc로 답하지 않고 닫았을 때 할 일
+  function openChoice(title, guideId, list, { cancel = null, interrupt = false } = {}) {
+    if (!ns.reader?.enabled || !list.length) return;
+    setList(title, { back: false, cancel });
+    show(list);
+    ns.output.raise?.();
+    guide(guideId, { count: entries.length, position: 1, label: spoken(entries[0]) }, { interrupt });
   }
 
   function close({ announce = true } = {}) {
@@ -203,9 +257,14 @@
 
   function choose() {
     const entry = entries[active];
+    // 키 도움말처럼 실행할 것이 없는 항목은 다시 읽기만 한다
+    if (!entry?.action) {
+      announceActive();
+      return;
+    }
     close({ announce: false });
     // 제목 목록 같은 항목은 실행하면서 목록을 다시 연다
-    entry?.action();
+    entry.action();
   }
 
   function moveBy(delta) {
@@ -258,7 +317,11 @@
         choose();
         return true;
       case 'Escape':
-        if (mode === 'list') openMenu();
+        if (mode === 'list' && onCancel) {
+          const cancel = onCancel;
+          close({ announce: false });
+          cancel();
+        } else if (mode === 'list' && backToMenu) openMenu();
         else close();
         return true;
       case 'Tab':
@@ -277,6 +340,8 @@
     },
     openMenu,
     openEntries,
+    openHelp,
+    openChoice,
     close,
     handleKey
   };

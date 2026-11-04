@@ -1,4 +1,5 @@
-import { activeProvider, loadSettings } from './lib/settings.js';
+import { activeProvider, loadSettings, saveSettings } from './lib/settings.js';
+import { NEW_TAB_HOME, isNewTabUrl, shouldRedirectNewTab } from './lib/newtab.js';
 import { pickDetailImages } from './lib/detect.js';
 import { cutTiles } from './lib/tiles.js';
 import { PROVIDERS } from './lib/providers.js';
@@ -26,6 +27,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   // 설치·업데이트 전에 열려 있던 탭에는 온글이 없으므로 넣어 준다 (새로고침하지 않아도 읽도록)
   if (reason === 'install' || reason === 'update') {
     injectReaderIntoOpenTabs();
+    redirectOpenNewTabs();
     guideShortcutSetup(reason);
   }
 });
@@ -44,6 +46,12 @@ async function injectReaderIntoOpenTabs() {
   await Promise.all(
     tabs.map((tab) => chrome.scripting.executeScript({ target: { tabId: tab.id }, files: READER_FILES }).catch(() => {}))
   );
+}
+
+// 설치·업데이트 전에 열려 있던 크롬 기본 새 탭도 google.com으로 옮긴다 (설정이 google일 때)
+async function redirectOpenNewTabs() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.all(tabs.map((tab) => redirectNewTab(tab.id, tab.pendingUrl || tab.url)));
 }
 
 // 단축키별로 페이지에 넣을 content script. page-text.js는 요약·질문 응답이 같이 쓴다.
@@ -95,10 +103,16 @@ async function guideFromWorker(id, params = {}) {
 }
 
 // 온글 스크립트가 응답하지 않는 탭에 대한 안내: 일반 웹페이지면 새로고침 안내, 아니면 읽을 수 없는 페이지 안내
-function noReaderGuide(tab, prefix = '') {
+async function noReaderGuide(tab, prefix = '') {
   // 제목 끝의 마침표는 지운다 (안내 문장이 "제목." 뒤에 이어지므로 마침표가 겹치지 않게)
   const title = [prefix, tab?.title].filter(Boolean).join(' ').replace(/[.\s]+$/, '');
   const url = tab?.url ?? '';
+  // 크롬 기본 새 탭을 쓰기로 한 경우: 일반 안내 대신 새 탭에서 할 수 있는 일(주소창 입력)과 되돌리는 법을 알린다
+  if (isNewTabUrl(url)) {
+    // google.com으로 옮길 새 탭이면 지금 옮긴다 (설치 전부터 열려 있던 새 탭 등). 옮긴 페이지의 온글이 읽는다
+    if (shouldRedirectNewTab(url, await loadSettings())) return chrome.tabs.update(tab.id, { url: NEW_TAB_HOME }).catch(() => {});
+    return guideFromWorker('new-tab-unreadable', { prefix });
+  }
   const webPage = /^(https?|file):/.test(url) && !/^https:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)/.test(url) && !/\.pdf($|[?#])/i.test(url);
   return guideFromWorker(webPage ? 'reload-needed' : 'unreadable-page', { title });
 }
@@ -161,9 +175,14 @@ function stopSpeech(tab) {
 
 // 탭을 바꾸면 그 탭의 온글이 제목과 현재 항목을 읽는다. 온글을 넣을 수 없는 페이지면 그렇다고 알린다.
 async function announceTab(tabId) {
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  // 설정을 바꾸기 전부터 열려 있던 크롬 기본 새 탭으로 전환했으면 지금 옮긴다 (옮긴 페이지의 온글이 읽는다)
+  if (tab && shouldRedirectNewTab(tab.url, await loadSettings())) {
+    await chrome.tabs.update(tabId, { url: NEW_TAB_HOME }).catch(() => noReaderGuide(tab));
+    return;
+  }
   const { readerEnabled } = await chrome.storage.local.get('readerEnabled');
   if (!readerEnabled) return;
-  const tab = await chrome.tabs.get(tabId).catch(() => null);
   if (!tab || tab.status !== 'complete') return;
   const answered = await chrome.tabs.sendMessage(tabId, { type: 'ongeul-tab-activated' }).catch(() => null);
   if (!answered) await noReaderGuide(tab);
@@ -179,9 +198,57 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     if (!readerEnabled) return;
     const answered = await chrome.tabs.sendMessage(tabId, { type: 'ongeul-ping' }).catch(() => null);
     const latest = await chrome.tabs.get(tabId).catch(() => null);
-    if (!answered && latest?.active) await noReaderGuide(latest);
+    // 그사이 다른 페이지로 옮겨 가는 중이면(새 탭을 google.com으로 옮김 등) 그 페이지가 다 열린 뒤에 다시 판단한다
+    if (latest?.status !== 'complete') return;
+    if (isNewTabUrl(tab.url) && latest.url !== tab.url) return;
+    if (!answered && latest.active) await noReaderGuide(latest);
   }, 1500);
 });
+
+// 크롬 기본 새 탭은 확장 프로그램이 들어갈 수 없어 온글이 읽지 못한다. 설정(reader.newTab)이 google이면 새 탭을
+// google.com으로 옮겨 온글이 읽게 한다 (크롬을 시작할 때 열리는 새 탭도 같음). 같은 탭을 두 번 옮기지 않게 잠시 기억한다.
+const redirectingTabs = new Set();
+async function redirectNewTab(tabId, url) {
+  if (!isNewTabUrl(url) || redirectingTabs.has(tabId)) return;
+  redirectingTabs.add(tabId);
+  setTimeout(() => redirectingTabs.delete(tabId), 3000);
+  if (!shouldRedirectNewTab(url, await loadSettings())) return;
+  await chrome.tabs.update(tabId, { url: NEW_TAB_HOME }).catch(() => {});
+}
+chrome.tabs.onCreated.addListener((tab) => redirectNewTab(tab.id, tab.pendingUrl || tab.url));
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.url && !isNewTabUrl(info.url)) redirectingTabs.delete(tabId);
+  if (info.url || info.status === 'loading') redirectNewTab(tabId, info.url || tab.url);
+});
+chrome.tabs.onRemoved.addListener((tabId) => redirectingTabs.delete(tabId));
+
+// 새 탭 질문은 온글을 처음 켰을 때 한 번만 묻는다. 여러 탭이 한꺼번에 물어도 한 탭만 묻도록 순서대로 처리하고,
+// 답(또는 Esc)을 받았을 때 물은 것으로 기록한다 (답하기 전에 탭을 옮기거나 온글을 끄면 다음에 다시 묻는다).
+// 이미 온글 설정에서 크롬 기본 새 탭을 골랐으면 "google.com으로 바꿨다"는 말이 맞지 않으므로 묻지 않는다.
+const QUESTION_HOLD_MS = 60_000;
+let newTabQuestionQueue = Promise.resolve();
+let newTabQuestionAt = 0;
+function claimNewTabQuestion() {
+  const task = newTabQuestionQueue.then(async () => {
+    const { newTabAsked } = await chrome.storage.local.get('newTabAsked');
+    if (newTabAsked || Date.now() - newTabQuestionAt < QUESTION_HOLD_MS) return false;
+    if ((await loadSettings()).reader.newTab === 'chrome') {
+      await chrome.storage.local.set({ newTabAsked: true });
+      return false;
+    }
+    newTabQuestionAt = Date.now();
+    return true;
+  });
+  newTabQuestionQueue = task.catch(() => {});
+  return task;
+}
+
+async function setNewTab(newTab) {
+  if (newTab !== 'google' && newTab !== 'chrome') return;
+  const settings = await loadSettings();
+  await saveSettings({ ...settings, reader: { ...settings.reader, newTab } });
+  await chrome.storage.local.set({ newTabAsked: true });
+}
 
 // 페이지의 온글이 보내는 요청: 읽기(음성), 멈춤, 단축키 이름, 설정 열기
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -204,6 +271,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return;
     case 'ongeul-open-options':
       chrome.runtime.openOptionsPage();
+      return;
+    case 'ongeul-claim-newtab-question':
+      claimNewTabQuestion().then((ask) => sendResponse({ ask }), () => sendResponse({ ask: false }));
+      return true;
+    case 'ongeul-set-newtab':
+      setNewTab(message.newTab);
       return;
     default:
       return;
