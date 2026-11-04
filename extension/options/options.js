@@ -134,6 +134,7 @@ function readForm() {
       commandKeys: Object.fromEntries(Object.entries(COMMAND_KEY_INPUTS).map(([name, id]) => [name, $(id).value])),
       verbosity: form.elements.verbosity.value || 'auto',
       captionPosition: form.elements.caption.value || 'bottom',
+      newTab: form.elements.newtab.value === 'chrome' ? 'chrome' : 'google',
       autoSupplement: $('auto-supplement').checked
     },
     braille: {
@@ -165,6 +166,12 @@ async function init() {
   for (const [name, id] of Object.entries(COMMAND_KEY_INPUTS)) $(id).value = settings.reader.commandKeys[name];
   form.elements.verbosity.value = settings.reader.verbosity;
   form.elements.caption.value = settings.reader.captionPosition;
+  form.elements.newtab.value = settings.reader.newTab;
+  // 설정 화면을 열어 둔 채 음성 질문에서 새 탭을 바꾸면 화면도 바꿔, 나중에 저장할 때 예전 값으로 덮어쓰지 않게 한다
+  chrome.storage.onChanged.addListener((changes, area) => {
+    const newTab = changes.settings?.newValue?.reader?.newTab;
+    if (area === 'local' && newTab) form.elements.newtab.value = newTab;
+  });
   $('auto-supplement').checked = settings.reader.autoSupplement;
   form.elements['braille-grade'].value = String(settings.braille.grade);
   $('braille-cells').value = String(settings.braille.cells);

@@ -23,7 +23,10 @@
       // 안내 자세히: auto(처음 3번 자세히), detailed(항상 자세히), short(항상 짧게)
       verbosity: 'auto',
       // 자막 패널 위치: bottom(아래) 또는 top(위)
-      captionPosition: 'bottom'
+      captionPosition: 'bottom',
+      // 새 탭을 열면: google(google.com을 연다) 또는 chrome(크롬 기본 새 탭). 크롬 기본 새 탭은 확장이 들어갈 수 없어
+      // 온글이 읽지 못하므로 기본값은 google이다 (서비스 워커가 새 탭을 google.com으로 옮긴다)
+      newTab: 'google'
     },
     speech: { voiceName: '', rate: 1 },
     // 점자: grade 2(약자 사용) 또는 1(약자 없음), 디스플레이 칸 수, 관리자 도구(점자 전달 테스트 버튼)

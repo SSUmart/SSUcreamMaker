@@ -110,7 +110,8 @@
         'NVDA나 센스리더 같은 다른 스크린리더를 쓰고 있다면 먼저 꺼 주세요. ' +
         `온글을 켜려면 ${pressText(p.toggle, '온글 켜기')}. ` +
         `켠 다음 ${p.menu || keysOf(p).menu} 키를 누르면 온글 메뉴가 열리고, 첫 항목에서 사용 가이드를 들을 수 있습니다. ` +
-        '지금 열린 온글 설정 화면에서는 AI 기능, 음성, 점자를 설정할 수 있습니다.'
+        '지금 열린 온글 설정 화면에서는 AI 기능, 음성, 점자를 설정할 수 있습니다. ' +
+        `그리고 새 탭을 열면 크롬 기본 새 탭 대신 google.com이 열리도록 바꿨습니다. 크롬 기본 새 탭은 온글이 읽을 수 없기 때문입니다. 이유와 되돌리는 방법은 온글을 처음 켤 때 다시 안내합니다.`
     },
     // 설치·업데이트 뒤 켜기 단축키가 비어 있을 때 서비스 워커가 크롬 단축키 설정 화면을 열고 읽는 안내 (항상 자세히)
     'shortcut-missing': {
@@ -162,6 +163,39 @@
       detailed: (p) =>
         `${p.title || '이 탭'}. 이 페이지는 크롬 설정 화면이나 웹스토어처럼 확장 프로그램이 들어갈 수 없는 페이지라서 온글이 읽을 수 없습니다. ` +
         'Ctrl과 W를 누르면 이 탭을 닫고, Ctrl과 Tab을 누르면 다음 탭으로 이동합니다. 일반 웹페이지로 가면 온글이 다시 읽습니다.'
+    },
+    // 크롬 기본 새 탭을 쓰기로 한 사용자가 새 탭을 열었을 때 (설정 reader.newTab이 chrome)
+    'new-tab-unreadable': {
+      detailed: (p) =>
+        `${p.prefix ? `${p.prefix} ` : ''}새 탭. 크롬 기본 새 탭은 확장 프로그램이 들어갈 수 없는 화면이라 온글이 읽을 수 없고, 화살표나 온글 메뉴 같은 키도 쓸 수 없습니다. ` +
+        '지금 초점은 주소창에 있으니 주소나 검색어를 입력하고 Enter를 누르세요. ' +
+        '새 탭을 열 때 google.com이 열리게 하려면 온글 메뉴의 온글 설정에서 새 탭 항목을 google.com 열기로 바꾸세요.',
+      short: (p) => `${p.prefix ? `${p.prefix} ` : ''}새 탭. 온글이 읽을 수 없는 화면입니다. 주소창에 주소나 검색어를 입력하세요.`
+    },
+    // 온글을 처음 켰을 때 한 번 묻는 새 탭 질문 (항상 자세히). 이어서 고를 항목 2개가 목록으로 열린다.
+    'newtab-ask': {
+      always: true,
+      detailed: (p) =>
+        '새 탭 안내. 온글을 설치하면서, 새 탭을 열면 크롬 기본 새 탭 대신 google.com이 열리도록 기본 페이지를 google.com으로 바꿨습니다. ' +
+        '크롬 기본 새 탭은 확장 프로그램이 들어갈 수 없는 화면이라, 온글이 내용을 읽지 못하고 화살표나 온글 메뉴 같은 키도 쓸 수 없기 때문입니다. ' +
+        '크롬 기본 새 탭으로 되돌릴까요? 되돌리면 새 탭을 열 때마다 온글이 읽을 수 없다는 안내만 나오고, 주소나 검색어는 주소창에 직접 입력해야 합니다. ' +
+        `${p.count}개 중 ${p.position}번, ${p.label}. 위아래 화살표로 고르고 Enter를 누르세요. 나중에 온글 설정의 새 탭 항목에서 다시 바꿀 수 있습니다.`
+    },
+    'newtab-kept': {
+      always: true,
+      detailed: () => '새 탭을 열면 계속 google.com이 열립니다. 원래 읽던 위치로 돌아왔습니다.'
+    },
+    'newtab-reverted': {
+      always: true,
+      detailed: () =>
+        '크롬 기본 새 탭으로 되돌렸습니다. 이제 새 탭에서는 온글이 읽지 못하니 주소창에 주소나 검색어를 입력하세요. 다시 바꾸려면 온글 설정의 새 탭 항목을 고르세요.'
+    },
+    'help-opened': {
+      detailed: (p) =>
+        `키 도움말. ${p.count}개 중 ${p.position}번, ${p.label}. ` +
+        '위아래 화살표로 하나씩 듣고, 놓친 항목은 위 화살표로 다시 듣습니다. Home과 End로 처음과 끝으로 갑니다. ' +
+        (p.back ? 'Esc를 누르면 온글 메뉴로 돌아갑니다.' : 'Esc를 누르면 도움말을 닫고 읽던 위치로 돌아갑니다.'),
+      short: (p) => `키 도움말. ${p.count}개 중 ${p.position}번, ${p.label}`
     },
     'reload-needed': {
       always: true,
@@ -228,19 +262,49 @@
     }
   };
 
-  function help(p) {
+  // 키 도움말: 한 번에 쭉 읽지 않고 목록으로 띄워 위아래 화살표로 하나씩 듣는다 (놓친 것만 다시 들을 수 있게).
+  // label은 하는 일, keyText는 누르는 키. 온글 메뉴와 같은 모양이라 메뉴가 그대로 띄운다.
+  function helpEntries(p) {
     const k = keysOf(p);
     return [
-      `키 도움말. 온글 명령은 모두 ${k.modifier}를 누른 채 다른 키를 함께 누릅니다.`,
-      `${p.menu && p.menu !== k.menu ? `${p.menu} 키 또는 ` : ''}${k.menu} 키를 누르면 온글 메뉴가 열립니다. 모든 기능을 목록에서 골라 실행할 수 있습니다.`,
-      '읽기. 아래 화살표, 다음 항목. 위 화살표, 이전 항목. Ctrl과 Home, 페이지 처음. Ctrl과 End, 페이지 끝. Ctrl, 읽기 멈춤.',
-      `${k.sayAll} 또는 ${k.sayAllAlt}, 지금 위치부터 끝까지 계속 읽기. ${p.reread || k.reread}, 어디서든 현재 위치 다시 읽기. ${p.stop || k.stop}, 어디서든 읽기 멈춤.`,
-      '한 글자로 이동. H 제목, K 링크, B 버튼, F 입력 요소, E 편집창, X 체크박스, R 라디오 버튼, C 콤보 상자, T 표, L 목록, G 그래픽, D 영역. Shift를 함께 누르면 위쪽으로 찾습니다. 숫자 1부터 6은 그 수준의 제목입니다.',
-      `Enter 또는 스페이스, 지금 항목 누르기. 편집창에서 Enter를 누르면 글쓰기 모드가 되고, Esc를 누르면 읽기 모드로 돌아옵니다. ${k.mode}로도 두 모드를 바꿉니다.`,
-      `기능. ${k.summary}, 페이지 요약. ${k.ask}, 페이지에 질문. ${k.detail}, 상세 이미지 읽기. ${k.explain}, 현재 항목 AI 설명. ${k.results}, AI 결과 모음. ${k.help}, 이 도움말.`,
-      '이름 없는 버튼이나 그림을 읽으면 AI가 자동으로 분석해 이름을 붙이고, AI가 붙인 이름 뒤에는 AI 추정이라고 읽습니다.',
-      `온글을 켜고 끄려면 ${pressText(p.toggle, '온글 켜기')}. 기능 키 글자는 온글 설정에서 바꿀 수 있습니다.`
-    ].join(' ');
+      { label: `온글 명령은 모두 ${k.modifier}를 누른 채 다른 키를 함께 누릅니다` },
+      { label: '온글 메뉴 열기, 모든 기능을 목록에서 골라 실행', keyText: p.menu && p.menu !== k.menu ? `${p.menu} 또는 ${k.menu}` : k.menu },
+      { label: '다음 항목 읽기', keyText: '아래 화살표' },
+      { label: '이전 항목 읽기', keyText: '위 화살표' },
+      { label: '페이지 처음으로', keyText: 'Ctrl과 Home' },
+      { label: '페이지 끝으로', keyText: 'Ctrl과 End' },
+      { label: '읽기 멈춤', keyText: 'Ctrl' },
+      { label: '지금 위치부터 끝까지 계속 읽기', keyText: `${k.sayAll} 또는 ${k.sayAllAlt}` },
+      { label: '어디서든 현재 위치 다시 읽기', keyText: p.reread || k.reread },
+      { label: '어디서든 읽기 멈춤', keyText: p.stop || k.stop },
+      { label: '다음 제목으로 이동', keyText: 'H' },
+      { label: '다음 링크로 이동', keyText: 'K' },
+      { label: '다음 버튼으로 이동', keyText: 'B' },
+      { label: '다음 입력 요소로 이동', keyText: 'F' },
+      { label: '다음 편집창으로 이동', keyText: 'E' },
+      { label: '다음 체크박스로 이동', keyText: 'X' },
+      { label: '다음 라디오 버튼으로 이동', keyText: 'R' },
+      { label: '다음 콤보 상자로 이동', keyText: 'C' },
+      { label: '다음 표로 이동', keyText: 'T' },
+      { label: '다음 목록으로 이동', keyText: 'L' },
+      { label: '다음 그래픽으로 이동', keyText: 'G' },
+      { label: '다음 영역으로 이동. 영역은 머리말, 메뉴, 본문, 바닥글처럼 페이지를 나눈 구역', keyText: 'D' },
+      { label: '위쪽으로 찾기, 한 글자 키와 함께', keyText: 'Shift' },
+      { label: '그 수준의 제목으로 이동', keyText: '숫자 1부터 6' },
+      { label: '지금 항목 누르기', keyText: 'Enter 또는 스페이스' },
+      { label: '글쓰기 모드, 편집창에서', keyText: 'Enter' },
+      { label: '글쓰기 모드에서 읽기 모드로 돌아오기', keyText: 'Esc' },
+      { label: '읽기 모드와 글쓰기 모드 바꾸기', keyText: k.mode },
+      { label: '페이지 요약', keyText: k.summary },
+      { label: '페이지에 질문', keyText: k.ask },
+      { label: '상세 이미지 읽기', keyText: k.detail },
+      { label: '현재 항목 AI 설명', keyText: k.explain },
+      { label: 'AI 결과 모음', keyText: k.results },
+      { label: '이 키 도움말', keyText: k.help },
+      { label: '이름 없는 버튼이나 그림을 읽으면 AI가 자동으로 이름을 붙이고, 그 이름 뒤에는 AI 추정이라고 읽습니다' },
+      { label: '온글 켜고 끄기', keyText: p.toggle || '단축키가 지정되지 않음, 온글 설정에서 확인' },
+      { label: '기능 키 글자는 온글 설정에서 바꿀 수 있습니다' }
+    ];
   }
 
   // 안내 문장 고르기. seen: 안내별로 읽은 횟수(자동 모드에서 씀)
@@ -252,5 +316,5 @@
     return (detailed ? entry.detailed : entry.short)(params);
   }
 
-  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, help, shortcutText, codeText, comboText, keyNames, pressText, needsShortcutSetup };
+  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, helpEntries, shortcutText, codeText, comboText, keyNames, pressText, needsShortcutSetup };
 })();
