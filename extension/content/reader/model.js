@@ -121,6 +121,20 @@
     return el.tagName.toUpperCase();
   }
 
+  // E 키로 찾는 편집창: 글자를 입력하는 칸. 자동완성 검색창은 입력칸에 role="combobox"를 달아(네이버·유튜브 검색창)
+  // 콤보 상자로 분류되지만 글자를 입력하므로 편집창으로도 본다 (NVDA와 같음). 선택 상자(select)와 버튼 모양 콤보 상자는
+  // 글자를 입력하지 않으므로 빼고, C 키(콤보 상자)로만 찾는다.
+  const EDIT_ROLES = new Set(['textbox', 'searchbox', 'password', 'spinbutton']);
+  const NON_TEXT_INPUTS = new Set(['checkbox', 'radio', 'range', 'button', 'submit', 'reset', 'image', 'hidden', 'file', 'color']);
+  function isEditField(item) {
+    if (EDIT_ROLES.has(item.role)) return true;
+    const el = item.el;
+    if (item.role !== 'combobox' || !el) return false;
+    const tag = tagOf(el);
+    if (tag === 'TEXTAREA' || el.isContentEditable) return true;
+    return tag === 'INPUT' && !NON_TEXT_INPUTS.has((el.getAttribute('type') ?? 'text').toLowerCase());
+  }
+
   // 숨겨진 요소. sr-only처럼 화면에서만 숨긴 글은 숨겨진 것이 아니다 (checkVisibility가 true).
   function hidden(el) {
     if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return true;
@@ -651,6 +665,7 @@
     phraseOf,
     accessibleName,
     roleOf,
+    isEditField,
     indexOfElement,
     itemFor,
     watch,
