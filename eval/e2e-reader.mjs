@@ -46,6 +46,15 @@ const FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><tit
 <button class="btn-delete"><svg width="20" height="20" aria-hidden="true"><rect width="10" height="10"/></svg></button>
 <p>끝</p></main></body></html>`;
 
+// E 키 편집창 이동: 자동완성 검색창(role="combobox"인 입력칸)도 편집창으로 찾는지. 네이버·유튜브 검색창과 같은 마크업
+const SEARCH_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>검색창 확인</title></head><body><main>
+<h1>검색창 확인</h1>
+<label for="sort">정렬</label><select id="sort"><option>최신순</option><option>인기순</option></select>
+<input id="query" type="search" name="query" title="네이버 검색" placeholder="검색어를 입력해 주세요." role="combobox" aria-expanded="false" aria-autocomplete="list">
+<button type="button">버튼 사이</button>
+<input name="search_query" aria-label="유튜브 검색" role="combobox" aria-autocomplete="list" aria-expanded="false">
+<p>끝</p></main></body></html>`;
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/mock/v1/chat/completions') {
     let body = '';
@@ -55,6 +64,10 @@ const server = http.createServer(async (req, res) => {
     if (typeof content === 'string' && content.startsWith('웹페이지에 이름이 없어')) await new Promise((r) => setTimeout(r, 600));
     res.setHeader('content-type', 'application/json');
     return res.end(JSON.stringify({ choices: [{ message: { content: fakeAi(content) } }] }));
+  }
+  if (req.url === '/search-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(SEARCH_FIXTURE);
   }
   if (req.url === '/fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -168,6 +181,10 @@ await page.waitForTimeout(500);
 await sw.evaluate(() => chrome.storage.local.set({ readerEnabled: true }));
 let c = await until((t) => t.includes('온글이 켜졌습니다'));
 check('켜기 안내 (사용 가이드 위치 포함)', c.includes('온글이 켜졌습니다') && c.includes('사용 가이드'), c);
+// 처음 켜면 새 탭을 google.com으로 바꾼 이유를 알리고 되돌릴지 한 번 묻는다. Esc는 그대로 쓰기
+c = await until((t) => t.includes('되돌릴까요'));
+check('처음 켜면 새 탭 질문', c.includes('google.com') && c.includes('되돌릴까요') && c.includes('2개 중 1번'), c);
+check('새 탭 질문 Esc: google.com 그대로', (await press('Escape', 400)).includes('계속 google.com'));
 check('아래 화살표: 첫 항목', (await press('ArrowDown')).includes('본문 바로가기, 링크'));
 check('H: 제목', (await press('KeyH')).includes('제목 1'));
 check('R → Enter: 라디오 선택', (await press('KeyR')).includes('1/3') && (await press('Enter', 400)).includes('선택됨'));
@@ -177,7 +194,13 @@ check('Shift+T: 표', (await toItem('KeyT', '표,')).includes('5행 2열'));
 await toItem('KeyH', '상세정보, 제목 2');
 c = await press('ArrowDown');
 check('상세 이미지 자리 안내 (실제 키 이름)', c.includes('상세 이미지 4개') && c.includes('Shift와 D 키'), c);
-check('Alt+Shift+1: 도움말 (실제 키 이름)', ((c) => c.includes('Shift와 A') && !c.includes('온글 키와'))(await press('Alt+Shift+Digit1')));
+// 키 도움말은 목록으로 열리고 위아래 화살표로 하나씩 듣는다. Esc로 닫는다
+c = await press('Alt+Shift+Digit1', 400);
+check('Alt+Shift+1: 키 도움말 목록', c.includes('키 도움말') && /\d+개 중 1번/.test(c), c);
+for (let i = 0; i < 12 && !c.includes('계속 읽기'); i++) c = await press('ArrowDown', 120);
+check('키 도움말 아래 화살표: 한 항목씩 (실제 키 이름)', c.includes('계속 읽기') && c.includes('Shift와 A') && !c.includes('온글 키와'), c);
+await press('Escape', 300);
+check('키 도움말 Esc: 닫힘', !(await shadow((r) => r.querySelector('.menu') && !r.querySelector('.menu').hidden)));
 
 console.log('\n== 온글 메뉴와 사용 가이드');
 c = await press('Alt+Shift+KeyM', 400);
@@ -213,6 +236,22 @@ await press('Escape', 300);
 await toItem('KeyB', '공유하기');
 c = await press('Alt+Shift+KeyE', 1200);
 check('현재 항목 AI 설명', (await until((t) => t.includes('AI 설명'), 3000)).includes('상품 링크를 공유하는 버튼입니다'), c);
+
+console.log('\n== 자동완성 검색창 (E 키)');
+await page.goto(`${base}/search-fixture/`);
+await page.waitForTimeout(500);
+await press('Control+Home', 150);
+c = await press('KeyE');
+check('E: 선택 상자는 건너뛰고 네이버형 검색창', c.includes('네이버 검색'), c);
+c = await press('KeyE');
+check('E: 유튜브형 검색창', c.includes('유튜브 검색'), c);
+c = await press('Shift+KeyE');
+check('Shift+E: 위쪽 검색창으로', c.includes('네이버 검색'), c);
+check('C: 콤보 상자로도 찾음', (await toItem('KeyC', '유튜브 검색', 4)).includes('유튜브 검색'));
+await press('Control+Home', 150);
+await press('KeyE');
+check('검색창에서 Enter: 글쓰기 모드', (await press('Enter', 400)).includes('글쓰기 모드'));
+await press('Escape', 300);
 
 console.log('\n== 교차 검증');
 await page.goto(`${base}/fixture/`);

@@ -17,7 +17,8 @@
     KeyK: { test: (item) => item.category === 'link', label: '링크' },
     KeyB: { test: (item) => item.category === 'button', label: '버튼' },
     KeyF: { test: (item) => item.category === 'field', label: '입력 요소' },
-    KeyE: { test: (item) => ['textbox', 'searchbox', 'password', 'spinbutton'].includes(item.role), label: '편집창' },
+    // 자동완성 검색창(role="combobox"인 입력칸)도 편집창으로 찾는다 (model.isEditField)
+    KeyE: { test: (item) => model.isEditField(item), label: '편집창' },
     KeyX: { test: (item) => item.role === 'checkbox', label: '체크박스' },
     KeyR: { test: (item) => item.role === 'radio', label: '라디오 버튼' },
     KeyC: { test: (item) => ['combobox', 'listbox'].includes(item.role), label: '콤보 상자' },
