@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>온글몰 - 가상 쇼핑몰</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="mall.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main id="main" tabindex="-1">
+    <section class="banner" aria-labelledby="banner-title">
+      <h2 id="banner-title">11월 생활용품 기획전</h2>
+      <p>3만 원 이상 사면 배송비 무료. 텀블러와 무선 이어폰 할인 중.</p>
+    </section>
+    <h1 id="list-title">전체 상품</h1>
+    <p id="list-count" class="hint"></p>
+    <ul class="products" id="products" aria-labelledby="list-title"></ul>
+  </main>
+  <div id="site-footer"></div>
+
+  <script type="module">
+    import { CATEGORIES, PRODUCTS } from './data.js';
+    import { won } from './store.js';
+    import { $, h, renderHeader, renderFooter } from './common.js';
+
+    const HEART = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z" stroke="currentColor" stroke-width="2"/></svg>';
+    const params = new URLSearchParams(location.search);
+    const category = params.get('category') ?? '';
+    const query = (params.get('q') ?? '').trim();
+    renderHeader({ category, query });
+    renderFooter();
+
+    const list = PRODUCTS.filter((p) => (!category || p.category === category) && (!query || p.name.includes(query) || p.brand.includes(query)));
+    const title = query ? `"${query}" 검색 결과` : `${CATEGORIES.find((c) => c.id === category)?.name ?? '전체'} 상품`;
+    $('#list-title').textContent = title;
+    document.title = `${title} - 온글몰`;
+    $('#list-count').textContent = `상품 ${list.length}개`;
+
+    $('#products').append(
+      ...list.map((p) =>
+        h(
+          'li',
+          { class: 'card' },
+          h(
+            'a',
+            { href: `product.html?id=${p.id}` },
+            h('img', { src: p.images[0].src, alt: p.images[0].alt }),
+            h('span', { class: 'name' }, p.name),
+            h(
+              'span',
+              { class: 'price' },
+              p.salePrice && h('span', { class: 'rate' }, `${Math.round((1 - p.salePrice / p.price) * 100)}%`),
+              p.salePrice && h('span', { class: 'list-price' }, won(p.price)),
+              h('strong', {}, won(p.salePrice ?? p.price))
+            )
+          ),
+          // [접근성 문제] 찜하기 버튼에 이름이 없다 (하트 기호만 있음, 눌림 상태도 알리지 않음)
+          h('button', { type: 'button', class: 'wish wish-off', onclick: (e) => e.currentTarget.classList.toggle('wish-off'), html: HEART })
+        )
+      )
+    );
+    if (!list.length) $('#products').replaceWith(h('p', { class: 'empty' }, '찾는 상품이 없습니다. 다른 검색어로 찾아보세요.'));
+  </script>
+</body>
+</html>

@@ -9,6 +9,8 @@
     "e2e:reader": "node e2e-reader.mjs",
     "braille": "node braille/compare.mjs",
     "shop": "node shop/serve.mjs",
+    "mall": "START=/mall/ node shop/serve.mjs",
+    "e2e:mall": "node mall/e2e-mall.mjs",
     "shop:build": "node shop/build-detail.mjs",
     "reader:accuracy": "node reader/accuracy.mjs",
     "ai-eval": "node ai-eval.mjs"

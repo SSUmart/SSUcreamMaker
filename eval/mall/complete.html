@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>주문 완료 - 온글몰</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="mall.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main id="main" tabindex="-1"></main>
+  <div id="site-footer"></div>
+
+  <script type="module">
+    import { lastOrder, won } from './store.js';
+    import { $, h, renderHeader, renderFooter } from './common.js';
+
+    renderHeader();
+    renderFooter();
+    const order = lastOrder.get();
+    const main = $('#main');
+
+    if (!order) {
+      main.append(h('h1', {}, '주문 정보가 없습니다'), h('p', {}, h('a', { href: 'index.html' }, '쇼핑하러 가기')));
+    } else {
+      const row = (k, v) => h('tr', {}, h('th', { scope: 'row' }, k), h('td', {}, v));
+      main.append(
+        h('div', { class: 'done' },
+          h('p', { class: 'mark', 'aria-hidden': 'true' }, '✓'),
+          h('h1', {}, '주문이 완료되었습니다'),
+          h('p', { class: 'order-no' }, `주문번호 ${order.number}`),
+          h('p', { class: 'hint' }, '가상 주문입니다. 실제로 결제되거나 배송되지 않습니다.')),
+        h('div', { class: 'receipt' },
+          h('h2', {}, '주문 상품'),
+          h('table', {}, h('caption', { class: 'sr-only' }, '주문 상품'),
+            h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, '상품'), h('th', { scope: 'col' }, '수량'), h('th', { scope: 'col' }, '금액'))),
+            h('tbody', {}, order.lines.map((l) => h('tr', {}, h('td', {}, `${l.name} (${l.option})`), h('td', {}, `${l.quantity}개`), h('td', {}, won(l.amount)))))),
+          h('h2', {}, '배송 정보'),
+          h('table', {}, h('caption', { class: 'sr-only' }, '배송 정보'),
+            h('tbody', {},
+              row('받는 분', `${order.shipTo.name} (${order.shipTo.phone})`),
+              row('주소', `[${order.shipTo.zipcode}] ${order.shipTo.address}`),
+              row('배송 요청사항', order.memo))),
+          h('h2', {}, '결제 정보'),
+          h('table', {}, h('caption', { class: 'sr-only' }, '결제 정보'),
+            h('tbody', {},
+              row('결제수단', order.method),
+              row('상품 금액', won(order.totals.goods + order.totals.discount)),
+              row('할인 금액', order.totals.discount ? `-${won(order.totals.discount)}` : '0원'),
+              row('배송비', won(order.totals.shipping)),
+              row('최종 결제 금액', won(order.totals.total)))),
+          h('div', { class: 'actions' }, h('a', { class: 'btn primary wide', href: 'index.html' }, '쇼핑 계속하기')))
+      );
+      document.title = `주문 완료 (${order.number}) - 온글몰`;
+    }
+  </script>
+</body>
+</html>
