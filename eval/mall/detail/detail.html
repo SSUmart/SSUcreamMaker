@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>온글몰 상세 이미지 원본</title>
+<!--
+  가상 쇼핑몰(온글몰) 상품의 상세 이미지 원본. 텀블러는 /shop/의 상세 이미지를 다시 쓰므로 여기 없다.
+  build-detail.mjs가 .detail-image 하나를 이미지 한 장(images/<id>.jpg)으로 렌더링한다 (npm run mall:build).
+  사진(images/*.jpg)은 Codex 이미지 생성으로 만들었고 글자가 없다. 글자는 모두 여기 적는다.
+  상품 정보는 data.js(옵션, 가격, 요약)와 맞춰야 한다.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { word-break: keep-all; background: #ccc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #222; }
+  .detail-image { width: 860px; background: #fff; margin: 0 auto 40px; overflow: hidden; }
+  .photo { display: block; width: 100%; }
+  .pad { padding: 64px 70px; }
+  .center { text-align: center; }
+  .eyebrow { font-size: 26px; font-weight: 700; color: #5b7f6b; letter-spacing: 2px; }
+  h1 { font-size: 56px; line-height: 1.3; margin-top: 18px; }
+  h2 { font-size: 44px; line-height: 1.3; margin-bottom: 28px; }
+  .lead { font-size: 30px; line-height: 1.6; color: #555; margin-top: 24px; }
+  .band { background: #f3f6f4; }
+  .dark { background: #26302b; color: #fff; }
+  .price-box { border: 4px solid #d94b3d; border-radius: 24px; padding: 44px; margin-top: 10px; }
+  .option-box { border: 4px solid #5b7f6b; border-radius: 24px; padding: 40px; font-size: 32px; line-height: 1.7; }
+  .option-box strong { color: #5b7f6b; }
+  .badge { display: inline-block; background: #d94b3d; color: #fff; font-size: 28px; font-weight: 700; padding: 8px 24px; border-radius: 40px; }
+  .was { font-size: 32px; color: #888; text-decoration: line-through; margin-top: 26px; }
+  .now { font-size: 54px; font-weight: 800; color: #d94b3d; margin-top: 8px; }
+  .extra { font-size: 30px; margin-top: 18px; }
+  .colors { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px 46px; font-size: 30px; font-weight: 700; margin-top: 26px; }
+  .dot { display: inline-block; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #999; vertical-align: -5px; margin-right: 10px; }
+  .big-num { display: flex; justify-content: space-around; margin: 40px 0 10px; }
+  .big-num strong { display: block; font-size: 72px; }
+  .big-num span { font-size: 30px; }
+  .note { font-size: 22px; color: #888; margin-top: 24px; }
+  .dark .note { color: #b9c4be; }
+  .two { display: flex; gap: 20px; }
+  .two figure { flex: 1; }
+  .two figcaption { font-size: 30px; font-weight: 700; margin-top: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 28px; }
+  th, td { border-bottom: 2px solid #ddd; padding: 22px 12px; text-align: left; }
+  th { width: 34%; color: #5b7f6b; }
+  ol, ul { font-size: 30px; line-height: 1.7; padding-left: 40px; }
+  li + li { margin-top: 14px; }
+  .warn li::marker { color: #d94b3d; }
+</style>
+</head>
+<body>
+
+<!-- ===================== 도자기 머그컵 ===================== -->
+<div class="detail-image" id="mug-detail-01">
+  <img class="photo" src="../images/mug-lifestyle.jpg" alt="">
+  <div class="pad center">
+    <p class="eyebrow">ONGEUL LIVING</p>
+    <h1>손에 편안하게 감기는<br>350ml 도자기 머그</h1>
+    <p class="lead">온글리빙 데일리 머그<br>아침 커피부터 저녁 차 한 잔까지</p>
+  </div>
+  <div class="pad band center">
+    <h2>색상 2종</h2>
+    <img class="photo" src="../images/mug-colors.jpg" alt="">
+    <p class="colors">
+      <span><i class="dot" style="background:#ece5d3"></i>아이보리</span>
+      <span><i class="dot" style="background:#26324a"></i>네이비</span>
+    </p>
+    <p class="lead">네이비는 화면보다 조금 더 진하게 보일 수 있습니다.<br>구성: 머그컵 1개</p>
+  </div>
+</div>
+
+<div class="detail-image" id="mug-detail-02">
+  <div class="pad dark center">
+    <h2>전자레인지 · 식기세척기 사용 가능</h2>
+    <div class="big-num">
+      <p><strong>OK</strong><span>전자레인지</span></p>
+      <p><strong>OK</strong><span>식기세척기</span></p>
+      <p><strong>NO</strong><span>오븐 · 직화</span></p>
+    </div>
+  </div>
+  <div class="pad center">
+    <h2>넉넉한 손잡이, 무광 유약</h2>
+    <img class="photo" src="../images/mug-detail.jpg" alt="">
+    <p class="lead">손가락 세 개가 편하게 들어가는 손잡이<br>손자국이 덜 남는 부드러운 무광 표면</p>
+  </div>
+</div>
+
+<div class="detail-image" id="mug-detail-03">
+  <div class="pad">
+    <h2 class="center">제품 사양</h2>
+    <table>
+      <tr><th>용량</th><td>350ml</td></tr>
+      <tr><th>크기</th><td>지름 8cm × 높이 9.5cm</td></tr>
+      <tr><th>무게</th><td>330g</td></tr>
+      <tr><th>소재</th><td>도자기 (무광 유약)</td></tr>
+    </table>
+  </div>
+  <div class="pad band">
+    <h2 class="center">사용 시 주의사항</h2>
+    <ul class="warn">
+      <li>오븐과 가스레인지 직화에는 쓰지 마세요.</li>
+      <li>뜨거운 머그에 찬물을 바로 붓지 마세요. 금이 갈 수 있습니다.</li>
+      <li>금속 수세미로 문지르지 마세요.</li>
+    </ul>
+  </div>
+  <div class="pad">
+    <h2 class="center">배송 · 교환 · 반품</h2>
+    <ul>
+      <li>오후 2시 이전 주문은 당일 출고합니다.</li>
+      <li>배송비 3,000원, 30,000원 이상 구매 시 무료배송</li>
+      <li>교환·반품은 상품 수령 후 7일 이내에 신청해 주세요.</li>
+      <li>단순 변심 반품 시 왕복 배송비 6,000원은 고객 부담입니다.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 보온보냉 물병 ===================== -->
+<div class="detail-image" id="bottle-detail-01">
+  <img class="photo" src="../images/bottle-lifestyle.jpg" alt="">
+  <div class="pad center">
+    <p class="eyebrow">ONGEUL LIVING</p>
+    <h1>운동할 때도 출근할 때도<br>750ml 보온보냉 물병</h1>
+    <p class="lead">하루 마실 물을 한 번에 담는 넉넉한 용량</p>
+  </div>
+  <div class="pad band center">
+    <h2>색상 3종</h2>
+    <img class="photo" src="../images/bottle-colors.jpg" alt="">
+    <p class="colors">
+      <span><i class="dot" style="background:#c3c8cc"></i>실버</span>
+      <span><i class="dot" style="background:#222"></i>블랙</span>
+      <span><i class="dot" style="background:#f2c6cf"></i>핑크</span>
+    </p>
+  </div>
+  <div class="pad center">
+    <div class="option-box">
+      <p><strong>뚜껑 선택</strong></p>
+      <p>기본 뚜껑: 추가 금액 없음</p>
+      <p>빨대 뚜껑: 3,000원 추가</p>
+    </div>
+    <p class="lead">구성: 물병 본체 1개, 고른 뚜껑 1개</p>
+  </div>
+</div>
+
+<div class="detail-image" id="bottle-detail-02">
+  <div class="pad dark center">
+    <h2>보온 12시간 · 보냉 24시간</h2>
+    <div class="big-num">
+      <p><strong>12시간</strong><span>60℃ 이상 보온</span></p>
+      <p><strong>24시간</strong><span>10℃ 이하 보냉</span></p>
+    </div>
+    <p class="note">실온 20℃에서 95℃ 물, 4℃ 얼음물을 가득 담아 측정한 자체 시험 결과입니다.</p>
+  </div>
+  <img class="photo" src="../images/bottle-hot-cold.jpg" alt="">
+  <div class="pad center">
+    <h2>빨대 뚜껑</h2>
+    <img class="photo" src="../images/bottle-straw-lid.jpg" alt="">
+    <p class="lead">손잡이가 달려 들고 다니기 편합니다<br>빨대와 실리콘 부품을 모두 분리해 씻을 수 있습니다</p>
+  </div>
+</div>
+
+<div class="detail-image" id="bottle-detail-03">
+  <div class="pad">
+    <h2 class="center">제품 사양</h2>
+    <table>
+      <tr><th>용량</th><td>750ml</td></tr>
+      <tr><th>크기</th><td>지름 7.5cm × 높이 26cm</td></tr>
+      <tr><th>무게</th><td>기본 뚜껑 380g, 빨대 뚜껑 410g</td></tr>
+      <tr><th>본체 소재</th><td>스테인리스 스틸 304</td></tr>
+      <tr><th>뚜껑 소재</th><td>PP, 실리콘 (BPA 프리)</td></tr>
+    </table>
+  </div>
+  <div class="pad band">
+    <h2 class="center">사용 시 주의사항</h2>
+    <ul class="warn">
+      <li>탄산음료를 담지 마세요. 뚜껑이 튀어 오를 수 있습니다.</li>
+      <li>식기세척기와 전자레인지에 넣지 마세요.</li>
+      <li>뜨거운 음료를 담을 때는 빨대 뚜껑을 쓰지 마세요. 입을 데일 수 있습니다.</li>
+    </ul>
+  </div>
+  <div class="pad">
+    <h2 class="center">배송 · 교환 · 반품</h2>
+    <ul>
+      <li>오후 2시 이전 주문은 당일 출고합니다.</li>
+      <li>배송비 3,000원, 30,000원 이상 구매 시 무료배송</li>
+      <li>교환·반품은 상품 수령 후 7일 이내에 신청해 주세요.</li>
+      <li>단순 변심 반품 시 왕복 배송비 6,000원은 고객 부담입니다.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 캔버스 에코백 ===================== -->
+<div class="detail-image" id="ecobag-detail-01">
+  <img class="photo" src="../images/ecobag-wear.jpg" alt="">
+  <div class="pad center">
+    <p class="eyebrow">ONGEUL GOODS</p>
+    <h1>노트북도 서류도 쏙<br>튼튼한 캔버스 에코백</h1>
+    <p class="lead">도톰한 12수 캔버스로 무거운 짐도 든든하게</p>
+  </div>
+  <div class="pad band center">
+    <h2>색상 2종</h2>
+    <div class="two">
+      <figure><img class="photo" src="../images/ecobag-natural.jpg" alt=""><figcaption>내추럴</figcaption></figure>
+      <figure><img class="photo" src="../images/ecobag-black.jpg" alt=""><figcaption>블랙</figcaption></figure>
+    </div>
+    <p class="lead">구성: 에코백 1개</p>
+  </div>
+</div>
+
+<div class="detail-image" id="ecobag-detail-02">
+  <div class="pad dark center">
+    <h2>넉넉한 크기</h2>
+    <div class="big-num">
+      <p><strong>38cm</strong><span>가로</span></p>
+      <p><strong>42cm</strong><span>세로</span></p>
+      <p><strong>10cm</strong><span>바닥 폭</span></p>
+    </div>
+    <p class="note">어깨끈 길이 65cm (어깨에 메었을 때 가방 윗부분이 허리 높이)</p>
+  </div>
+  <div class="pad center">
+    <h2>14인치 노트북과 A4 서류가 함께</h2>
+    <img class="photo" src="../images/ecobag-lifestyle.jpg" alt="">
+  </div>
+  <div class="pad band center">
+    <h2>안쪽 주머니 1개</h2>
+    <img class="photo" src="../images/ecobag-inside.jpg" alt="">
+    <p class="lead">휴대폰과 열쇠를 따로 넣어 두세요</p>
+  </div>
+</div>
+
+<div class="detail-image" id="ecobag-detail-03">
+  <div class="pad">
+    <h2 class="center">제품 사양</h2>
+    <table>
+      <tr><th>크기</th><td>가로 38cm × 세로 42cm × 바닥 폭 10cm</td></tr>
+      <tr><th>어깨끈</th><td>길이 65cm, 폭 3cm</td></tr>
+      <tr><th>소재</th><td>면 100% (캔버스 12수)</td></tr>
+      <tr><th>수납</th><td>안쪽 주머니 1개, 여밈 없음</td></tr>
+    </table>
+  </div>
+  <div class="pad band">
+    <h2 class="center">세탁 방법</h2>
+    <ul class="warn">
+      <li>찬물에 손세탁해 주세요.</li>
+      <li>표백제와 건조기를 쓰지 마세요.</li>
+      <li>첫 세탁 때 3% 정도 줄어들 수 있습니다.</li>
+      <li>블랙은 처음 몇 번 물이 빠질 수 있으니 따로 세탁해 주세요.</li>
+    </ul>
+  </div>
+  <div class="pad">
+    <h2 class="center">배송 · 교환 · 반품</h2>
+    <ul>
+      <li>오후 2시 이전 주문은 당일 출고합니다.</li>
+      <li>배송비 3,000원, 30,000원 이상 구매 시 무료배송</li>
+      <li>교환·반품은 상품 수령 후 7일 이내에 신청해 주세요.</li>
+      <li>단순 변심 반품 시 왕복 배송비 6,000원은 고객 부담입니다.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 면 양말 5켤레 세트 ===================== -->
+<div class="detail-image" id="socks-detail-01">
+  <img class="photo" src="../images/socks-lifestyle.jpg" alt="">
+  <div class="pad center">
+    <p class="eyebrow">ONGEUL GOODS</p>
+    <h1>매일 신기 좋은<br>면 양말 5켤레 세트</h1>
+    <p class="lead">부드러운 면 80%, 하루 종일 편안하게</p>
+  </div>
+  <div class="pad band center">
+    <h2>5가지 색이 한 켤레씩</h2>
+    <img class="photo" src="../images/socks-set.jpg" alt="">
+    <p class="colors">
+      <span><i class="dot" style="background:#9fb7a8"></i>세이지그린</span>
+      <span><i class="dot" style="background:#f1ebdc"></i>아이보리</span>
+      <span><i class="dot" style="background:#9a9a9a"></i>그레이</span>
+      <span><i class="dot" style="background:#26324a"></i>네이비</span>
+      <span><i class="dot" style="background:#d6a531"></i>머스터드</span>
+    </p>
+    <p class="lead">색은 고를 수 없고 5가지가 모두 들어 있습니다.</p>
+  </div>
+</div>
+
+<div class="detail-image" id="socks-detail-02">
+  <div class="pad center">
+    <h2>도톰한 짜임, 늘어나지 않는 발목</h2>
+    <img class="photo" src="../images/socks-detail.jpg" alt="">
+    <p class="lead">발목 골지에 스판덱스를 넣어 여러 번 빨아도 흘러내리지 않습니다</p>
+  </div>
+  <div class="pad band">
+    <h2 class="center">사이즈 안내</h2>
+    <img class="photo" src="../images/socks-size.jpg" alt="">
+    <table style="margin-top:30px">
+      <tr><th>230mm</th><td>발 길이 220~240mm</td></tr>
+      <tr><th>250mm</th><td>발 길이 240~260mm</td></tr>
+      <tr><th>270mm</th><td>발 길이 260~280mm (현재 품절)</td></tr>
+    </table>
+    <p class="note">사이즈가 애매하면 한 치수 큰 것을 추천합니다.</p>
+  </div>
+</div>
+
+<div class="detail-image" id="socks-detail-03">
+  <div class="pad">
+    <h2 class="center">제품 사양</h2>
+    <table>
+      <tr><th>소재</th><td>면 80%, 폴리에스터 18%, 스판덱스 2%</td></tr>
+      <tr><th>구성</th><td>5켤레 (세이지그린, 아이보리, 그레이, 네이비, 머스터드)</td></tr>
+      <tr><th>길이</th><td>크루 양말 (발목 위 약 18cm)</td></tr>
+    </table>
+  </div>
+  <div class="pad band">
+    <h2 class="center">세탁 방법</h2>
+    <ul class="warn">
+      <li>뒤집어서 세탁망에 넣어 주세요.</li>
+      <li>30℃ 이하 찬물로 세탁해 주세요.</li>
+      <li>건조기를 쓰면 줄어들 수 있습니다.</li>
+    </ul>
+  </div>
+  <div class="pad">
+    <h2 class="center">배송 · 교환 · 반품</h2>
+    <ul>
+      <li>오후 2시 이전 주문은 당일 출고합니다.</li>
+      <li>배송비 3,000원, 30,000원 이상 구매 시 무료배송</li>
+      <li>교환·반품은 상품 수령 후 7일 이내에 신청해 주세요.</li>
+      <li>양말은 포장을 뜯으면 교환·반품할 수 없습니다.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 무선 이어폰 ===================== -->
+<div class="detail-image" id="earphone-detail-01">
+  <img class="photo" src="../images/earphone-wear.jpg" alt="">
+  <div class="pad center">
+    <p class="eyebrow">ONGEUL SOUND</p>
+    <h1>작고 가벼운<br>블루투스 5.3 무선 이어폰</h1>
+    <p class="lead">한 쪽 4.5g, 오래 껴도 귀가 편안합니다</p>
+  </div>
+  <div class="pad band center">
+    <div class="price-box">
+      <span class="badge">가을 특가</span>
+      <p class="was">정가 59,000원</p>
+      <p class="now">할인가 49,900원 (15% 할인)</p>
+      <p class="extra">특가는 준비한 수량이 모두 팔리면 끝납니다.</p>
+    </div>
+  </div>
+  <div class="pad center">
+    <h2>색상 2종</h2>
+    <div class="two">
+      <figure><img class="photo" src="../images/earphone-white.jpg" alt=""><figcaption>화이트</figcaption></figure>
+      <figure><img class="photo" src="../images/earphone-black.jpg" alt=""><figcaption>블랙 (일시 품절)</figcaption></figure>
+    </div>
+  </div>
+</div>
+
+<div class="detail-image" id="earphone-detail-02">
+  <div class="pad dark center">
+    <h2>최대 24시간 재생</h2>
+    <div class="big-num">
+      <p><strong>6시간</strong><span>이어폰만</span></p>
+      <p><strong>24시간</strong><span>충전 케이스 포함</span></p>
+    </div>
+    <p class="note">10분 충전으로 1시간 들을 수 있습니다. 음량 50%에서 측정한 자체 시험 결과입니다.</p>
+  </div>
+  <div class="pad center">
+    <h2>생활 방수 IPX4</h2>
+    <img class="photo" src="../images/earphone-water.jpg" alt="">
+    <p class="lead">땀과 빗방울은 괜찮습니다<br>물에 담그거나 샤워할 때는 쓰지 마세요</p>
+  </div>
+</div>
+
+<div class="detail-image" id="earphone-detail-03">
+  <div class="pad center">
+    <h2>구성품</h2>
+    <img class="photo" src="../images/earphone-parts.jpg" alt="">
+    <p class="lead">이어폰 한 쌍, 충전 케이스, USB-C 케이블,<br>이어팁 S · M · L (M은 이어폰에 끼워져 있음)</p>
+  </div>
+  <div class="pad band">
+    <h2 class="center">제품 사양</h2>
+    <table>
+      <tr><th>블루투스</th><td>5.3</td></tr>
+      <tr><th>무게</th><td>이어폰 한 쪽 4.5g, 충전 케이스 38g</td></tr>
+      <tr><th>재생 시간</th><td>이어폰 6시간, 케이스 포함 24시간</td></tr>
+      <tr><th>충전</th><td>USB-C, 케이스 완충 약 1시간 30분</td></tr>
+      <tr><th>방수</th><td>IPX4 (생활 방수)</td></tr>
+    </table>
+  </div>
+  <div class="pad">
+    <h2 class="center">처음 연결하는 방법</h2>
+    <ol>
+      <li>이어폰을 케이스에 넣은 채 뚜껑을 엽니다.</li>
+      <li>휴대폰 블루투스 목록에서 ONGEUL BUDS를 고릅니다.</li>
+      <li>다음부터는 뚜껑만 열면 자동으로 연결됩니다.</li>
+    </ol>
+  </div>
+  <div class="pad band">
+    <h2 class="center">배송 · 교환 · 반품</h2>
+    <ul>
+      <li>오후 2시 이전 주문은 당일 출고합니다.</li>
+      <li>배송비 3,000원, 30,000원 이상 구매 시 무료배송</li>
+      <li>교환·반품은 상품 수령 후 7일 이내에 신청해 주세요.</li>
+      <li>위생상 이어팁을 사용했다면 단순 변심 반품이 되지 않습니다.</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

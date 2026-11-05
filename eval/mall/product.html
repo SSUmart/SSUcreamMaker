@@ -186,9 +186,8 @@
     }
 
     function detail() {
-      // [접근성 문제] 상세 이미지에 대체 텍스트가 없다 (온글의 상세 이미지 읽기 대상)
-      if (product.detailImages) return h('div', { class: 'detail-images' }, product.detailImages.map((src) => h('img', { src, width: '860' })));
-      return h('div', {}, h('h3', {}, '상품 정보'), h('ul', {}, product.detailText.map((t) => h('li', {}, t))));
+      // [접근성 문제] 상세 정보가 글자 없이 이미지로만 있고, 대체 텍스트도 없다 (온글의 상세 이미지 읽기 대상)
+      return h('div', { class: 'detail-images' }, product.detailImages.map((src) => h('img', { src, width: '860' })));
     }
 
     function shippingTable() {

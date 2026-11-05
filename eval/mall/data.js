@@ -1,5 +1,6 @@
 // 가상 쇼핑몰(온글몰) 상품 데이터. 실제 판매하지 않는 가상 상품이다.
-// 텀블러는 평가용 쇼핑몰(/shop/)의 사진과 상세 이미지를 다시 쓰고, 나머지 상품 사진은 SVG로 그린다.
+// 텀블러는 평가용 쇼핑몰(/shop/)의 사진과 상세 이미지를 다시 쓴다.
+// 상세 정보는 모든 상품이 대체 텍스트 없는 상세 이미지로만 있다 (국내 쇼핑몰에 흔한 형태, 온글의 상세 이미지 읽기 대상).
 
 export const FREE_SHIPPING_MIN = 30000;
 export const SHIPPING_FEE = 3000;
@@ -12,18 +13,9 @@ export const CATEGORIES = [
   { id: 'digital', name: '디지털' }
 ];
 
-// 상품 사진 SVG (색과 모양만 다르게). 글자를 넣지 않는다.
-function drawing(shape, color) {
-  const shapes = {
-    mug: `<rect x="70" y="80" width="120" height="140" rx="14" fill="${color}"/><path d="M190 110 h22 a26 26 0 0 1 0 52 h-22" fill="none" stroke="${color}" stroke-width="14"/>`,
-    bottle: `<rect x="105" y="40" width="50" height="30" rx="6" fill="#555"/><rect x="85" y="68" width="90" height="170" rx="30" fill="${color}"/>`,
-    bag: `<path d="M95 95 q35 -70 70 0" fill="none" stroke="#8a6d46" stroke-width="10"/><rect x="60" y="95" width="140" height="150" rx="8" fill="${color}"/>`,
-    socks: `<path d="M90 50 h50 v120 l40 30 a22 22 0 0 1 -20 40 l-60 -40 a20 20 0 0 1 -10 -16 z" fill="${color}"/>`,
-    earphone: `<ellipse cx="100" cy="140" rx="30" ry="38" fill="${color}"/><rect x="92" y="170" width="16" height="60" rx="8" fill="${color}"/><ellipse cx="170" cy="140" rx="30" ry="38" fill="${color}"/><rect x="162" y="170" width="16" height="60" rx="8" fill="${color}"/>`
-  };
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 280"><rect width="260" height="280" fill="#f4f4f2"/>${shapes[shape]}</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
+// 사진은 Codex 이미지 생성으로 만들었다(글자 없음). 상세 이미지는 detail/detail.html을 렌더링한 것 (npm run mall:build)
+const img = (name) => `images/${name}.jpg`;
+const details = (id, n = 3) => Array.from({ length: n }, (_, i) => img(`${id}-detail-0${i + 1}`));
 
 // options: 고르는 순서대로. values의 soldOut은 품절(고를 수 없음), extra는 추가 금액
 export const PRODUCTS = [
@@ -38,13 +30,12 @@ export const PRODUCTS = [
     reviewCount: 3,
     images: [
       { src: '../shop/images/product-white.jpg', alt: '화이트 색상 진공 텀블러 정면' },
-      { src: '../shop/images/product-colors.jpg', alt: '화이트, 블랙, 민트 세 가지 색상 텀블러' },
+      { src: '../shop/images/product-colors.jpg', alt: '화이트, 블랙, 세이지그린 세 가지 색상 텀블러' },
       { src: '../shop/images/lid-detail.jpg', alt: '슬라이드 뚜껑을 연 모습' }
     ],
-    // 상세 이미지: 대체 텍스트 없이 넣는다 (국내 쇼핑몰에 흔한 형태, 온글의 상세 이미지 읽기 대상)
     detailImages: ['../shop/images/detail-01.jpg', '../shop/images/detail-02.jpg', '../shop/images/detail-03.jpg', '../shop/images/detail-04.jpg'],
-    options: [{ name: '색상', values: [{ name: '화이트' }, { name: '블랙' }, { name: '민트', soldOut: true }] }],
-    summary: '12시간 보온, 24시간 보냉. 슬라이드 뚜껑으로 한 손으로 열고 닫습니다.'
+    options: [{ name: '색상', values: [{ name: '화이트' }, { name: '블랙' }, { name: '세이지그린', soldOut: true }] }],
+    summary: '6시간 보온, 12시간 보냉. 슬라이드 뚜껑으로 한 손으로 열고 닫습니다.'
   },
   {
     id: 'mug',
@@ -54,10 +45,14 @@ export const PRODUCTS = [
     price: 12900,
     rating: 4.5,
     reviewCount: 2,
-    images: [{ src: drawing('mug', '#e9e2d0'), alt: '아이보리 색 도자기 머그컵' }],
+    images: [
+      { src: img('mug-ivory'), alt: '아이보리 색 도자기 머그컵' },
+      { src: img('mug-navy'), alt: '네이비 색 도자기 머그컵' },
+      { src: img('mug-lifestyle'), alt: '나무 책상 위 커피가 담긴 아이보리 머그컵' }
+    ],
+    detailImages: details('mug'),
     options: [{ name: '색상', values: [{ name: '아이보리' }, { name: '네이비' }] }],
     summary: '전자레인지와 식기세척기에 쓸 수 있는 도자기 머그컵입니다.',
-    detailText: ['용량 350ml, 높이 9.5cm, 지름 8cm', '소재: 도자기 (전자레인지·식기세척기 사용 가능)', '오븐과 직화에는 쓰지 마세요.']
   },
   {
     id: 'bottle',
@@ -67,13 +62,17 @@ export const PRODUCTS = [
     price: 29900,
     rating: 4.6,
     reviewCount: 2,
-    images: [{ src: drawing('bottle', '#b8bec4'), alt: '실버 색 보온보냉 물병' }],
+    images: [
+      { src: img('bottle-silver'), alt: '실버 색 보온보냉 물병' },
+      { src: img('bottle-colors'), alt: '실버, 블랙, 핑크 세 가지 색상 물병' },
+      { src: img('bottle-straw-lid'), alt: '빨대 뚜껑을 끼운 물병 윗부분' }
+    ],
+    detailImages: details('bottle'),
     options: [
       { name: '색상', values: [{ name: '실버' }, { name: '블랙' }, { name: '핑크' }] },
       { name: '뚜껑', values: [{ name: '기본 뚜껑' }, { name: '빨대 뚜껑', extra: 3000 }] }
     ],
     summary: '빨대 뚜껑을 고르면 3,000원이 추가됩니다.',
-    detailText: ['용량 750ml, 보온 12시간, 보냉 24시간', '소재: 스테인리스 304', '빨대 뚜껑은 분리해 세척할 수 있습니다.']
   },
   {
     id: 'ecobag',
@@ -83,10 +82,14 @@ export const PRODUCTS = [
     price: 15900,
     rating: 4.3,
     reviewCount: 1,
-    images: [{ src: drawing('bag', '#e6dcc3'), alt: '내추럴 색 캔버스 에코백' }],
+    images: [
+      { src: img('ecobag-natural'), alt: '내추럴 색 캔버스 에코백' },
+      { src: img('ecobag-black'), alt: '블랙 캔버스 에코백' },
+      { src: img('ecobag-inside'), alt: '에코백 안쪽 주머니에 휴대폰을 넣은 모습' }
+    ],
+    detailImages: details('ecobag'),
     options: [{ name: '색상', values: [{ name: '내추럴' }, { name: '블랙' }] }],
     summary: 'A4 서류와 노트북(14인치)이 들어가는 크기입니다.',
-    detailText: ['크기: 가로 38cm, 세로 42cm, 바닥 폭 10cm', '소재: 면 100% (캔버스 12수)', '안쪽 주머니 1개']
   },
   {
     id: 'socks',
@@ -96,11 +99,15 @@ export const PRODUCTS = [
     price: 9900,
     rating: 4.4,
     reviewCount: 2,
-    images: [{ src: drawing('socks', '#9fb7a8'), alt: '세이지 그린 색 면 양말' }],
+    images: [
+      { src: img('socks-set'), alt: '세이지그린, 아이보리, 그레이, 네이비, 머스터드 다섯 가지 색 면 양말' },
+      { src: img('socks-lifestyle'), alt: '세이지그린 양말을 신은 발' },
+      { src: img('socks-detail'), alt: '양말 발목 골지 부분 접사' }
+    ],
+    detailImages: details('socks'),
     // 사이즈는 버튼 묶음으로 고른다 (select가 아닌 형태)
     options: [{ name: '사이즈', type: 'buttons', values: [{ name: '230mm' }, { name: '250mm' }, { name: '270mm', soldOut: true }] }],
     summary: '5가지 색이 한 켤레씩 들어 있습니다.',
-    detailText: ['소재: 면 80%, 폴리에스터 18%, 스판덱스 2%', '구성: 5켤레 (색상 혼합)', '세탁망에 넣어 찬물로 세탁하세요.']
   },
   {
     id: 'earphone',
@@ -111,17 +118,21 @@ export const PRODUCTS = [
     salePrice: 49900,
     rating: 4.2,
     reviewCount: 2,
-    images: [{ src: drawing('earphone', '#f2f2f2'), alt: '화이트 무선 이어폰 한 쌍' }],
+    images: [
+      { src: img('earphone-white'), alt: '화이트 무선 이어폰 한 쌍과 열린 충전 케이스' },
+      { src: img('earphone-parts'), alt: '이어폰, 충전 케이스, USB-C 케이블, 이어팁 구성품' },
+      { src: img('earphone-wear'), alt: '귀에 낀 화이트 무선 이어폰' }
+    ],
+    detailImages: details('earphone'),
     options: [{ name: '색상', values: [{ name: '화이트' }, { name: '블랙', soldOut: true }] }],
     summary: '한 번 충전으로 6시간, 충전 케이스와 함께 24시간 사용합니다.',
-    detailText: ['블루투스 5.3, 생활 방수(IPX4)', '재생 시간: 이어폰 6시간, 케이스 포함 24시간', '구성: 이어폰, 충전 케이스, USB-C 케이블']
   }
 ];
 
 export const REVIEWS = {
   tumbler: [
     { author: 'kim***', rating: 5, text: '오후까지 커피가 따뜻해요. 뚜껑이 한 손으로 열려서 편합니다.' },
-    { author: 'lee***', rating: 5, text: '민트 색이 품절이라 화이트로 샀는데 깔끔해요.' },
+    { author: 'lee***', rating: 5, text: '세이지그린이 품절이라 화이트로 샀는데 깔끔해요.' },
     { author: 'par***', rating: 4, text: '식기세척기에 못 넣는 점만 아쉬워요.' }
   ],
   mug: [
