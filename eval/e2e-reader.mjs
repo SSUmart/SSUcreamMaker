@@ -253,6 +253,22 @@ await press('KeyE');
 check('검색창에서 Enter: 글쓰기 모드', (await press('Enter', 400)).includes('글쓰기 모드'));
 await press('Escape', 300);
 
+console.log('\n== 가상 쇼핑몰(온글몰)');
+await page.goto(`${base}/mall/`);
+c = await until((t) => t.includes('온글몰'));
+check('온글몰 메인을 읽음', c.includes('온글몰'), c);
+check('H: 상품 목록 제목', (await toItem('KeyH', '전체 상품', 5)).includes('전체 상품, 제목 1'));
+// 일부러 넣은 접근성 문제: 장바구니 아이콘 링크의 이름이 개수 숫자뿐 ("0, 링크")
+await press('Control+Home', 150);
+await press('KeyK', 120);
+await press('KeyK', 120);
+c = await press('KeyK', 120);
+check('장바구니 아이콘 링크는 개수 숫자로만 읽힘 (일부러 넣은 문제)', /^0, 링크/.test(c), c);
+await page.goto(`${base}/mall/product.html?id=tumbler`);
+c = await until((t) => t.includes('스텐 진공 텀블러'));
+check('E: 상품 페이지의 첫 편집창은 검색창', (await toItem('KeyE', '상품 검색', 3)).includes('상품 검색'));
+check('C: 색상 선택 상자', (await toItem('KeyC', '색상', 3)).includes('색상'));
+
 console.log('\n== 교차 검증');
 await page.goto(`${base}/fixture/`);
 await page.waitForTimeout(500);
