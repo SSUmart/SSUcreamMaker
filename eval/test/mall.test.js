@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { shopFile } from '../shop/serve.mjs';
@@ -25,6 +26,23 @@ test('상품 id가 겹치지 않고, 모든 상품에 사진 대체 텍스트와
   }
 });
 
+test('모든 상품의 사진과 상세 이미지 파일이 있다', () => {
+  for (const p of PRODUCTS) {
+    assert.ok(p.detailImages?.length, `${p.id} 상세 이미지 없음`);
+    for (const src of [...p.images.map((i) => i.src), ...p.detailImages]) {
+      assert.ok(fs.existsSync(path.join(mallDir, src)), `${p.id}: ${src}`);
+    }
+  }
+});
+
+test('상세 이미지 원본에 적힌 옵션 이름은 상품 옵션과 같다', () => {
+  const html = fs.readFileSync(path.join(mallDir, 'detail/detail.html'), 'utf8');
+  for (const p of PRODUCTS.filter((p) => p.id !== 'tumbler')) {
+    const block = html.slice(html.indexOf(`id="${p.id}-detail-01"`), html.indexOf(`id="${p.id}-detail-03"`));
+    for (const o of p.options) for (const v of o.values) assert.ok(block.includes(v.name), `${p.id}: ${v.name}`);
+  }
+});
+
 test('가격: 할인가와 옵션 추가 금액을 더한다', () => {
   assert.equal(unitPrice(productById('tumbler'), { 색상: '화이트' }), 24900);
   assert.equal(unitPrice(productById('bottle'), { 색상: '실버', 뚜껑: '빨대 뚜껑' }), 32900);
@@ -35,7 +53,7 @@ test('옵션을 다 고르지 않았거나 품절을 고르면 빠진 옵션으�
   const bottle = productById('bottle');
   assert.deepEqual(missingOptions(bottle, {}), ['색상', '뚜껑']);
   assert.deepEqual(missingOptions(bottle, { 색상: '블랙' }), ['뚜껑']);
-  assert.deepEqual(missingOptions(productById('tumbler'), { 색상: '민트' }), ['색상']);
+  assert.deepEqual(missingOptions(productById('tumbler'), { 색상: '세이지그린' }), ['색상']);
   assert.deepEqual(missingOptions(productById('socks'), { 사이즈: '250mm' }), []);
 });
 

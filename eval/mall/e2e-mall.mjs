@@ -43,7 +43,7 @@ await page.getByRole('link', { name: /스텐 진공 텀블러/ }).click();
 check('상품: 제목', (await text('h1')) === '스텐 진공 텀블러 500ml');
 await page.getByRole('button', { name: '장바구니 담기' }).click();
 check('옵션 안 고르고 담기: 오류 안내', (await text('#option-error')).includes('색상을(를) 골라 주세요'));
-check('품절 옵션은 고를 수 없음', await page.locator('#opt-0 option', { hasText: '민트' }).isDisabled());
+check('품절 옵션은 고를 수 없음', await page.locator('#opt-0 option', { hasText: '세이지그린' }).isDisabled());
 await page.getByLabel('색상').selectOption('화이트');
 await page.locator('.qty-plus').click();
 await page.locator('.qty-plus').click();
