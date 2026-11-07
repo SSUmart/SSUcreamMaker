@@ -1,0 +1,31 @@
+# 온글 평가용 웹(온글몰·평가용 쇼핑몰·평가 설문)을 8080 포트 하나로 띄우는 systemd 서비스.
+# 설치 방법: docs/EVAL-WEB-SERVICE.md
+#   sudo cp eval/deploy/ongeul-eval-web.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now ongeul-eval-web
+# 저장소 위치(/opt/ssu/SSUcreamMaker), 실행 계정(ssu), node 경로(/usr/bin/node)가 다르면 아래를 고친다.
+
+[Unit]
+Description=Ongeul evaluation web (mall, shop, survey on one port)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ssu
+Group=ssu
+WorkingDirectory=/opt/ssu/SSUcreamMaker/eval
+# 포트·주소·설문 비밀번호는 이 파일에 둔다 (권한 600, 저장소에 올리지 않음)
+EnvironmentFile=/etc/ongeul-eval-web.env
+ExecStart=/usr/bin/node web.mjs
+Restart=on-failure
+RestartSec=3
+# 로그는 journalctl -u ongeul-eval-web 으로 본다
+
+# 보호 설정: 시스템 폴더 쓰기, 홈 폴더 접근, 권한 상승을 막는다 (설문 응답은 저장소 안 eval/survey/data에 쓴다)
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

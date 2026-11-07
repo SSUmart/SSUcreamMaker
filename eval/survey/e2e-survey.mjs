@@ -1,18 +1,20 @@
 // 설문 서비스 화면 점검: 실제 Chromium으로 관리자 로그인 → 설문 만들기 → 팀원·사용자 링크로 응답 → AI 답 입력 → 끝내기 → 분석표.
+// 테스트 서버와 같은 모양으로, 쇼핑몰과 한 포트를 쓰는 합친 서버(web.mjs)의 /survey/ 아래에서 점검한다.
 // 임시 폴더에 서버를 띄우므로 실제 응답 데이터는 건드리지 않는다.
 // 사용법: eval 폴더에서 npm run e2e:survey   (--headed: 창 띄우기, --shots <폴더>: 화면 저장)
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createSurveyServer } from './server.mjs';
+import { createWebServer } from '../web.mjs';
 
 const args = process.argv.slice(2);
 const shots = args.includes('--shots') ? path.resolve(args[args.indexOf('--shots') + 1]) : null;
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'survey-e2e-'));
-const server = createSurveyServer({ dataDir, password: 'e2e-pass' });
+const server = createWebServer({ survey: { dataDir, password: 'e2e-pass', basePath: '/survey' } });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
-const base = `http://127.0.0.1:${server.address().port}`;
+const origin = `http://127.0.0.1:${server.address().port}`;
+const base = `${origin}/survey`;
 
 const browser = await chromium.launch({ channel: 'chromium', headless: !args.includes('--headed') });
 const page = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1200, height: 900 } });
@@ -32,7 +34,11 @@ const shot = async (name) => shots && page.screenshot({ path: path.join(shots, `
 if (shots) fs.mkdirSync(shots, { recursive: true });
 
 try {
-  console.log('== 관리자');
+  console.log('== 한 포트에 함께');
+  check('쇼핑몰도 같은 포트에서 열림', (await page.goto(`${origin}/mall/`)).ok());
+  check('/survey → 관리자 화면으로', (await page.goto(`${base}`)) && new URL(page.url()).pathname === '/survey/admin');
+
+  console.log('\n== 관리자');
   await page.goto(`${base}/`);
   await page.getByLabel('관리자 비밀번호').fill('틀린 비밀번호');
   await page.getByRole('button', { name: '로그인' }).click();
@@ -53,7 +59,7 @@ try {
   check('설문 상세로 이동', /#\/s\//.test(page.url()));
   const teamLink = await page.getByLabel('팀원용 링크').inputValue();
   const userLink = await page.getByLabel('사용자용 링크').inputValue();
-  check('팀원·사용자 링크가 따로 있음', teamLink !== userLink && teamLink.includes('/s/') && userLink.includes('/s/'));
+  check('팀원·사용자 링크가 따로 있고 /survey/s/ 아래', teamLink !== userLink && teamLink.startsWith(`${base}/s/`) && userLink.startsWith(`${base}/s/`));
   check('끝내기 전에는 분석표 대신 안내', (await page.locator('main').innerText()).includes('설문을 끝내면'));
   await shot('admin-detail');
 
@@ -120,6 +126,9 @@ try {
   check('영역별 비교 표', (await page.getByRole('table', { name: /영역별/ }).count()) === 1);
   check('눈여겨볼 문항에 3번', report.includes('3번 상세 이미지 읽기'));
   check('하고 싶은 말', report.includes('상세 이미지 읽기가 조금 느려요'));
+  const csvHref = await page.getByRole('link', { name: '응답 내려받기 (CSV)' }).getAttribute('href');
+  const csv = await page.evaluate((href) => fetch(href).then((r) => r.status), csvHref);
+  check('CSV 링크도 /survey 아래에서 받아짐', csvHref.startsWith('/survey/api/') && csv === 200, `${csvHref} ${csv}`);
   check('끝난 설문은 링크 안내 없음', !(await page.getByLabel('사용자용 링크').count()));
   await shot('admin-analysis');
 
