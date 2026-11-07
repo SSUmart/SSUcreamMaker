@@ -56,12 +56,13 @@ test('키 도움말 안내는 하나씩 듣는 법과 Esc로 돌아갈 곳을 �
 });
 
 test('새 탭 질문은 바꾼 내용, 이유, 되돌렸을 때 문제, 고르는 법을 읽는다', () => {
-  const text = guidance.message('newtab-ask', { count: 2, position: 1, label: 'google.com 그대로 쓰기' }, { verbosity: 'short', seen: 9 });
-  assert.match(text, /google\.com으로 바꿨습니다/);
+  const text = guidance.message('newtab-ask', { count: 2, position: 1, label: '구글 페이지 그대로 쓰기' }, { verbosity: 'short', seen: 9 });
+  assert.match(text, /구글 페이지가 열리도록 기본 페이지를 바꿨습니다/);
+  assert.doesNotMatch(text, /google\.com/); // 음성이 "구글점컴"으로 읽으므로 소리로 읽는 글에는 쓰지 않는다
   assert.match(text, /온글이 내용을 읽지 못하고/);
   assert.match(text, /되돌릴까요\?/);
   assert.match(text, /주소창에 직접 입력해야/);
-  assert.match(text, /2개 중 1번, google\.com 그대로 쓰기/);
+  assert.match(text, /2개 중 1번, 구글 페이지 그대로 쓰기/);
 });
 
 test('크롬 기본 새 탭 안내는 할 수 있는 일과 바꾸는 법을 알리고, 켜짐 안내를 앞에 붙인다', () => {

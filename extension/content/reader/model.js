@@ -105,6 +105,13 @@
   const SCAN_INSIDE = new Set(['heading']);
   // 이름 없이 있으면 사용자가 무엇인지 알 수 없는 종류 (AI 자동 보완 대상)
   const NEEDS_NAME = new Set(['link', 'button', 'switch', 'img', 'tab', 'menuitem', 'checkbox', 'radio', 'textbox', 'searchbox', 'combobox']);
+  // 아이콘과 숫자만 있는 링크·버튼 (장바구니 아이콘 + 담은 개수 "0" 등): 숫자는 이름이 아니라 개수라서 무엇인지 알 수 없다.
+  // 이름 없는 것으로 보고 AI로 채우되, 숫자는 함께 읽는다. 아이콘 없이 숫자만 있는 쪽 번호 링크("2")는 그대로 둔다
+  const WEAK_NAME_ROLES = new Set(['link', 'button', 'menuitem', 'tab']);
+  const COUNT_ONLY = /^[\d\s.,:·/+\-%()[\]#×xX]*\d[\d\s.,:·/+\-%()[\]#×xX]*$/;
+  function countOnlyName(el, role, name, source) {
+    return WEAK_NAME_ROLES.has(role) && source === 'content' && COUNT_ONLY.test(name) && !!el.querySelector('svg, img, i, [class*="icon" i]');
+  }
   // 이름을 내용 글자로 정하는 종류
   const NAME_FROM_CONTENT = new Set(['link', 'button', 'switch', 'tab', 'menuitem', 'option', 'heading', 'checkbox', 'radio']);
 
@@ -352,6 +359,12 @@
       return clean(aria(el, 'valuetext') ?? aria(el, 'valuenow') ?? el.textContent, 200);
     }
     if (role === 'combobox') return clean(el.value ?? aria(el, 'valuetext') ?? '', 200);
+    // 사용자 정의 목록 상자: 지금 가리키는 항목(aria-activedescendant), 없으면 고른 항목(aria-selected)
+    if (role === 'listbox') {
+      const id = aria(el, 'activedescendant');
+      const option = (id && el.ownerDocument.getElementById(id)) || el.querySelector('[role="option"][aria-selected="true"]');
+      return option ? clean(contentText(option), 200) : '';
+    }
     if (role === 'progressbar' || role === 'meter') return clean(aria(el, 'valuetext') ?? aria(el, 'valuenow') ?? '', 50);
     return '';
   }
@@ -371,6 +384,8 @@
       group = [...(el.closest('[role="tablist"]')?.querySelectorAll('[role="tab"]') ?? [])];
     } else if (role === 'radio') {
       group = [...(el.closest('[role="radiogroup"]')?.querySelectorAll('[role="radio"]') ?? [])];
+    } else if (role === 'option') {
+      group = [...(el.closest('[role="listbox"]')?.querySelectorAll('[role="option"]') ?? [])];
     }
     const index = group.indexOf(el);
     return index >= 0 && group.length > 1 ? `${index + 1}/${group.length}` : '';
@@ -397,6 +412,7 @@
     const roleName = item.role === 'heading' ? `${ROLE_NAMES.heading} ${item.level}` : ROLE_NAMES[item.role] ?? '';
     if (item.name) parts.push(item.aiName ? `${item.name}, AI 추정` : item.name);
     else if (item.needsName) parts.push('이름 없음');
+    if (item.countText) parts.push(item.countText);
     if (roleName) parts.push(roleName);
     if (item.summary) parts.push(item.summary);
     parts.push(...item.states);
@@ -407,13 +423,16 @@
   }
 
   function makeItem(el, role, extra = {}) {
-    const { name, source } = role === 'text' ? { name: '', source: 'content' } : accessibleName(el);
+    const found = role === 'text' ? { name: '', source: 'content' } : accessibleName(el);
+    const weak = role !== 'text' && countOnlyName(el, role, found.name, found.source);
+    const name = weak ? '' : found.name;
     const item = {
       el,
       role,
       category: CATEGORY[role] ?? (role === 'text' ? 'text' : 'other'),
       name,
-      nameSource: source,
+      nameSource: found.source,
+      countText: weak ? found.name : '', // 이름 대신 들어 있던 숫자 (이름 뒤에 함께 읽는다)
       needsName: NEEDS_NAME.has(role) && !name,
       aiName: false,
       level: role === 'heading' ? headingLevel(el) : 0,

@@ -53,6 +53,7 @@
   let sayingAll = false;
   let stopWatching = null;
   let liveObserver = null;
+  let selectionObserver = null;
   let ignoreFocusUntil = 0;
   // 초점이 웹페이지 밖(주소창 등)에 있을 때 받은 명령. F6으로 초점이 돌아오면 이어서 실행한다.
   let pendingOnFocus = null;
@@ -112,7 +113,8 @@
     ns.menu.openHelp();
   }
 
-  // 온글을 처음 켰을 때 한 번: 새 탭을 google.com으로 바꾼 이유를 알리고 되돌릴지 묻는다.
+  // 온글을 처음 켰을 때 한 번: 새 탭을 구글 페이지(google.com)로 바꾼 이유를 알리고 되돌릴지 묻는다.
+  // 소리로 읽는 글에는 google.com 대신 "구글 페이지"라고 쓴다 (음성이 "구글점컴"으로 읽음).
   // 여러 탭이 한꺼번에 켜져도 한 번만 묻도록 서비스 워커가 정한다. 앞 안내(켜짐, 페이지 정보)에 이어서 읽는다.
   async function askNewTabOnce() {
     const response = await chrome.runtime.sendMessage({ type: 'ongeul-claim-newtab-question' }).catch(() => null);
@@ -125,7 +127,7 @@
       '새 탭 설정',
       'newtab-ask',
       [
-        { label: 'google.com 그대로 쓰기', hint: '추천, 새 탭에서도 온글이 읽습니다', action: answer('google', 'newtab-kept') },
+        { label: '구글 페이지 그대로 쓰기', hint: '추천드립니다. 새 탭에서도 온글이 적용됩니다', action: answer('google', 'newtab-kept') },
         { label: '크롬 기본 새 탭으로 되돌리기', hint: '새 탭에서는 온글이 읽지 못합니다', action: answer('chrome', 'newtab-reverted') }
       ],
       { cancel: answer('google', 'newtab-kept') }
@@ -548,6 +550,76 @@
     ns.ai?.onItemRead?.(item);
   }
 
+  // 선택 상자·목록 상자·콤보 상자에서 고른 항목을 읽는다.
+  // 초점이 항목마다 옮겨 가는 목록은 onFocusIn이 읽지만, 초점은 상자에 두고 값이나 가리키는 항목(aria-activedescendant)만
+  // 바꾸는 목록은 초점 이동이 없어 따로 살펴야 한다 (네이버 검색 자동완성, 많은 쇼핑몰의 옵션 목록 등).
+  const isOwnUi = (el) => !!el?.closest?.('[data-ongeul-ui]');
+  function sayChoice(text) {
+    if (!text || document.visibilityState !== 'visible') return;
+    output.say(text, { interrupt: true });
+  }
+
+  // 기본 선택 상자: 키보드(Windows의 화살표)나 펼친 목록에서 고르면 change가 온다
+  function onSelectChange(event) {
+    const el = event.target;
+    if (!enabled || !(el instanceof HTMLSelectElement) || isOwnUi(el)) return;
+    const chosen = [...el.selectedOptions].map((o) => o.textContent.trim()).filter(Boolean);
+    if (!chosen.length) return;
+    const position = el.multiple || el.options.length < 2 ? '' : `, ${el.selectedIndex + 1}/${el.options.length}`;
+    // 읽기 목록의 항목 문장도 새 값으로 (다시 읽을 때 옛 값이 나오지 않게)
+    const at = model.indexOfElement(items, el, { exact: true });
+    if (at !== -1) items[at] = model.refreshItem(items[at]);
+    sayChoice(`${chosen.join(', ')}${position}`);
+  }
+
+  // 초점이 있는 상자의 aria-activedescendant, aria-expanded, 그 안 항목의 aria-selected가 바뀌면 읽는다
+  let browsingOptionsOf = null; // 후보 항목을 읽어 준 콤보 상자 (닫힐 때 값을 알리려고)
+  function watchSelection() {
+    selectionObserver = new MutationObserver((mutations) => {
+      if (!enabled) return;
+      const active = document.activeElement;
+      if (!active || active === document.body || isOwnUi(active)) return;
+      let option = null;
+      let expanded = null;
+      for (const m of mutations) {
+        const target = m.target;
+        if (m.attributeName === 'aria-activedescendant' && target === active) {
+          const id = active.getAttribute('aria-activedescendant');
+          option = id ? active.ownerDocument.getElementById(id) : null;
+        } else if (m.attributeName === 'aria-expanded' && target === active && m.oldValue !== active.getAttribute('aria-expanded')) {
+          expanded = active.getAttribute('aria-expanded'); // 같은 값을 다시 넣은 것은 바뀐 것이 아니다
+        } else if (
+          m.attributeName === 'aria-selected' &&
+          target.getAttribute('aria-selected') === 'true' &&
+          target.getAttribute('role') === 'option' &&
+          !active.hasAttribute('aria-activedescendant') &&
+          active.contains(target)
+        ) {
+          option = target; // 가리키는 항목 없이 고른 표시만 바꾸는 목록 상자
+        }
+      }
+      // 글자를 칠 때마다 자동완성 목록이 열리고 닫히므로 펼침·접힘만으로는 읽지 않는다.
+      // 후보 사이를 오가다(option을 읽은 뒤) 닫히면 고른 값을 알린다 (후보를 고르고 Enter)
+      const parts = [];
+      if (option?.isConnected) {
+        if (expanded === 'true') parts.push('펼쳐짐');
+        parts.push(model.itemFor(option).phrase);
+        browsingOptionsOf = active;
+      } else if (expanded === 'false' && browsingOptionsOf === active) {
+        browsingOptionsOf = null;
+        const value = model.itemFor(active).value;
+        parts.push(value ? `${value}, 접힘` : '접힘');
+      }
+      sayChoice(parts.join(', '));
+    });
+    selectionObserver.observe(document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeOldValue: true,
+      attributeFilter: ['aria-activedescendant', 'aria-expanded', 'aria-selected']
+    });
+  }
+
   // 실시간 안내 영역(role=status/alert, aria-live)의 새 글을 읽는다.
   // 같은 글을 다시 알리려고 비웠다 채우는 경우와, 안내 영역이 통째로 새로 생기는 경우(토스트 알림)도 읽는다.
   // 일반(polite) 안내는 하나씩 차례로 읽는다. 아직 읽지 않은 안내는 같은 영역의 새 안내로 바꾸고(진행률처럼 자주 바뀌는 안내가
@@ -634,6 +706,8 @@
     index = -1;
     stopWatching = model.watch(onPageChange);
     watchLiveRegions();
+    watchSelection();
+    document.addEventListener('change', onSelectChange, true);
     window.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('keyup', onKeyUp, true);
     window.addEventListener('focus', onWindowFocus);
@@ -664,6 +738,9 @@
     stopWatching = null;
     liveObserver?.disconnect();
     liveObserver = null;
+    selectionObserver?.disconnect();
+    selectionObserver = null;
+    document.removeEventListener('change', onSelectChange, true);
     window.removeEventListener('keydown', onKeyDown, true);
     window.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('focus', onWindowFocus);

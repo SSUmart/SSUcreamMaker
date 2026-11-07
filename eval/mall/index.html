@@ -10,8 +10,9 @@
 <body>
   <div id="site-header"></div>
   <main id="main" tabindex="-1">
+    <!-- 실제 쇼핑몰처럼 배너를 누르면 기획전 상품 목록으로 간다. 링크는 제목에 걸고(Tab·H 키로 모두 찾음) CSS로 배너 전체를 덮는다 -->
     <section class="banner" aria-labelledby="banner-title">
-      <h2 id="banner-title">11월 생활용품 기획전</h2>
+      <h2 id="banner-title"><a id="banner" href="index.html?sale=1">11월 생활용품 기획전</a></h2>
       <p>3만 원 이상 사면 배송비 무료. 텀블러와 무선 이어폰 할인 중.</p>
     </section>
     <h1 id="list-title">전체 상품</h1>
@@ -29,11 +30,12 @@
     const params = new URLSearchParams(location.search);
     const category = params.get('category') ?? '';
     const query = (params.get('q') ?? '').trim();
+    const sale = params.get('sale') === '1'; // 기획전 배너: 할인 중인 상품만
     renderHeader({ category, query });
     renderFooter();
 
-    const list = PRODUCTS.filter((p) => (!category || p.category === category) && (!query || p.name.includes(query) || p.brand.includes(query)));
-    const title = query ? `"${query}" 검색 결과` : `${CATEGORIES.find((c) => c.id === category)?.name ?? '전체'} 상품`;
+    const list = PRODUCTS.filter((p) => (!category || p.category === category) && (!query || p.name.includes(query) || p.brand.includes(query)) && (!sale || p.salePrice));
+    const title = query ? `"${query}" 검색 결과` : sale ? '기획전 할인 상품' : `${CATEGORIES.find((c) => c.id === category)?.name ?? '전체'} 상품`;
     $('#list-title').textContent = title;
     document.title = `${title} - 온글몰`;
     $('#list-count').textContent = `상품 ${list.length}개`;
