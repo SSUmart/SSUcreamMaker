@@ -55,6 +55,28 @@ const SEARCH_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-
 <input name="search_query" aria-label="유튜브 검색" role="combobox" aria-autocomplete="list" aria-expanded="false">
 <p>끝</p></main></body></html>`;
 
+// 고른 항목 알림: 초점은 상자에 두고 가리키는 항목(aria-activedescendant)이나 값만 바꾸는 목록 (초점 이동이 없음)
+const CHOICE_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>항목 선택 확인</title></head><body><main>
+<h1>항목 선택 확인</h1>
+<label for="color">색상</label><select id="color"><option>고르세요</option><option>블랙</option><option>화이트</option></select>
+<span id="fl">과일</span><ul role="listbox" tabindex="0" aria-labelledby="fl" id="lb" aria-activedescendant="o1">
+<li role="option" id="o1" aria-selected="true">사과</li><li role="option" id="o2" aria-selected="false">배</li><li role="option" id="o3" aria-selected="false">귤</li></ul>
+<label for="cb">도시</label><input id="cb" role="combobox" aria-expanded="false" aria-controls="cl" aria-autocomplete="list">
+<ul role="listbox" id="cl" hidden><li role="option" id="c1">서울</li><li role="option" id="c2">부산</li></ul>
+<p>끝</p></main>
+<script>
+const lb = document.getElementById('lb'), opts = [...lb.children]; let i = 0;
+lb.addEventListener('keydown', (e) => { if (!/Arrow(Up|Down)/.test(e.key)) return; e.preventDefault();
+  i = Math.max(0, Math.min(2, i + (e.key === 'ArrowDown' ? 1 : -1))); opts.forEach((o, k) => o.setAttribute('aria-selected', k === i)); lb.setAttribute('aria-activedescendant', opts[i].id); });
+const cb = document.getElementById('cb'), cl = document.getElementById('cl'), cs = [...cl.children]; let j = -1;
+const open = (v) => { cl.hidden = !v; cb.setAttribute('aria-expanded', String(v)); };
+cb.addEventListener('input', () => { open(cb.value.length > 0); j = -1; cb.removeAttribute('aria-activedescendant'); });
+cb.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); open(true); j = Math.min(1, j + 1); cs.forEach((o, k) => o.setAttribute('aria-selected', k === j)); cb.setAttribute('aria-activedescendant', cs[j].id); }
+  if (e.key === 'Enter' && j >= 0) { e.preventDefault(); cb.value = cs[j].textContent; open(false); cb.removeAttribute('aria-activedescendant'); j = -1; }
+});
+</script></body></html>`;
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/mock/v1/chat/completions') {
     let body = '';
@@ -64,6 +86,10 @@ const server = http.createServer(async (req, res) => {
     if (typeof content === 'string' && content.startsWith('웹페이지에 이름이 없어')) await new Promise((r) => setTimeout(r, 600));
     res.setHeader('content-type', 'application/json');
     return res.end(JSON.stringify({ choices: [{ message: { content: fakeAi(content) } }] }));
+  }
+  if (req.url === '/choice-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(CHOICE_FIXTURE);
   }
   if (req.url === '/search-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -183,8 +209,8 @@ let c = await until((t) => t.includes('온글이 켜졌습니다'));
 check('켜기 안내 (사용 가이드 위치 포함)', c.includes('온글이 켜졌습니다') && c.includes('사용 가이드'), c);
 // 처음 켜면 새 탭을 google.com으로 바꾼 이유를 알리고 되돌릴지 한 번 묻는다. Esc는 그대로 쓰기
 c = await until((t) => t.includes('되돌릴까요'));
-check('처음 켜면 새 탭 질문', c.includes('google.com') && c.includes('되돌릴까요') && c.includes('2개 중 1번'), c);
-check('새 탭 질문 Esc: google.com 그대로', (await press('Escape', 400)).includes('계속 google.com'));
+check('처음 켜면 새 탭 질문 (google.com 대신 구글 페이지)', c.includes('구글 페이지') && !c.includes('google.com') && c.includes('되돌릴까요') && c.includes('2개 중 1번'), c);
+check('새 탭 질문 Esc: 구글 페이지 그대로', (await press('Escape', 400)).includes('계속 구글 페이지'));
 check('아래 화살표: 첫 항목', (await press('ArrowDown')).includes('본문 바로가기, 링크'));
 check('H: 제목', (await press('KeyH')).includes('제목 1'));
 check('R → Enter: 라디오 선택', (await press('KeyR')).includes('1/3') && (await press('Enter', 400)).includes('선택됨'));
@@ -253,17 +279,55 @@ await press('KeyE');
 check('검색창에서 Enter: 글쓰기 모드', (await press('Enter', 400)).includes('글쓰기 모드'));
 await press('Escape', 300);
 
+console.log('\n== 고른 항목 알림 (선택 상자, 목록 상자, 자동완성 콤보 상자)');
+await page.goto(`${base}/choice-fixture/`);
+await page.waitForTimeout(500);
+await page.focus('#color');
+await page.waitForTimeout(300);
+await page.selectOption('#color', { index: 1 });
+c = await until((t) => t.includes('블랙'), 1500);
+check('선택 상자에서 고르면 고른 항목과 위치를 읽음', c.startsWith('블랙, 2/3'), c);
+await page.focus('#lb');
+c = await until((t) => t.includes('과일'), 1500);
+check('목록 상자에 가면 지금 항목도 읽음', c.includes('과일, 목록 상자, 사과'), c);
+c = await press('ArrowDown', 300);
+check('목록 상자 화살표: 가리키는 항목을 읽음 (초점 이동 없음)', c.startsWith('배, 선택 항목, 2/3'), c);
+await page.focus('#cb');
+await page.waitForTimeout(300);
+c = await press('KeyA', 300);
+check('콤보 상자에 글자를 칠 때 펼쳐짐을 읽지 않음', !c.includes('펼쳐짐'), c);
+await press('Backspace', 200);
+c = await press('ArrowDown', 300);
+check('콤보 상자 화살표: 펼쳐짐과 첫 후보', c.startsWith('펼쳐짐, 서울, 선택 항목, 1/2'), c);
+c = await press('ArrowDown', 300);
+check('콤보 상자 다음 후보 (펼쳐짐 반복 없음)', c.startsWith('부산, 선택 항목, 2/2'), c);
+c = await press('Enter', 300);
+check('후보를 고르고 Enter: 들어간 값과 접힘', c.startsWith('부산, 접힘'), c);
+await press('Escape', 300);
+
 console.log('\n== 가상 쇼핑몰(온글몰)');
 await page.goto(`${base}/mall/`);
 c = await until((t) => t.includes('온글몰'));
 check('온글몰 메인을 읽음', c.includes('온글몰'), c);
 check('H: 상품 목록 제목', (await toItem('KeyH', '전체 상품', 5)).includes('전체 상품, 제목 1'));
-// 일부러 넣은 접근성 문제: 장바구니 아이콘 링크의 이름이 개수 숫자뿐 ("0, 링크")
+c = await toItem('KeyH', '기획전', 3);
+check('H: 기획전 배너 제목', c.includes('11월 생활용품 기획전') && c.includes('제목 2'), c);
+// 기획전 배너는 링크라 Tab(초점 이동)으로도 간다
+await page.evaluate(() => document.getElementById('banner').focus());
+c = await until((t) => t.includes('기획전') && t.includes('링크'), 1500);
+check('Tab으로 기획전 배너 링크를 읽음', c.startsWith('11월 생활용품 기획전') && c.includes('링크'), c);
+// 일부러 넣은 접근성 문제: 장바구니 아이콘 링크의 이름이 개수 숫자뿐. 숫자는 이름이 아니라 개수이므로
+// "0, 링크" 대신 이름 없는 링크로 알리고(AI가 채움) 숫자는 함께 읽는다
 await press('Control+Home', 150);
 await press('KeyK', 120);
 await press('KeyK', 120);
 c = await press('KeyK', 120);
-check('장바구니 아이콘 링크는 개수 숫자로만 읽힘 (일부러 넣은 문제)', /^0, 링크/.test(c), c);
+// 페이지를 열 때 AI가 미리 채웠으면 "<AI 이름>, AI 추정, 0, 링크" (이 점검의 가짜 AI는 "이름 후보"라고 답함)
+const cartRead = /^(이름 없음|.+, AI 추정), 0, 링크/;
+check('장바구니 아이콘 링크: 숫자를 이름으로 쓰지 않고 이름 없음(AI 보완)으로 처리, 개수도 읽음', cartRead.test(c), c);
+await page.evaluate(() => document.querySelector('.cart-link').focus());
+c = await until((t) => t.includes('0, 링크'), 1500);
+check('Tab으로 장바구니 아이콘에 가도 같게 읽음', cartRead.test(c), c);
 await page.goto(`${base}/mall/product.html?id=tumbler`);
 c = await until((t) => t.includes('스텐 진공 텀블러'));
 check('E: 상품 페이지의 첫 편집창은 검색창', (await toItem('KeyE', '상품 검색', 3)).includes('상품 검색'));

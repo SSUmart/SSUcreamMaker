@@ -161,7 +161,8 @@
       const wrap = h('section', { class: 'tabs', 'aria-label': '상품 정보' }, list);
       const buttons = panels.map(([title, body], i) => {
         const tab = h('button', { type: 'button', role: 'tab', id: `tab-${i}`, 'aria-controls': `panel-${i}`, 'aria-selected': String(i === 0), tabindex: i === 0 ? '0' : '-1' }, title);
-        wrap.append(h('div', { role: 'tabpanel', id: `panel-${i}`, 'aria-labelledby': `tab-${i}`, hidden: i !== 0 }, h('h2', {}, title.replace(/ \(\d+\)$/, '')), body));
+        // 패널에 누를 것이 없어도(상세 이미지 등) Tab으로 탭 다음에 내용으로 들어갈 수 있게 tabindex=0 (W3C 탭 패턴)
+        wrap.append(h('div', { role: 'tabpanel', id: `panel-${i}`, 'aria-labelledby': `tab-${i}`, tabindex: '0', hidden: i !== 0 }, h('h2', {}, title.replace(/ \(\d+\)$/, '')), body));
         return tab;
       });
       const select = (i) => {

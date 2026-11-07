@@ -32,6 +32,10 @@ console.log('== 1. 장바구니를 거쳐 신용카드로 주문 (기본 배송�
 await page.goto(`${base}/`);
 check('메인: 상품 6개', (await page.locator('.products > li').count()) === 6);
 check('메인: 가상 쇼핑몰 안내', (await text('.notice-bar')).includes('실제로 주문·결제되지 않습니다'));
+await page.getByRole('link', { name: /11월 생활용품 기획전/ }).click();
+await page.waitForURL(/sale=1/);
+check('기획전 배너 링크: 할인 상품 2개', (await page.locator('.products > li').count()) === 2 && (await text('h1')) === '기획전 할인 상품');
+await page.goBack();
 await page.getByRole('link', { name: '주방' }).click();
 check('분류: 주방 상품 2개', (await page.locator('.products > li').count()) === 2 && (await text('h1')) === '주방 상품');
 await page.getByRole('searchbox', { name: '상품 검색' }).fill('이어폰');
@@ -41,6 +45,13 @@ check('검색: 이어폰 1개', (await page.locator('.products > li').count()) =
 await page.goto(`${base}/`);
 await page.getByRole('link', { name: /스텐 진공 텀블러/ }).click();
 check('상품: 제목', (await text('h1')) === '스텐 진공 텀블러 500ml');
+// 긴 상품 페이지도 Tab만으로 끝까지 간다: 탭 다음 패널(상세 이미지) → 푸터 "맨 위로"
+await page.getByRole('tab', { name: '상세정보' }).focus();
+await page.keyboard.press('Tab');
+const panelFocused = await page.evaluate(() => document.activeElement.getAttribute('role') === 'tabpanel');
+await page.keyboard.press('Tab');
+const toTop = await page.evaluate(() => ({ text: document.activeElement.textContent, bottom: Math.abs(scrollY - (document.documentElement.scrollHeight - innerHeight)) < 5 }));
+check('Tab: 상세정보 탭 → 탭 패널 → 맨 아래 "맨 위로"', panelFocused && toTop.text === '맨 위로' && toTop.bottom, JSON.stringify(toTop));
 await page.getByRole('button', { name: '장바구니 담기' }).click();
 check('옵션 안 고르고 담기: 오류 안내', (await text('#option-error')).includes('색상을(를) 골라 주세요'));
 check('품절 옵션은 고를 수 없음', await page.locator('#opt-0 option', { hasText: '세이지그린' }).isDisabled());
