@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LIMITS, analyze, checkAnswers, parseAiAnswer, parseQuestions, responsesCsv, validateSurveyInput, aiPrompt } from './analysis.js';
+import { LIMITS, analyze, checkAnswers, parseAiAnswer, parseQuestions, questionsToText, responsesCsv, validateSurveyInput, aiPrompt } from './analysis.js';
 import { createStore, newToken } from './store.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -117,6 +117,9 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
     ...summary(s),
     description: s.description,
     questionList: s.questions,
+    questionsText: questionsToText(s.questions),
+    // 응답이나 AI 답을 받은 뒤 문항을 바꾸면 이미 받은 점수가 다른 문항의 점수가 되므로, 그 전까지만 문항을 고칠 수 있다
+    questionsEditable: !s.responses.length && !s.aiAnswers.length,
     tokens: s.tokens,
     aiPrompt: aiPrompt(s),
     aiAnswers: s.aiAnswers.map((a) => ({ id: a.id, source: a.source, enteredAt: a.enteredAt, answered: Object.values(a.scores).filter((v) => v.score).length })),
@@ -202,6 +205,46 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
       }
 
       if ((hit = m(/^\/api\/admin\/surveys\/([A-Za-z0-9_-]+)$/)) && req.method === 'GET') return json(res, 200, detail(await adminSurvey(hit[1])));
+
+      // 수정: 제목·안내 문구는 언제나, 문항은 응답·AI 답이 없을 때만 (questionsText를 보냈을 때만 문항을 바꿈)
+      if ((hit = m(/^\/api\/admin\/surveys\/([A-Za-z0-9_-]+)$/)) && req.method === 'PATCH') {
+        await adminSurvey(hit[1]);
+        const data = await body(req);
+        const s = await store.update(hit[1], (s) => {
+          const next = {
+            title: data.title === undefined ? s.title : text(data.title, LIMITS.title),
+            description: data.description === undefined ? s.description : text(data.description, LIMITS.description),
+            questions: s.questions
+          };
+          if (data.questionsText !== undefined) {
+            const questions = parseQuestions(data.questionsText);
+            if (JSON.stringify(questions) !== JSON.stringify(s.questions)) {
+              if (s.responses.length || s.aiAnswers.length) {
+                throw new HttpError(409, '응답이나 AI 답을 받은 설문은 문항을 고칠 수 없습니다. 설문을 복제해서 새 설문으로 고치세요.');
+              }
+              next.questions = questions;
+            }
+          }
+          const errors = validateSurveyInput(next);
+          if (errors.length) throw new HttpError(400, errors.join(' '), { errors });
+          Object.assign(s, next);
+        });
+        if (!s) throw new HttpError(404, '설문을 찾을 수 없습니다.');
+        return json(res, 200, detail(s));
+      }
+
+      // 삭제: 휴지통(데이터 폴더의 trash/)으로 옮기고 링크를 끊는다
+      if ((hit = m(/^\/api\/admin\/surveys\/([A-Za-z0-9_-]+)$/)) && req.method === 'DELETE') {
+        if (!(await store.remove(hit[1]))) throw new HttpError(404, '설문을 찾을 수 없습니다.');
+        return json(res, 200, { ok: true });
+      }
+
+      // 복제: 제목·안내·문항만 복사한 새 설문 (새 링크, 응답 없음)
+      if ((hit = m(/^\/api\/admin\/surveys\/([A-Za-z0-9_-]+)\/copy$/)) && req.method === 'POST') {
+        const src = await adminSurvey(hit[1]);
+        const copy = await store.create({ title: `${src.title} (복사본)`.slice(0, LIMITS.title), description: src.description, questions: src.questions });
+        return json(res, 201, detail(copy));
+      }
 
       if ((hit = m(/^\/api\/admin\/surveys\/([A-Za-z0-9_-]+)\/close$/)) && req.method === 'POST') {
         await adminSurvey(hit[1]);

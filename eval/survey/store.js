@@ -105,5 +105,23 @@ export function createStore(dataDir) {
     return survey && { survey, role: hit.role };
   }
 
-  return { read, list, create, update, byToken };
+  // 설문 삭제: 파일을 지우지 않고 trash/ 폴더로 옮긴다 (서버에서 다시 옮겨 놓으면 되살아남). 링크도 바로 끊는다.
+  // 같은 설문의 쓰기 대기열 뒤에서 실행해, 저장 중인 응답과 엇갈리지 않게 한다
+  function remove(id) {
+    if (!ID.test(id)) return Promise.resolve(false);
+    const run = (queues.get(id) ?? Promise.resolve()).then(async () => {
+      const survey = await read(id);
+      if (!survey) return false;
+      const trash = path.join(dataDir, 'trash');
+      await fs.mkdir(trash, { recursive: true });
+      await fs.rename(file(id), path.join(trash, `${id}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`));
+      const map = await tokenMap();
+      for (const t of Object.values(survey.tokens)) map.delete(t);
+      return true;
+    });
+    queues.set(id, run.catch(() => {}));
+    return run;
+  }
+
+  return { read, list, create, update, remove, byToken };
 }

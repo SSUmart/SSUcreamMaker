@@ -63,6 +63,15 @@ try {
   check('끝내기 전에는 분석표 대신 안내', (await page.locator('main').innerText()).includes('설문을 끝내면'));
   await shot('admin-detail');
 
+  // 응답 전 수정: 문항까지 고칠 수 있음
+  await page.getByRole('link', { name: '수정', exact: true }).click();
+  await page.getByRole('heading', { name: '설문 수정', level: 1 }).waitFor();
+  check('수정 화면, 제목에 초점, 문항 고칠 수 있음', (await focusedText()) === '설문 수정' && !(await page.getByLabel('문항 (한 줄에 한 문항)').getAttribute('readonly') !== null));
+  await page.getByLabel('안내 문구 (선택, 응답 화면 맨 위에 나옴)').fill('온글을 써 본 경험을 알려 주세요. (고침)');
+  await page.getByRole('button', { name: '저장' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  check('수정 저장 → 설문 화면으로', /#\/s\/[^/]+$/.test(page.url()));
+
   console.log('\n== 응답자');
   const answer = async (link, scores, comment) => {
     await page.goto(link);
@@ -78,6 +87,7 @@ try {
 
   await page.goto(teamLink);
   await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  check('고친 안내 문구가 응답 화면에 나옴', (await page.locator('main').innerText()).includes('(고침)'));
   check('응답 화면: 팀원 표시, 문항 묶음 3개', (await page.getByText('팀원 평가', { exact: true }).count()) === 1 && (await page.getByRole('group').count()) === 3);
   check('점수 버튼에 뜻이 붙어 있음', (await page.getByRole('radio', { name: '1점 매우 불만족' }).count()) === 3 && (await page.getByRole('radio', { name: '해당 없음' }).count()) === 3);
   await page.getByRole('group', { name: /^1\. / }).getByRole('radio', { name: '4점 만족' }).check();
@@ -135,6 +145,24 @@ try {
   await page.goto(userLink);
   await page.getByText('종료된 설문입니다').waitFor();
   check('끝난 설문 링크: 종료 안내', true);
+
+  console.log('\n== 수정 제한, 복제, 삭제');
+  await page.goto(`${base}/admin#/`);
+  await page.getByRole('link', { name: '온글 1차 평가' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  await page.getByRole('link', { name: '수정', exact: true }).click();
+  await page.getByRole('heading', { name: '설문 수정', level: 1 }).waitFor();
+  check('응답 받은 설문: 문항은 읽기만, 이유 안내', (await page.getByLabel('문항 (한 줄에 한 문항)').getAttribute('readonly')) !== null && (await page.locator('#questions-hint').innerText()).includes('복제'));
+  await page.getByRole('link', { name: '취소' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  await page.getByRole('button', { name: '복제' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가 (복사본)', level: 1 }).waitFor();
+  const copyMain = await page.locator('main').innerText();
+  check('복제: 새 설문, 응답 없음, 진행 중', copyMain.includes('사용자 응답 0개') && copyMain.includes('진행 중') && (await page.getByLabel('사용자용 링크').inputValue()) !== userLink);
+  await page.getByRole('button', { name: '삭제' }).click(); // 확인 대화상자는 위에서 자동 수락
+  await page.getByRole('heading', { name: '설문 목록', level: 1 }).waitFor();
+  check('삭제 → 목록에서 사라짐', (await page.getByRole('link', { name: '온글 1차 평가 (복사본)' }).count()) === 0 && (await page.getByRole('link', { name: '온글 1차 평가', exact: true }).count()) === 1);
+  check('삭제한 설문은 휴지통 파일로 남음', fs.readdirSync(path.join(dataDir, 'trash')).length === 1);
 
   await page.goto(`${base}/admin#/`);
   await page.getByRole('button', { name: '로그아웃' }).click();
