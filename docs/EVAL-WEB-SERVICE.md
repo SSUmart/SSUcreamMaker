@@ -10,7 +10,7 @@
 | `/survey/s/<토큰>` | 설문 응답 링크 (관리자 화면에서 복사) |
 | `/healthz` | 살아 있는지 확인용 (`ok`) |
 
-한 포트만 쓰므로 nginx는 8080 하나만 넘겨주면 됩니다. 설문을 따로 띄우던 8090 포트는 더 쓰지 않습니다.
+한 포트만 쓰므로 nginx·Cloudflare 터널 같은 앞단(프록시)은 8080 하나만 넘겨주면 됩니다. SSU-DEV는 앞단이 다른 기기에 있고 `https://ssu.jaymong.me`로 연결됩니다. 설문을 따로 띄우던 8090 포트는 더 쓰지 않습니다.
 
 ## 1. 처음 설치
 
@@ -46,7 +46,10 @@ sudo chmod 600 /etc/ongeul-eval-web.env && sudo chown root:root /etc/ongeul-eval
 sudo vi /etc/ongeul-eval-web.env   # SURVEY_ADMIN_PASSWORD, HOST 고치기
 ```
 
-- `HOST`: nginx가 같은 서버에서 넘겨주면 `127.0.0.1`(밖에서 8080으로 바로 못 들어옴, 권장). 다른 PC에서 `http://<서버 IP>:8080`으로 바로 열려면 `0.0.0.0`.
+- `HOST`: 도메인을 넘겨주는 프록시·터널이 **어디에서 도는지**에 따라 정합니다. 모르면 `0.0.0.0`을 쓰세요.
+  - 다른 기기(공유기, 다른 서버의 nginx, 다른 PC의 Cloudflare 터널 등)에 있거나, 다른 PC에서 `http://<서버 IP>:8080`으로 바로 열려면 **`0.0.0.0`** (기본값, SSU-DEV는 이 경우)
+  - 이 서버 안에서 nginx·cloudflared가 넘겨줄 때만 `127.0.0.1` (밖에서 8080으로 바로 못 들어와 더 안전). 이때 프록시가 다른 기기에 있으면 연결이 거부되어 `502`가 납니다
+  - 이 서버에서 프록시가 도는지는 `systemctl is-active nginx cloudflared`로 확인합니다(`inactive`면 다른 기기)
 - `SURVEY_ADMIN_PASSWORD`: 따옴표나 `\`는 쓰지 않습니다. 비워 두면 설문만 꺼지고 쇼핑몰은 열립니다.
 - 비밀번호가 이 파일에만 있으므로 명령 기록(`history`)에 남지 않습니다.
 
@@ -60,9 +63,9 @@ systemctl status ongeul-eval-web --no-pager
 curl -s http://127.0.0.1:8080/healthz   # ok (survey on)
 ```
 
-## 2. nginx
+## 2. 앞단 프록시 (nginx, Cloudflare 터널)
 
-nginx가 사이트 전체(`/`)를 8080으로 넘기고 있다면 **고칠 것이 없습니다.** `/survey/`도 같은 곳으로 갑니다.
+앞단이 사이트 전체(`/`)를 8080으로 넘기고 있다면 **고칠 것이 없습니다.** `/survey/`도 같은 곳으로 갑니다. 앞단이 다른 기기에 있으면 넘길 곳은 `http://<SSU-DEV IP>:8080`(https 아님)이고, `HOST=0.0.0.0`이어야 합니다(1-④). 아래는 nginx 예입니다.
 
 ```nginx
 location / {
@@ -112,5 +115,6 @@ sudo systemctl restart ongeul-eval-web
 | 로그에 `status=203/EXEC` | `ExecStart`의 node 경로가 틀림. `command -v node`로 확인 (1-③) |
 | 로그에 `EACCES` (`survey/data`) | 실행 계정이 저장소 폴더에 쓸 수 없음. `sudo chown -R ssu:ssu /opt/ssu/SSUcreamMaker/eval/survey` |
 | `/survey/admin`이 "설문 서비스가 꺼져 있습니다" | `/etc/ongeul-eval-web.env`에 `SURVEY_ADMIN_PASSWORD`가 없음 |
+| 도메인으로 열면 `502` (Cloudflare는 `error code: 502`), 서버 안 `curl http://127.0.0.1:8080/healthz`는 `ok` | 앞단이 서비스에 닿지 못함. `ss -ltnp \| grep 8080`이 `127.0.0.1:8080`이면 `HOST=0.0.0.0`으로 바꾸고 `restart` (1-④). 그래도 안 되면 방화벽 `sudo firewall-cmd --list-ports`에 `8080/tcp`가 있는지, 앞단이 `http://<서버 IP>:8080`을 가리키는지 확인 |
 | 로그인 직후 다시 로그인 화면 | 브라우저가 쿠키를 막음, 또는 nginx가 `/survey` 앞부분을 떼어 냄 (2장) |
 | 서비스 없이 잠깐 띄워 보기 | `cd eval && SURVEY_ADMIN_PASSWORD='비밀번호' npm run web` (`Ctrl+C`로 끔) |
