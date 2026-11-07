@@ -1,6 +1,6 @@
 // 관리자 화면: 로그인 → 설문 목록·새 설문 → 설문 상세(링크, 응답 수, AI 답 입력, 종료) → 분석표.
 // 주소 # 뒤로 화면을 나눈다: #/ 목록, #/s/<id> 상세
-import { $, api, fmtDate, h } from './common.js';
+import { $, BASE, api, fmtDate, h } from './common.js';
 
 const main = $('#main');
 const ROLE = { ai: 'AI 평가', team: '팀원 평가', user: '사용자 평가' };
@@ -123,7 +123,7 @@ async function renderSurvey(id) {
   const s = await adminApi(`/api/admin/surveys/${id}`);
   const open = s.status === 'open';
   const linkField = (role) => {
-    const url = `${location.origin}/s/${s.tokens[role]}`;
+    const url = `${location.origin}${BASE}/s/${s.tokens[role]}`;
     const inputId = `link-${role}`;
     return h('div', {},
       h('label', { class: 'block', for: inputId }, role === 'team' ? '팀원용 링크' : '사용자용 링크'),
@@ -164,7 +164,7 @@ async function renderSurvey(id) {
         h('li', {}, `사용자 응답 ${s.counts.user}개`),
         h('li', {}, `AI 답 ${s.counts.ai}개`)),
       open ? [linkField('team'), linkField('user'), h('p', { class: 'hint' }, '링크를 받은 사람은 로그인 없이 응답할 수 있습니다. 한 PC에서 여러 사람이 차례로 응답해도 됩니다.')] : h('p', {}, '종료된 설문이라 링크로 응답할 수 없습니다.'),
-      h('p', { class: 'row' }, closeButton, h('a', { class: 'btn', href: `/api/admin/surveys/${id}/responses.csv` }, '응답 내려받기 (CSV)'))),
+      h('p', { class: 'row' }, closeButton, h('a', { class: 'btn', href: `${BASE}/api/admin/surveys/${id}/responses.csv` }, '응답 내려받기 (CSV)'))),
     aiSection(s),
     s.analysis ? analysisSection(s) : h('section', { class: 'card', 'aria-labelledby': 'an-title' },
       h('h2', { id: 'an-title', style: 'margin-top:0' }, '분석표'),

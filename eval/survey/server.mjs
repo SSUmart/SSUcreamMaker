@@ -3,6 +3,7 @@
 //
 // 실행 (eval 폴더에서): SURVEY_ADMIN_PASSWORD=<비밀번호> npm run survey
 //   PORT(기본 8090), HOST(기본 127.0.0.1, 다른 PC에서 열려면 0.0.0.0), DATA_DIR
+// 테스트 페이지와 한 포트로 함께 띄우려면 eval/web.mjs (설문은 /survey/ 아래)
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -31,8 +32,13 @@ class HttpError extends Error {
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest();
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 
-export function createSurveyServer({ dataDir, password }) {
+// 설문 요청을 처리하는 함수를 만든다. basePath('/survey' 등)를 주면 그 아래 주소만 처리한다 (다른 서버에 붙일 때).
+// 반환한 함수는 처리했으면 true, basePath 밖의 주소면 false를 돌려준다.
+export function createSurveyHandler({ dataDir, password, basePath = '' }) {
   if (!password) throw new Error('관리자 비밀번호(SURVEY_ADMIN_PASSWORD)가 필요합니다.');
+  const base = basePath.replace(/\/+$/, '');
+  if (base && !/^\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/.test(base)) throw new Error(`설문 경로가 올바르지 않습니다: ${basePath}`);
+  const cookiePath = base || '/';
   const store = createStore(dataDir);
   const sessions = new Map(); // 세션 토큰 → 만료 시각
   let loginFails = []; // 최근 1분 동안 틀린 시각
@@ -124,15 +130,13 @@ export function createSurveyServer({ dataDir, password }) {
     return s;
   }
 
-  async function route(req, res) {
-    const url = new URL(req.url, 'http://localhost');
-    const p = url.pathname;
+  async function route(req, res, p) {
     const m = (re) => p.match(re);
     let hit;
 
     // ----- 화면 -----
     if (req.method === 'GET') {
-      if (p === '/') return send(res, 302, '', { location: '/admin' });
+      if (p === '/' || p === '') return send(res, 302, '', { location: `${base}/admin` });
       if (p === '/admin') return serveFile(res, 'admin.html');
       if (m(/^\/s\/[A-Za-z0-9_-]+$/)) return serveFile(res, 'respond.html');
       if ((hit = m(/^\/assets\/([a-z0-9-]+\.(?:css|js))$/))) return serveFile(res, hit[1]);
@@ -176,11 +180,11 @@ export function createSurveyServer({ dataDir, password }) {
         }
         const token = newToken(24);
         sessions.set(token, Date.now() + SESSION_HOURS * 3600e3);
-        return json(res, 200, { admin: true }, { 'set-cookie': `survey_admin=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${SESSION_HOURS * 3600}` });
+        return json(res, 200, { admin: true }, { 'set-cookie': `survey_admin=${token}; Path=${cookiePath}; HttpOnly; SameSite=Strict; Max-Age=${SESSION_HOURS * 3600}` });
       }
       if (req.method === 'DELETE') {
         sessions.delete(cookie(req, 'survey_admin'));
-        return json(res, 200, { admin: false }, { 'set-cookie': 'survey_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0' });
+        return json(res, 200, { admin: false }, { 'set-cookie': `survey_admin=; Path=${cookiePath}; HttpOnly; SameSite=Strict; Max-Age=0` });
       }
     }
 
@@ -246,15 +250,30 @@ export function createSurveyServer({ dataDir, password }) {
     throw new HttpError(404, '찾을 수 없습니다.');
   }
 
-  return http.createServer((req, res) => {
-    route(req, res).catch((e) => {
+  return function handle(req, res) {
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+    if (base && pathname !== base && !pathname.startsWith(`${base}/`)) return false;
+    route(req, res, pathname.slice(base.length)).catch((e) => {
       if (res.headersSent) return res.destroy();
       if (e instanceof HttpError) return json(res, e.status, { error: e.message, ...e.extra });
       console.error(e);
       json(res, 500, { error: '서버 오류가 생겼습니다. 잠시 뒤 다시 시도해 주세요.' });
     });
+    return true;
+  };
+}
+
+// 설문만 따로 띄우는 서버 (주소 앞부분 없이 /admin, /s/<토큰>)
+export function createSurveyServer(options) {
+  const handle = createSurveyHandler(options);
+  return http.createServer((req, res) => {
+    if (!handle(req, res)) send404(res);
   });
 }
+const send404 = (res) => {
+  res.writeHead(404);
+  res.end();
+};
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 8090;

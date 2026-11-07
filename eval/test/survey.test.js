@@ -242,3 +242,50 @@ test('서버: 설문 만들기 → 팀원·사용자 링크로 응답 → 끝내
 test('서버: 비밀번호 없이는 시작하지 않는다', () => {
   assert.throws(() => createSurveyServer({ dataDir: os.tmpdir(), password: '' }), /비밀번호/);
 });
+
+test('합친 서버(web.mjs): 쇼핑몰과 설문을 한 포트에서, 설문은 /survey 아래만', async () => {
+  const { createWebServer } = await import('../web.mjs');
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'survey-web-'));
+  const server = createWebServer({ survey: { dataDir, password: 'pw-1234', basePath: '/survey' } });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const get = (p, init) => fetch(base + p, { redirect: 'manual', ...init });
+  try {
+    assert.equal((await get('/')).headers.get('location'), '/mall/');
+    assert.equal((await get('/mall/')).status, 200);
+    assert.equal((await get('/shop/')).status, 200);
+    assert.equal((await get('/healthz')).status, 200);
+    assert.equal((await get('/survey')).headers.get('location'), '/survey/admin');
+    assert.equal((await get('/survey/')).headers.get('location'), '/survey/admin');
+    assert.equal((await get('/survey/admin')).status, 200);
+    assert.equal((await get('/survey/assets/common.js')).status, 200);
+    // 설문 주소는 /survey 밖에서는 열리지 않고, /surveyX 같은 비슷한 주소도 설문으로 보지 않는다
+    assert.equal((await get('/admin')).status, 404);
+    assert.equal((await get('/api/admin/session')).status, 404);
+    assert.equal((await get('/surveyx/admin')).status, 404);
+    // 로그인 쿠키는 /survey에만 붙는다 (쇼핑몰 요청에는 보내지 않음)
+    const login = await get('/survey/api/admin/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: 'pw-1234' }) });
+    assert.equal(login.status, 200);
+    assert.match(login.headers.get('set-cookie'), /Path=\/survey;/);
+  } finally {
+    server.close();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test('합친 서버: 비밀번호가 없으면 설문만 끄고 쇼핑몰은 연다', async () => {
+  const { createWebServer } = await import('../web.mjs');
+  const server = createWebServer({});
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    assert.equal((await fetch(`${base}/mall/`)).status, 200);
+    assert.equal((await fetch(`${base}/survey/admin`)).status, 503);
+  } finally {
+    server.close();
+  }
+});
+
+test('설문 경로가 이상하면 시작하지 않는다', () => {
+  assert.throws(() => createSurveyServer({ dataDir: os.tmpdir(), password: 'x', basePath: '/../x' }), /설문 경로/);
+});

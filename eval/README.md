@@ -191,11 +191,12 @@ npm run e2e:mall  # 주문 흐름 점검: 실제 Chromium으로 메인부터 결
 같은 설문을 AI, 팀원, 실제 사용자가 답하게 하고 세 점수를 문항별로 비교하는 작은 웹 서비스입니다. 관리자는 설문을 만들고 끝내며, 응답자는 팀원용·사용자용 링크로 로그인 없이 답합니다. 설문을 끝내면 분석표가 나옵니다.
 
 ```bash
-SURVEY_ADMIN_PASSWORD='비밀번호' npm run survey   # http://127.0.0.1:8090/admin
-npm run e2e:survey                                 # 화면 점검 (임시 폴더 사용)
+SURVEY_ADMIN_PASSWORD='비밀번호' npm run web      # 8080 하나로 /mall/, /shop/, /survey/admin
+SURVEY_ADMIN_PASSWORD='비밀번호' npm run survey   # 설문만: http://127.0.0.1:8090/admin
+npm run e2e:survey                                 # 화면 점검 (한 포트 서버의 /survey/, 임시 폴더 사용)
 ```
 
-띄우는 법과 분석표 읽는 법은 [평가 설문 서비스 구동 가이드](../docs/SURVEY-SERVICE.md)를 참고하세요.
+띄우는 법과 분석표 읽는 법은 [평가 설문 서비스 구동 가이드](../docs/SURVEY-SERVICE.md)를, 테스트 서버에 systemd 서비스로 상시 띄우는 법은 [평가용 웹 서비스 운영 가이드](../docs/EVAL-WEB-SERVICE.md)를 참고하세요.
 
 ## 한계
 

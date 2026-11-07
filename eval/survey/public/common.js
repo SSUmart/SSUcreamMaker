@@ -1,6 +1,9 @@
 // 응답 화면과 관리자 화면이 함께 쓰는 도구. 글은 모두 textContent로 넣어 응답 내용이 HTML로 실행되지 않게 한다.
 export const $ = (selector, root = document) => root.querySelector(selector);
 
+// 설문 서비스가 붙은 주소 앞부분 ('' 또는 '/survey' 등). 이 파일은 <앞부분>/assets/common.js 에서 오므로 거기서 알아낸다
+export const BASE = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs ?? {})) {
@@ -20,7 +23,7 @@ export async function api(path, { method = 'GET', body, admin = false } = {}) {
   const headers = {};
   if (body !== undefined) headers['content-type'] = 'application/json';
   if (admin && method !== 'GET') headers['x-survey-admin'] = '1';
-  const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const res = await fetch(BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error || `요청 실패 (${res.status})`), { status: res.status, data });
   return data;

@@ -16,43 +16,35 @@
 
 ## 1. 띄우기
 
-관리자 비밀번호를 정해 함께 실행합니다. 비밀번호가 없으면 서버가 시작되지 않습니다.
+테스트 서버에서는 온글몰과 함께 **8080 포트 하나**로 띄우고, 설문은 `/survey/` 아래에서 엽니다. 서비스(systemd)로 상시 띄우는 방법은 [평가용 웹 서비스 운영 가이드](EVAL-WEB-SERVICE.md)를 보세요.
 
 ```bash
 cd eval
-SURVEY_ADMIN_PASSWORD='정한 비밀번호' npm run survey
+SURVEY_ADMIN_PASSWORD='정한 비밀번호' npm run web
 ```
 
-브라우저에서 `http://127.0.0.1:8090/admin`을 열고 비밀번호를 넣습니다.
+브라우저에서 `http://127.0.0.1:8080/survey/admin`을 열고 비밀번호를 넣습니다. 같은 서버가 `/mall/`, `/shop/`도 내려줍니다. 비밀번호가 없으면 설문만 꺼지고 쇼핑몰은 열립니다.
 
 | 환경 변수 | 기본값 | 뜻 |
 |---|---|---|
-| `SURVEY_ADMIN_PASSWORD` | 없음 (필수) | 관리자 비밀번호 |
-| `PORT` | `8090` | 포트. 온글몰(8080)과 같은 서버에서 함께 띄울 수 있음 |
-| `HOST` | `127.0.0.1` | 다른 PC에서 접속하려면 `0.0.0.0` |
-| `DATA_DIR` | `eval/survey/data` | 응답을 저장할 폴더 |
+| `SURVEY_ADMIN_PASSWORD` | 없음 | 관리자 비밀번호. 없으면 설문(`/survey/`)이 꺼짐 |
+| `PORT` | `8080` | 포트 |
+| `HOST` | `127.0.0.1` | 다른 PC에서 바로 접속하려면 `0.0.0.0` (nginx가 넘겨주면 그대로) |
+| `SURVEY_PATH` | `/survey` | 설문 주소 앞부분 |
+| `SURVEY_DATA_DIR` | `eval/survey/data` | 응답을 저장할 폴더 |
+| `START` | `/mall/` | 첫 주소(`/`)로 들어오면 갈 곳 |
 
-## 2. 테스트 서버(SSU-DEV)에 상시 띄우기
+## 2. 설문만 따로 띄우기 (로컬 확인용)
 
-온글몰과 같은 방식입니다. **`eval` 폴더 안에서** 실행합니다(경로가 `survey/server.mjs`).
+설문 서버만 띄울 수도 있습니다. 이때는 주소 앞부분 없이 `/admin`, `/s/<토큰>`이고 포트는 8090입니다(`PORT`, `HOST`, `DATA_DIR`로 바꿈).
 
 ```bash
-cd /opt/ssu/SSUcreamMaker/eval
-nohup env HOST=0.0.0.0 SURVEY_ADMIN_PASSWORD='정한 비밀번호' node survey/server.mjs > survey.log 2>&1 &
-echo $! > survey.pid
-sleep 1; cat survey.log
+cd eval
+SURVEY_ADMIN_PASSWORD='정한 비밀번호' npm run survey   # http://127.0.0.1:8090/admin
 ```
 
-로그에 `설문 관리자: http://0.0.0.0:8090/admin`이 나오면 정상입니다. 다른 PC에서는 `http://<서버 IP>:8090/admin`으로 엽니다. 방화벽에서 8090 포트를 열어야 합니다(`sudo firewall-cmd --add-port=8090/tcp --permanent && sudo firewall-cmd --reload`).
+두 방식은 같은 데이터 폴더(`eval/survey/data/`)를 쓰므로 응답과 토큰은 같고, 링크 주소만 다릅니다(`:8090/s/<토큰>` ↔ `:8080/survey/s/<토큰>`). 링크는 띄운 서버의 관리자 화면에서 복사하세요.
 
-| 하려는 일 | 명령 (`eval` 폴더에서) |
-|---|---|
-| 끄기 | `kill $(cat survey.pid) && rm survey.pid` |
-| 번호를 모를 때 끄기 | `pkill -f survey/server.mjs` |
-| 돌고 있는지 확인 | `pgrep -af survey/server.mjs` |
-| 코드 바꾼 뒤 반영 | `git pull` 후 끄고 다시 띄우기 (화면 파일만 바뀌었으면 브라우저 강력 새로고침만) |
-
-- 비밀번호는 명령 기록(`history`)에 남습니다. 공용 계정이라면 `read -s SURVEY_ADMIN_PASSWORD && export SURVEY_ADMIN_PASSWORD`로 입력한 뒤 `nohup env HOST=0.0.0.0 node survey/server.mjs ...`로 띄우세요.
 - 서버를 껐다 켜도 응답과 링크는 그대로입니다(파일에 남음). 로그인만 다시 하면 됩니다.
 - 응답 백업은 `eval/survey/data/` 폴더를 복사하면 됩니다.
 
@@ -94,5 +86,5 @@ sleep 1; cat survey.log
 
 ```bash
 npm test                       # 저장소 루트: 계산·서버 테스트 포함
-cd eval && npm run e2e:survey  # 실제 Chromium으로 만들기 → 응답 → AI 답 → 끝내기 → 분석표 (임시 폴더 사용)
+cd eval && npm run e2e:survey  # 실제 Chromium으로 한 포트 서버의 /survey/ 아래에서 만들기 → 응답 → AI 답 → 끝내기 → 분석표 (임시 폴더 사용)
 ```
