@@ -29,7 +29,7 @@ SURVEY_ADMIN_PASSWORD='정한 비밀번호' npm run web
 |---|---|---|
 | `SURVEY_ADMIN_PASSWORD` | 없음 | 관리자 비밀번호. 없으면 설문(`/survey/`)이 꺼짐 |
 | `PORT` | `8080` | 포트 |
-| `HOST` | `127.0.0.1` | 다른 PC에서 바로 접속하려면 `0.0.0.0` (nginx가 넘겨주면 그대로) |
+| `HOST` | `127.0.0.1` | 다른 기기에서 접속하거나 프록시·터널이 다른 기기에 있으면 `0.0.0.0` (같은 서버의 nginx가 넘겨줄 때만 그대로) |
 | `SURVEY_PATH` | `/survey` | 설문 주소 앞부분 |
 | `SURVEY_DATA_DIR` | `eval/survey/data` | 응답을 저장할 폴더 |
 | `START` | `/mall/` | 첫 주소(`/`)로 들어오면 갈 곳 |
