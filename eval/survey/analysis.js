@@ -32,6 +32,18 @@ export function parseQuestions(text) {
   return questions;
 }
 
+// 문항 목록을 관리자가 고칠 수 있는 글로 되돌린다 (parseQuestions의 반대)
+export function questionsToText(questions) {
+  const lines = [];
+  let group = '';
+  for (const q of questions) {
+    if (q.group && q.group !== group) lines.push(`# ${q.group}`);
+    group = q.group;
+    lines.push(q.text);
+  }
+  return lines.join('\n');
+}
+
 // 새 설문 입력 확인. 문제 목록(빈 배열이면 통과)
 export function validateSurveyInput({ title, questions }) {
   const errors = [];

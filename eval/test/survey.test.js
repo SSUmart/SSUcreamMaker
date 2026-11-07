@@ -289,3 +289,56 @@ test('합친 서버: 비밀번호가 없으면 설문만 끄고 쇼핑몰은 연
 test('설문 경로가 이상하면 시작하지 않는다', () => {
   assert.throws(() => createSurveyServer({ dataDir: os.tmpdir(), password: 'x', basePath: '/../x' }), /설문 경로/);
 });
+
+test('문항 글 되돌리기: questionsToText → parseQuestions 는 같은 문항', async () => {
+  const { questionsToText } = await import('../survey/analysis.js');
+  const qs = parseQuestions('첫 문항\n# 시작하기\n1. 안내에 만족?\n2. 도움말에 만족?\n# AI\n상세 이미지 읽기에 만족?');
+  assert.deepEqual(parseQuestions(questionsToText(qs)), qs);
+});
+
+test('서버: 설문 수정·복제·삭제 (문항은 응답 전까지만, 삭제는 휴지통으로)', () =>
+  withServer(async ({ call, dataDir }) => {
+    await call('/api/admin/session', { method: 'POST', body: { password: 'pw-1234' } });
+    const s = (await call('/api/admin/surveys', { method: 'POST', body: { title: '처음 제목', description: '', questionsText: '# 영역\n문항 하나\n문항 둘' } })).data;
+    assert.equal(s.questionsEditable, true);
+    assert.equal(s.questionsText, '# 영역\n문항 하나\n문항 둘');
+
+    // 응답 전: 제목과 문항 모두 고침
+    let r = await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { title: '고친 제목', questionsText: '문항 하나\n문항 둘\n문항 셋' } });
+    assert.equal(r.status, 200);
+    assert.equal(r.data.title, '고친 제목');
+    assert.equal(r.data.questions, 3);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { title: '  ' } })).status, 400);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { title: 'x' }, csrf: false })).status, 403);
+
+    // 응답을 받으면 문항은 못 고치고 제목·안내는 고침. 같은 문항 글을 다시 보내는 것은 괜찮음
+    assert.equal((await call(`/api/s/${s.tokens.user}`, { method: 'POST', admin: false, body: { answers: { q1: 5, q2: 4, q3: 3 } } })).status, 201);
+    r = await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { questionsText: '바꾼 문항' } });
+    assert.equal(r.status, 409);
+    assert.match(r.data.error, /복제/);
+    r = await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { title: '응답 후 제목', description: '안내', questionsText: '문항 하나\n문항 둘\n문항 셋' } });
+    assert.equal(r.status, 200);
+    assert.equal(r.data.title, '응답 후 제목');
+    assert.equal(r.data.questionsEditable, false);
+    assert.equal(r.data.counts.user, 1);
+
+    // 복제: 문항은 같고 링크는 새로, 응답 없음
+    const copy = (await call(`/api/admin/surveys/${s.id}/copy`, { method: 'POST' })).data;
+    assert.equal(copy.title, '응답 후 제목 (복사본)');
+    assert.deepEqual(copy.questionList, r.data.questionList);
+    assert.notEqual(copy.tokens.user, s.tokens.user);
+    assert.equal(copy.counts.user + copy.counts.team + copy.counts.ai, 0);
+    assert.equal(copy.questionsEditable, true);
+
+    // 삭제: 목록·링크에서 사라지고 파일은 trash/ 로
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'DELETE', csrf: false })).status, 403);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'DELETE' })).status, 200);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`)).status, 404);
+    assert.equal((await call(`/api/s/${s.tokens.user}`, { admin: false })).status, 404);
+    assert.deepEqual((await call('/api/admin/surveys')).data.map((x) => x.id), [copy.id]);
+    const trashed = fs.readdirSync(path.join(dataDir, 'trash'));
+    assert.equal(trashed.length, 1);
+    assert.ok(trashed[0].startsWith(`${s.id}-`));
+    assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'trash', trashed[0]), 'utf8')).responses.length, 1);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'DELETE' })).status, 404);
+  }));

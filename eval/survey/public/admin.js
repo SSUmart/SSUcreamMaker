@@ -1,5 +1,5 @@
 // 관리자 화면: 로그인 → 설문 목록·새 설문 → 설문 상세(링크, 응답 수, AI 답 입력, 종료) → 분석표.
-// 주소 # 뒤로 화면을 나눈다: #/ 목록, #/s/<id> 상세
+// 주소 # 뒤로 화면을 나눈다: #/ 목록, #/s/<id> 상세, #/s/<id>/edit 수정
 import { $, BASE, api, fmtDate, h } from './common.js';
 
 const main = $('#main');
@@ -90,7 +90,7 @@ async function renderList() {
     h('label', { class: 'block', for: 'description' }, '안내 문구 (선택, 응답 화면 맨 위에 나옴)'),
     h('textarea', { id: 'description', maxlength: '2000' }),
     h('label', { class: 'block', for: 'questions' }, '문항 (한 줄에 한 문항)'),
-    h('p', { class: 'hint', id: 'questions-hint' }, '"# 영역 이름" 줄(# 뒤에 띄어쓰기)을 넣으면 그 아래 문항이 그 영역으로 묶입니다. 줄 앞의 번호는 지워도 되고 그대로 둬도 됩니다. 만든 뒤에는 문항을 고칠 수 없습니다.'),
+    h('p', { class: 'hint', id: 'questions-hint' }, '"# 영역 이름" 줄(# 뒤에 띄어쓰기)을 넣으면 그 아래 문항이 그 영역으로 묶입니다. 줄 앞의 번호는 지워도 되고 그대로 둬도 됩니다. 응답을 받기 전까지는 문항을 고칠 수 있습니다.'),
     h('textarea', { id: 'questions', class: 'tall', 'aria-describedby': 'questions-hint', placeholder: '# 시작하기\n온글을 켰을 때 들은 첫 안내에 얼마나 만족하셨나요?\n# AI 기능\n상세 이미지 속 글자를 읽어 준 결과에 얼마나 만족하셨나요?' }),
     error,
     h('p', {}, h('button', { class: 'btn primary', type: 'submit' }, '설문 만들기')));
@@ -152,6 +152,37 @@ async function renderSurvey(id) {
     renderSurvey(id);
   } }, '설문 끝내기');
 
+  const manage = h('section', { class: 'card no-print', 'aria-labelledby': 'manage-title' },
+    h('h2', { id: 'manage-title', style: 'margin-top:0' }, '설문 관리'),
+    h('p', { class: 'row' },
+      h('a', { class: 'btn', href: `#/s/${id}/edit` }, '수정'),
+      h('button', { class: 'btn', type: 'button', onclick: async () => {
+        try {
+          const copy = await adminApi(`/api/admin/surveys/${id}/copy`, { method: 'POST' });
+          say(`${copy.title} 설문을 만들었습니다.`);
+          location.hash = `#/s/${copy.id}`;
+        } catch (err) {
+          if (!err.handled) alertFail('설문을 복제하지 못했습니다', err);
+        }
+      } }, '복제'),
+      h('button', { class: 'btn danger', type: 'button', onclick: async () => {
+        const n = s.counts.team + s.counts.user;
+        const lost = n || s.counts.ai ? ` 받은 응답 ${n}개와 AI 답 ${s.counts.ai}개도 함께 사라지고,` : '';
+        if (!confirm(`"${s.title}" 설문을 삭제할까요?${lost} 팀원·사용자 링크로 더 이상 들어올 수 없습니다.`)) return;
+        try {
+          await adminApi(`/api/admin/surveys/${id}`, { method: 'DELETE' });
+        } catch (err) {
+          if (!err.handled) alertFail('설문을 삭제하지 못했습니다', err);
+          return;
+        }
+        say(`${s.title} 설문을 삭제했습니다.`);
+        location.hash = '#/';
+      } }, '삭제')),
+    h('p', { class: 'hint' },
+      s.questionsEditable
+        ? '아직 응답이 없어 제목, 안내 문구, 문항을 모두 고칠 수 있습니다. 복제는 문항이 같은 새 설문(새 링크)을 만듭니다. 삭제한 설문은 서버의 휴지통(데이터 폴더의 trash)으로 옮겨집니다.'
+        : '응답이나 AI 답을 받은 설문은 제목과 안내 문구만 고칠 수 있습니다. 문항을 바꾸려면 복제한 새 설문에서 고치세요. 삭제한 설문은 서버의 휴지통(데이터 폴더의 trash)으로 옮겨집니다.'));
+
   show(s.title,
     h('p', { class: 'no-print' }, h('a', { href: '#/' }, '설문 목록으로')),
     h('div', { class: 'topbar' }, h('h1', {}, s.title), logoutButton()),
@@ -165,12 +196,51 @@ async function renderSurvey(id) {
         h('li', {}, `AI 답 ${s.counts.ai}개`)),
       open ? [linkField('team'), linkField('user'), h('p', { class: 'hint' }, '링크를 받은 사람은 로그인 없이 응답할 수 있습니다. 한 PC에서 여러 사람이 차례로 응답해도 됩니다.')] : h('p', {}, '종료된 설문이라 링크로 응답할 수 없습니다.'),
       h('p', { class: 'row' }, closeButton, h('a', { class: 'btn', href: `${BASE}/api/admin/surveys/${id}/responses.csv` }, '응답 내려받기 (CSV)'))),
+    manage,
     aiSection(s),
     s.analysis ? analysisSection(s) : h('section', { class: 'card', 'aria-labelledby': 'an-title' },
       h('h2', { id: 'an-title', style: 'margin-top:0' }, '분석표'),
       h('p', {}, '설문을 끝내면 AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표가 여기에 나옵니다.')),
     h('details', { class: 'card no-print' }, h('summary', {}, `문항 보기 (${s.questions}개)`),
       h('ol', {}, s.questionList.map((q) => h('li', {}, q.group ? `[${q.group}] ${q.text}` : q.text)))));
+}
+
+// ---------- 수정 ----------
+async function renderEdit(id) {
+  const s = await adminApi(`/api/admin/surveys/${id}`);
+  const error = h('div', { class: 'error-box', tabindex: '-1' });
+  const form = h('form', { class: 'card' },
+    h('label', { class: 'block', for: 'title' }, '설문 제목'),
+    h('input', { type: 'text', id: 'title', maxlength: '200', value: s.title }),
+    h('label', { class: 'block', for: 'description' }, '안내 문구 (선택, 응답 화면 맨 위에 나옴)'),
+    h('textarea', { id: 'description', maxlength: '2000' }, s.description),
+    h('label', { class: 'block', for: 'questions' }, '문항 (한 줄에 한 문항)'),
+    h('p', { class: 'hint', id: 'questions-hint' }, s.questionsEditable
+      ? '"# 영역 이름" 줄(# 뒤에 띄어쓰기)을 넣으면 그 아래 문항이 그 영역으로 묶입니다. 아직 응답이 없어 문항을 고칠 수 있습니다.'
+      : `응답이나 AI 답을 받은 설문이라 문항은 고칠 수 없습니다(팀원 ${s.counts.team}개, 사용자 ${s.counts.user}개, AI ${s.counts.ai}개). 문항을 바꾸려면 설문 화면에서 "복제"로 새 설문을 만드세요.`),
+    h('textarea', { id: 'questions', class: 'tall', 'aria-describedby': 'questions-hint', readonly: !s.questionsEditable }, s.questionsText),
+    error,
+    h('p', { class: 'row' },
+      h('button', { class: 'btn primary', type: 'submit' }, '저장'),
+      h('a', { class: 'btn', href: `#/s/${id}` }, '취소')));
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = { title: $('#title').value, description: $('#description').value };
+    if (s.questionsEditable) body.questionsText = $('#questions').value;
+    try {
+      await adminApi(`/api/admin/surveys/${id}`, { method: 'PATCH', body });
+      say('설문을 고쳤습니다.');
+      location.hash = `#/s/${id}`;
+    } catch (err) {
+      if (err.handled) return;
+      error.textContent = err.message;
+      error.focus();
+    }
+  });
+  show(`${s.title} 수정`,
+    h('p', {}, h('a', { href: `#/s/${id}` }, '설문으로 돌아가기')),
+    h('h1', {}, '설문 수정'),
+    form);
 }
 
 function aiSection(s) {
@@ -307,8 +377,9 @@ async function route() {
   try {
     const { admin } = await api('/api/admin/session');
     if (!admin) return renderLogin();
-    const m = location.hash.match(/^#\/s\/([A-Za-z0-9_-]+)$/);
-    if (m) await renderSurvey(m[1]);
+    const m = location.hash.match(/^#\/s\/([A-Za-z0-9_-]+)(\/edit)?$/);
+    if (m?.[2]) await renderEdit(m[1]);
+    else if (m) await renderSurvey(m[1]);
     else await renderList();
   } catch (e) {
     if (e.handled) return;
