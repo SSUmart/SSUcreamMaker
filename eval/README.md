@@ -286,7 +286,7 @@ NVIDIA_API_KEY=... node nim-models.mjs 모델1 모델2  # 원하는 모델만
 
 ## 설치 가이드 (`guide/`)
 
-사용자에게 주는 온글 설치 가이드 웹페이지입니다. 운영체제별 통합 zip 받기부터 ChatGPT 로그인·연결 확인까지 7단계를 그림과 함께 안내합니다. 테스트 서버(`npm run web`)의 `/guide/`에서 열립니다.
+사용자에게 주는 온글 설치·사용 가이드 웹페이지입니다. 운영체제별 통합 zip 받기부터 ChatGPT 로그인·연결 확인까지 7단계를 그림과 함께 안내하고, 설치 후 키·AI 기능 사용법과 연습 순서를 알려 줍니다. 테스트 서버(`npm run web`)의 `/guide/`에서 열립니다.
 
 - `guide/index.html`, `guide.css`, `guide.js`: 페이지. Windows·Mac 안내를 버튼으로 바꾸고, 마친 단계는 그 브라우저에만 기억합니다
 - `guide/images/`: 실제 화면(`extensions-devmode.png`, `options-*.png`)과 Codex로 만든 설명 그림(`*.jpg`)

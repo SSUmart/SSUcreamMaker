@@ -19,3 +19,5 @@ dist/
 /.claude/skills/
 !/.claude/skills/collab-rules/
 /skills-lock.json
+# 개인 발표자료 초안 등 docs 폴더의 HTML (eval 등 다른 곳의 HTML은 커밋함)
+/docs/*.html

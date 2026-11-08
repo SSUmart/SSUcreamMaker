@@ -142,3 +142,21 @@ details p { margin: 8px 0 0; color: var(--muted); }
   html { scroll-behavior: auto; }
   .progress .bar { transition: none; }
 }
+
+/* 사용법 */
+.toc-sub { margin: 12px 0 4px; font-weight: 700; color: var(--accent); font-size: 16px; }
+.toc ul { margin: 0; padding-left: 24px; columns: 2; column-gap: 32px; }
+.usage { padding-top: 24px; margin-top: 8px; border-top: 1px solid var(--line); scroll-margin-top: 16px; }
+.usage-title { margin: 0 0 12px; font-size: clamp(28px, 5vw, 38px); line-height: 1.25; font-weight: 900; }
+.usage .card { scroll-margin-top: 16px; }
+.usage h3 { margin: 0 0 10px; font-size: 22px; }
+.table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--line); border-radius: 12px; }
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.table-wrap th, .table-wrap td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.table-wrap thead th { background: var(--panel2); font-size: 15px; }
+.table-wrap tbody tr:last-child td { border-bottom: none; }
+.table-wrap td:first-child { white-space: nowrap; }
+@media (max-width: 640px) {
+  .toc ul { columns: 1; }
+  .table-wrap td:first-child { white-space: normal; }
+}
