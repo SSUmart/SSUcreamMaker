@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## [26.3.0-beta.2] - 2026-11-08
+ChatGPT 계정 연결을 쉽게 설치하도록 바꾼 베타입니다. ChatGPT 계정으로 쓰려면 컴퓨터에 맞는 통합 zip 하나(`ongeul-v26.3.0-beta.2-windows-x64.zip` 또는 `-macos-arm64.zip`)를 받아 설치 파일을 한 번 실행하세요. Node.js·Codex CLI를 따로 설치하지 않아도 됩니다. API 키로만 쓰는 분은 지금처럼 확장 zip(`ongeul-v26.3.0-beta.2.zip`)만 받으면 됩니다.
+
 ### Changed
 - ChatGPT 계정 연결 설치를 간단하게: 운영체제별 통합 zip(Windows용 `ongeul-v<버전>-windows-x64.zip`, 애플 실리콘 Mac용 `-macos-arm64.zip`. 인텔 Mac은 지원하지 않음)에 온글 확장, 연결 프로그램, Node.js 24, OpenAI Codex CLI를 함께 담음. 압축을 풀고 설치 파일을 한 번 실행한 뒤 확장을 로드하고 웹으로 로그인하면 되며, Node.js·Codex를 따로 설치(npm)하지 않아도 됨. 설치가 끝나면 확장 폴더 경로를 알려 주고 클립보드에 복사함
 - 초보자용 설치 가이드 웹페이지(`eval/guide/`, 테스트 서버의 `/guide/`): 통합 zip 받기부터 ChatGPT 로그인·연결 확인까지 7단계를 실제 화면과 그림으로 안내. Windows·Mac 안내 전환, 마친 단계 표시, 스크린리더로 읽을 수 있게 그림마다 설명을 붙임
