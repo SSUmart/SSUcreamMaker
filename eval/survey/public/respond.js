@@ -5,7 +5,7 @@ const token = location.pathname.split('/').pop();
 const main = $('#main');
 
 function show(...nodes) {
-  main.replaceChildren(...nodes);
+  main.replaceChildren(...nodes.filter((node) => node != null && node !== false)); // null을 넘기면 "null" 글자로 그려지므로 뺀다
   // 화면이 바뀌면 제목으로 초점을 옮겨 스크린리더가 처음부터 읽게 한다
   const title = main.querySelector('h1');
   if (title) {

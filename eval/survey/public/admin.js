@@ -19,7 +19,7 @@ const adminApi = (path, opts = {}) =>
 
 function show(title, ...nodes) {
   document.title = `${title} - 온글 평가 설문 관리`;
-  main.replaceChildren(...nodes);
+  main.replaceChildren(...nodes.filter((node) => node != null && node !== false)); // null을 넘기면 "null" 글자로 그려지므로 뺀다
   const h1 = main.querySelector('h1');
   if (h1) {
     h1.tabIndex = -1;
@@ -213,9 +213,11 @@ function resultSection(s) {
     h('h2', { id: 'an-title', style: 'margin-top:0' }, '분석표 (결과 페이지)'),
     h('p', {}, closed
       ? 'AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표를 결과 페이지에서 볼 수 있습니다.'
-      : '설문을 끝내면 이 주소에서 AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표를 볼 수 있습니다.'),
+      : '설문을 끝내면 이 주소에서 AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표를 볼 수 있습니다. 끝내기 전에도 "결과 미리보기"로 지금까지 받은 응답의 분석표가 어떻게 보이는지 확인할 수 있습니다(관리자만).'),
     copyField('결과 페이지 주소', url, 'result-url'),
-    closed ? h('p', {}, h('a', { class: 'btn primary', href: `${BASE}/result-${s.no}` }, '분석표 열기')) : null,
+    h('p', {}, closed
+      ? h('a', { class: 'btn primary', href: `${BASE}/result-${s.no}` }, '분석표 열기')
+      : h('a', { class: 'btn', href: `${BASE}/result-${s.no}` }, '결과 미리보기')),
     h('p', { class: 'row no-print' }, toggle, h('label', { for: 'result-public' }, '결과 공개 (로그인 없이 주소로 보기)')),
     h('p', { class: 'hint', id: 'result-public-hint' }, '공개하면 주소를 아는 누구나 분석표와 응답자가 남긴 "하고 싶은 말"을 볼 수 있습니다. 끄면 관리자만 봅니다. 설문을 끝내기 전에는 공개해도 분석표가 나오지 않습니다.'));
 }
@@ -267,10 +269,10 @@ function aiSection(s) {
       renderSurvey(s.id);
     } catch (err) {
       if (err.handled) return;
-      error.replaceChildren(h('p', {}, err.message),
+      error.replaceChildren(h('p', {}, err.message,
         err.data?.missing?.length && !allowMissing
           ? h('button', { class: 'btn small', type: 'button', onclick: () => save(true) }, '빠진 문항은 해당 없음으로 저장')
-          : null);
+          : null));
       error.focus();
     }
   };
