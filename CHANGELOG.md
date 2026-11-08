@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## [26.3.0-beta.1] - 2026-11-08
+API 키 대신 ChatGPT 계정으로 로그인해 AI 기능을 쓸 수 있게 한 베타입니다. ChatGPT 계정으로 쓰려면 함께 올린 `ongeul-bridge-v26.3.0-beta.1.zip`(온글 연결 프로그램)과 OpenAI Codex CLI를 설치하세요(`docs/CHATGPT-LOGIN.md`). API 키로 쓰는 분은 확장 zip만 설치하면 됩니다.
+
 이 버전부터 온글 확장 ID가 고정됩니다. **그 전 버전에서 처음 바꿀 때는 새 확장으로 인식되어 설정(API 키 포함)을 한 번 다시 넣어야 합니다.**
 
 ### Added
