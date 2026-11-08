@@ -86,3 +86,4 @@ summary { cursor: pointer; color: var(--accent); }
   .no-print { display: none !important; }
   .card, .table-wrap { border-color: #999; }
 }
+input[type='checkbox'] { width: 22px; height: 22px; margin: 0; }

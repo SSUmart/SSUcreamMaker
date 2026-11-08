@@ -1,5 +1,7 @@
 // 설문 저장소: 설문 하나를 JSON 파일 하나(<dataDir>/<id>.json)로 둔다. 외부 DB 없이 서버 한 대에서 쓴다.
 // 쓰기는 임시 파일에 쓴 뒤 이름을 바꿔(rename) 중간에 꺼져도 파일이 깨지지 않게 하고, 설문마다 순서대로 처리한다.
+// 설문마다 순번(no)을 붙여 결과 페이지 주소(result-<no>)로 쓴다. 지운 설문(trash/)의 번호도 다시 쓰지 않아,
+// 예전에 나눈 결과 링크가 다른 설문의 결과를 열지 않게 한다.
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -13,6 +15,14 @@ export function createStore(dataDir) {
   // 토큰(링크) → { id, role }. 처음 한 번 읽어 채우고, 설문을 만들 때 더한다.
   // 결과가 아니라 읽는 중인 Promise를 담아 두어, 서버를 켠 직후 동시에 온 요청도 모두 같은 목록을 기다린다
   let tokensReady = null;
+  // 순번을 정하는 일(새 설문, 예전 설문에 번호 붙이기)은 한 번에 하나씩 (동시에 만들어도 번호가 겹치지 않게)
+  let numbering = Promise.resolve();
+  const serial = (fn) => {
+    const run = numbering.then(fn);
+    numbering = run.catch(() => {});
+    return run;
+  };
+  let numbered = null;
 
   async function read(id) {
     if (!ID.test(id)) return null;
@@ -45,7 +55,7 @@ export function createStore(dataDir) {
   }
 
   // 파일 하나가 깨져 있어도(손으로 고치다 망가짐 등) 나머지 설문은 계속 쓸 수 있게 건너뛴다
-  async function list() {
+  async function readAll() {
     let names = [];
     try {
       names = await fs.readdir(dataDir);
@@ -65,6 +75,55 @@ export function createStore(dataDir) {
     return surveys.filter((s) => s?.id && s.tokens && s.createdAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  // 이미 쓴 순번: 지금 있는 설문과 휴지통의 설문
+  async function usedNumbers() {
+    const nums = (await readAll()).map((s) => s.no);
+    const trash = path.join(dataDir, 'trash');
+    let names = [];
+    try {
+      names = await fs.readdir(trash);
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+    for (const n of names.filter((n) => n.endsWith('.json'))) {
+      try {
+        nums.push(JSON.parse(await fs.readFile(path.join(trash, n), 'utf8')).no);
+      } catch {
+        // 깨진 휴지통 파일은 건너뛴다
+      }
+    }
+    return nums.filter(Number.isInteger);
+  }
+  const nextNumber = async () => Math.max(0, ...(await usedNumbers())) + 1;
+
+  // 순번이 없는 예전 설문에 만든 순서대로 번호를 붙인다 (서버를 켠 뒤 한 번)
+  function ensureNumbers() {
+    numbered ??= serial(async () => {
+      const missing = (await readAll()).filter((s) => !Number.isInteger(s.no)).reverse(); // 오래된 것부터
+      if (!missing.length) return;
+      let next = await nextNumber();
+      for (const s of missing) {
+        await update(s.id, (cur) => {
+          if (!Number.isInteger(cur.no)) cur.no = next++;
+        });
+      }
+    }).catch((e) => {
+      numbered = null; // 실패하면 다음 요청에서 다시 한다
+      throw e;
+    });
+    return numbered;
+  }
+
+  async function list() {
+    await ensureNumbers();
+    return readAll();
+  }
+
+  // 결과 페이지 순번으로 설문 찾기
+  async function byNumber(no) {
+    return (await list()).find((s) => s.no === no) ?? null;
+  }
+
   function tokenMap() {
     tokensReady ??= list()
       .then((all) => {
@@ -80,19 +139,25 @@ export function createStore(dataDir) {
   }
 
   async function create({ title, description, questions }) {
-    const survey = {
-      id: newToken(9),
-      title,
-      description,
-      questions,
-      status: 'open',
-      createdAt: new Date().toISOString(),
-      closedAt: null,
-      tokens: { team: newToken(), user: newToken() },
-      responses: [],
-      aiAnswers: []
-    };
-    await write(survey);
+    await ensureNumbers();
+    const survey = await serial(async () => {
+      const s = {
+        id: newToken(9),
+        no: await nextNumber(),
+        title,
+        description,
+        questions,
+        status: 'open',
+        createdAt: new Date().toISOString(),
+        closedAt: null,
+        resultPublic: false,
+        tokens: { team: newToken(), user: newToken() },
+        responses: [],
+        aiAnswers: []
+      };
+      await write(s);
+      return s;
+    });
     const map = await tokenMap();
     for (const [role, t] of Object.entries(survey.tokens)) map.set(t, { id: survey.id, role });
     return survey;
@@ -123,5 +188,5 @@ export function createStore(dataDir) {
     return run;
   }
 
-  return { read, list, create, update, remove, byToken };
+  return { read, list, create, update, remove, byToken, byNumber };
 }

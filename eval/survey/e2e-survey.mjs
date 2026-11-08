@@ -1,4 +1,4 @@
-// 설문 서비스 화면 점검: 실제 Chromium으로 관리자 로그인 → 설문 만들기 → 팀원·사용자 링크로 응답 → AI 답 입력 → 끝내기 → 분석표.
+// 설문 서비스 화면 점검: 실제 Chromium으로 관리자 로그인 → 설문 만들기 → 팀원·사용자 링크로 응답 → AI 답 입력 → 끝내기 → 결과 페이지(분석표, 공개).
 // 테스트 서버와 같은 모양으로, 쇼핑몰과 한 포트를 쓰는 합친 서버(web.mjs)의 /survey/ 아래에서 점검한다.
 // 임시 폴더에 서버를 띄우므로 실제 응답 데이터는 건드리지 않는다.
 // 사용법: eval 폴더에서 npm run e2e:survey   (--headed: 창 띄우기, --shots <폴더>: 화면 저장)
@@ -113,7 +113,7 @@ try {
 
   console.log('\n== AI 답, 끝내기, 분석표');
   await page.goto(`${base}/admin#/`);
-  await page.getByRole('link', { name: '온글 1차 평가' }).click();
+  await page.getByRole('link', { name: '온글 1차 평가', exact: true }).click();
   await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
   check('응답 현황: 팀원 1, 사용자 2', (await page.locator('main').innerText()).includes('팀원 응답 1개') && (await page.locator('main').innerText()).includes('사용자 응답 2개'));
   await page.getByText('AI에 보낼 질문 글 보기').click();
@@ -127,8 +127,18 @@ try {
   await page.getByText('AI 답 1개').waitFor();
   check('AI 답 저장', (await page.getByRole('button', { name: 'Claude 답 지우기' }).count()) === 1);
 
+  check('끝내기 전: 결과 페이지 주소를 미리 알려 줌, 분석표 열기 버튼은 없음', (await page.getByLabel('결과 페이지 주소').inputValue()) === `${base}/result-1` && (await page.getByRole('link', { name: '분석표 열기' }).count()) === 0);
   await page.getByRole('button', { name: '설문 끝내기' }).click();
-  await page.getByRole('heading', { name: '분석표', level: 2 }).waitFor();
+  await page.getByRole('link', { name: '분석표 열기' }).waitFor();
+  check('끝낸 뒤: 분석표 열기 버튼', true);
+  const csvHref = await page.getByRole('link', { name: '응답 내려받기 (CSV)' }).getAttribute('href');
+  const csv = await page.evaluate((href) => fetch(href).then((r) => r.status), csvHref);
+  check('CSV 링크도 /survey 아래에서 받아짐', csvHref.startsWith('/survey/api/') && csv === 200, `${csvHref} ${csv}`);
+  check('끝난 설문은 링크 안내 없음', !(await page.getByLabel('사용자용 링크').count()));
+
+  await page.getByRole('link', { name: '분석표 열기' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가 결과', level: 1 }).waitFor();
+  check('분석표는 별도 페이지 /survey/result-1, 제목에 초점', new URL(page.url()).pathname === '/survey/result-1' && (await focusedText()) === '온글 1차 평가 결과', page.url());
   const report = await page.locator('main').innerText();
   check('분석표: AI·팀원·사용자 세 점수', report.includes('AI 평가') && report.includes('팀원 평가') && report.includes('사용자 평가'));
   const q3 = await page.getByRole('row', { name: /^3\. 상세 이미지/ }).innerText();
@@ -136,10 +146,38 @@ try {
   check('영역별 비교 표', (await page.getByRole('table', { name: /영역별/ }).count()) === 1);
   check('눈여겨볼 문항에 3번', report.includes('3번 상세 이미지 읽기'));
   check('하고 싶은 말', report.includes('상세 이미지 읽기가 조금 느려요'));
-  const csvHref = await page.getByRole('link', { name: '응답 내려받기 (CSV)' }).getAttribute('href');
-  const csv = await page.evaluate((href) => fetch(href).then((r) => r.status), csvHref);
-  check('CSV 링크도 /survey 아래에서 받아짐', csvHref.startsWith('/survey/api/') && csv === 200, `${csvHref} ${csv}`);
-  check('끝난 설문은 링크 안내 없음', !(await page.getByLabel('사용자용 링크').count()));
+  check('관리자에게: 아직 공개 전 안내, 설문 관리로 돌아가는 링크', report.includes('관리자만 볼 수 있습니다') && (await page.getByRole('link', { name: '설문 관리로 돌아가기' }).count()) === 1);
+  await shot('result-page');
+
+  // 로그인하지 않은 사람: 공개 전에는 볼 수 없음
+  const guest = await browser.newPage({ locale: 'ko-KR' });
+  guest.on('pageerror', (e) => errors.push(e.message));
+  await guest.goto(`${base}/result-1`);
+  await guest.getByRole('heading', { name: '결과를 볼 수 없습니다', level: 1 }).waitFor();
+  check('공개 전: 로그인하지 않은 사람은 결과를 볼 수 없음', !(await guest.locator('main').innerText()).includes('상세 이미지'));
+
+  // 결과 공개 켜기 → 로그인 없이 보임
+  await page.getByRole('link', { name: '설문 관리로 돌아가기' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  await page.getByLabel('결과 공개 (로그인 없이 주소로 보기)').check();
+  await page.waitForFunction(() => document.getElementById('live').textContent.includes('공개했습니다'));
+  await guest.reload();
+  await guest.getByRole('heading', { name: '온글 1차 평가 결과', level: 1 }).waitFor();
+  const guestText = await guest.locator('main').innerText();
+  check('공개 후: 로그인 없이 결과 페이지에서 분석표를 봄 (관리 링크·안내는 없음)', guestText.includes('사용자 평가') && guestText.includes('상세 이미지 읽기가 조금 느려요') && !guestText.includes('설문 관리로') && !guestText.includes('관리자만'));
+  await page.reload();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
+  check('공개 설정이 저장됨', await page.getByLabel('결과 공개 (로그인 없이 주소로 보기)').isChecked());
+  await page.getByLabel('결과 공개 (로그인 없이 주소로 보기)').uncheck();
+  await page.waitForFunction(() => document.getElementById('live').textContent.includes('공개를 껐습니다'));
+  await guest.reload();
+  await guest.getByRole('heading', { name: '결과를 볼 수 없습니다', level: 1 }).waitFor();
+  check('공개를 끄면 다시 볼 수 없음', true);
+  await guest.close();
+
+  await page.goto(`${base}/admin#/`);
+  await page.getByRole('heading', { name: '설문 목록', level: 1 }).waitFor();
+  check('설문 목록: 끝낸 설문에 결과 페이지 링크', (await page.getByRole('link', { name: '온글 1차 평가 분석표' }).getAttribute('href')) === '/survey/result-1');
   await shot('admin-analysis');
 
   await page.goto(userLink);
@@ -148,7 +186,7 @@ try {
 
   console.log('\n== 수정 제한, 복제, 삭제');
   await page.goto(`${base}/admin#/`);
-  await page.getByRole('link', { name: '온글 1차 평가' }).click();
+  await page.getByRole('link', { name: '온글 1차 평가', exact: true }).click();
   await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
   await page.getByRole('link', { name: '수정', exact: true }).click();
   await page.getByRole('heading', { name: '설문 수정', level: 1 }).waitFor();

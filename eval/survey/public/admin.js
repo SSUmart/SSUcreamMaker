@@ -1,9 +1,9 @@
-// 관리자 화면: 로그인 → 설문 목록·새 설문 → 설문 상세(링크, 응답 수, AI 답 입력, 종료) → 분석표.
+// 관리자 화면: 로그인 → 설문 목록·새 설문 → 설문 상세(링크, 응답 수, AI 답 입력, 종료, 결과 페이지 주소·공개).
+// 분석표는 결과 페이지(<앞부분>/result-<순번>, result.js)에서 따로 본다.
 // 주소 # 뒤로 화면을 나눈다: #/ 목록, #/s/<id> 상세, #/s/<id>/edit 수정
 import { $, BASE, api, fmtDate, h } from './common.js';
 
 const main = $('#main');
-const ROLE = { ai: 'AI 평가', team: '팀원 평가', user: '사용자 평가' };
 const say = (msg) => {
   $('#live').textContent = '';
   setTimeout(() => ($('#live').textContent = msg), 50);
@@ -29,20 +29,6 @@ function show(title, ...nodes) {
 
 // 실패를 대화상자로 알린다 (스크린리더도 바로 읽음)
 const alertFail = (what, err) => alert(`${what}. ${err.message}`);
-
-const fmt = (n, d = 2) => (n == null ? '–' : n.toFixed(d));
-const pct = (r) => (r == null ? '–' : `${Math.round(r * 100)}%`);
-function diffCell(v) {
-  if (v == null) return h('td', { class: 'num' }, '–');
-  const cls = v >= 0.5 ? 'diff up' : v <= -0.5 ? 'diff down' : 'diff';
-  return h('td', { class: `num ${cls}` }, `${v > 0 ? '+' : ''}${v.toFixed(2)}`);
-}
-function scoreCell(s, kind) {
-  if (s.mean == null) return h('td', { class: 'num' }, '–', h('span', { class: 'sr-only' }, ' 응답 없음'));
-  return h('td', { class: `num ${kind}` },
-    `${s.mean.toFixed(2)}`, h('span', { class: 'muted' }, ` (${s.n})`),
-    h('span', { class: 'bar-track', 'aria-hidden': 'true' }, h('span', { class: 'bar', style: `width:${(s.mean / 5) * 100}%` })));
-}
 
 // ---------- 로그인 ----------
 function renderLogin(message = '') {
@@ -71,7 +57,7 @@ async function renderList() {
   const table = surveys.length
     ? h('div', { class: 'table-wrap' }, h('table', {},
         h('caption', { class: 'sr-only' }, '설문 목록'),
-        h('thead', {}, h('tr', {}, ['설문', '상태', '문항', '팀원 응답', '사용자 응답', 'AI 답', '만든 날'].map((t, i) => h('th', { scope: 'col', class: i >= 2 && i <= 5 ? 'num' : null }, t)))),
+        h('thead', {}, h('tr', {}, ['설문', '상태', '문항', '팀원 응답', '사용자 응답', 'AI 답', '만든 날', '분석표'].map((t, i) => h('th', { scope: 'col', class: i >= 2 && i <= 5 ? 'num' : null }, t)))),
         h('tbody', {}, surveys.map((s) => h('tr', {},
           h('td', {}, h('a', { href: `#/s/${s.id}` }, s.title)),
           h('td', {}, h('span', { class: s.status === 'open' ? 'tag' : 'tag closed' }, s.status === 'open' ? '진행 중' : '종료')),
@@ -79,7 +65,10 @@ async function renderList() {
           h('td', { class: 'num' }, s.counts.team),
           h('td', { class: 'num' }, s.counts.user),
           h('td', { class: 'num' }, s.counts.ai),
-          h('td', {}, fmtDate(s.createdAt)))))))
+          h('td', {}, fmtDate(s.createdAt)),
+          h('td', {}, s.status === 'closed'
+            ? h('a', { href: `${BASE}/result-${s.no}`, 'aria-label': `${s.title} 분석표` }, `결과 ${s.no}번`, s.resultPublic ? ' (공개)' : '')
+            : h('span', { class: 'muted' }, '끝낸 뒤')))))))
     : h('p', { class: 'card' }, '아직 만든 설문이 없습니다. 아래에서 새 설문을 만드세요.');
 
   const error = h('div', { class: 'error-box', tabindex: '-1' });
@@ -118,27 +107,28 @@ function logoutButton() {
   } }, '로그아웃');
 }
 
+// 주소 칸과 복사 버튼
+function copyField(label, url, inputId) {
+  return h('div', {},
+    h('label', { class: 'block', for: inputId }, label),
+    h('div', { class: 'link-field' },
+      h('input', { type: 'text', id: inputId, readonly: true, value: url }),
+      h('button', { class: 'btn small', type: 'button', onclick: async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          $(`#${inputId}`).select();
+          document.execCommand('copy');
+        }
+        say(`${label}를 복사했습니다.`);
+      } }, '복사')));
+}
+
 // ---------- 상세 ----------
 async function renderSurvey(id) {
   const s = await adminApi(`/api/admin/surveys/${id}`);
   const open = s.status === 'open';
-  const linkField = (role) => {
-    const url = `${location.origin}${BASE}/s/${s.tokens[role]}`;
-    const inputId = `link-${role}`;
-    return h('div', {},
-      h('label', { class: 'block', for: inputId }, role === 'team' ? '팀원용 링크' : '사용자용 링크'),
-      h('div', { class: 'link-field' },
-        h('input', { type: 'text', id: inputId, readonly: true, value: url }),
-        h('button', { class: 'btn small', type: 'button', onclick: async () => {
-          try {
-            await navigator.clipboard.writeText(url);
-          } catch {
-            $(`#${inputId}`).select();
-            document.execCommand('copy');
-          }
-          say(`${role === 'team' ? '팀원용' : '사용자용'} 링크를 복사했습니다.`);
-        } }, '복사')));
-  };
+  const linkField = (role) => copyField(role === 'team' ? '팀원용 링크' : '사용자용 링크', `${location.origin}${BASE}/s/${s.tokens[role]}`, `link-${role}`);
 
   const closeButton = open && h('button', { class: 'btn danger', type: 'button', onclick: async () => {
     if (!confirm('설문을 끝낼까요? 끝내면 더 이상 응답을 받지 않고, 다시 열 수 없습니다.')) return;
@@ -148,7 +138,7 @@ async function renderSurvey(id) {
       if (!err.handled) alertFail('설문을 끝내지 못했습니다', err);
       return;
     }
-    say('설문을 끝냈습니다. 분석표를 만들었습니다.');
+    say('설문을 끝냈습니다. 결과 페이지에서 분석표를 볼 수 있습니다.');
     renderSurvey(id);
   } }, '설문 끝내기');
 
@@ -198,11 +188,36 @@ async function renderSurvey(id) {
       h('p', { class: 'row' }, closeButton, h('a', { class: 'btn', href: `${BASE}/api/admin/surveys/${id}/responses.csv` }, '응답 내려받기 (CSV)'))),
     manage,
     aiSection(s),
-    s.analysis ? analysisSection(s) : h('section', { class: 'card', 'aria-labelledby': 'an-title' },
-      h('h2', { id: 'an-title', style: 'margin-top:0' }, '분석표'),
-      h('p', {}, '설문을 끝내면 AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표가 여기에 나옵니다.')),
+    resultSection(s),
     h('details', { class: 'card no-print' }, h('summary', {}, `문항 보기 (${s.questions}개)`),
       h('ol', {}, s.questionList.map((q) => h('li', {}, q.group ? `[${q.group}] ${q.text}` : q.text)))));
+}
+
+// 결과 페이지: 주소(result-<순번>), 열기, 공개 여부
+function resultSection(s) {
+  const url = `${location.origin}${BASE}/result-${s.no}`;
+  const closed = s.status === 'closed';
+  const toggle = h('input', { type: 'checkbox', id: 'result-public', checked: s.resultPublic, 'aria-describedby': 'result-public-hint' });
+  toggle.addEventListener('change', async () => {
+    const want = toggle.checked;
+    try {
+      await adminApi(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: want } });
+      s.resultPublic = want;
+      say(want ? '결과를 공개했습니다. 주소를 아는 사람은 로그인 없이 분석표를 볼 수 있습니다.' : '결과 공개를 껐습니다. 이제 관리자만 분석표를 볼 수 있습니다.');
+    } catch (err) {
+      toggle.checked = !want;
+      if (!err.handled) alertFail('결과 공개를 바꾸지 못했습니다', err);
+    }
+  });
+  return h('section', { class: 'card', 'aria-labelledby': 'an-title' },
+    h('h2', { id: 'an-title', style: 'margin-top:0' }, '분석표 (결과 페이지)'),
+    h('p', {}, closed
+      ? 'AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표를 결과 페이지에서 볼 수 있습니다.'
+      : '설문을 끝내면 이 주소에서 AI 평가, 팀원 평가, 사용자 평가를 비교하는 분석표를 볼 수 있습니다.'),
+    copyField('결과 페이지 주소', url, 'result-url'),
+    closed ? h('p', {}, h('a', { class: 'btn primary', href: `${BASE}/result-${s.no}` }, '분석표 열기')) : null,
+    h('p', { class: 'row no-print' }, toggle, h('label', { for: 'result-public' }, '결과 공개 (로그인 없이 주소로 보기)')),
+    h('p', { class: 'hint', id: 'result-public-hint' }, '공개하면 주소를 아는 누구나 분석표와 응답자가 남긴 "하고 싶은 말"을 볼 수 있습니다. 끄면 관리자만 봅니다. 설문을 끝내기 전에는 공개해도 분석표가 나오지 않습니다.'));
 }
 
 // ---------- 수정 ----------
@@ -297,78 +312,6 @@ function aiSection(s) {
             say('AI 답을 지웠습니다.');
             renderSurvey(s.id);
           } }, `${a.source} 답 지우기`)))))
-      : null);
-}
-
-function analysisSection(s) {
-  const a = s.analysis;
-  const card = (kind, label, value, n) =>
-    h('div', { class: `score-card ${kind}` },
-      h('p', { style: 'margin:0;font-weight:700' }, label),
-      h('p', { class: 'big', style: 'margin:4px 0' }, value == null ? '–' : value.toFixed(2)),
-      h('p', { class: 'muted', style: 'margin:0' }, value == null ? '응답 없음' : `5점 만점 · ${kind === 'ai' ? `AI ${n}개` : `응답 ${n}명`}`));
-  const compareHead = (first) => h('thead', {}, h('tr', {},
-    h('th', { scope: 'col' }, first),
-    h('th', { scope: 'col', class: 'num' }, 'AI'),
-    h('th', { scope: 'col', class: 'num' }, '팀원'),
-    h('th', { scope: 'col', class: 'num' }, '사용자'),
-    h('th', { scope: 'col', class: 'num' }, '사용자 − AI'),
-    h('th', { scope: 'col', class: 'num' }, '사용자 − 팀원')));
-
-  return h('section', { 'aria-labelledby': 'an-title' },
-    h('div', { class: 'topbar' }, h('h2', { id: 'an-title' }, '분석표'),
-      h('button', { class: 'btn small no-print', type: 'button', onclick: () => window.print() }, '인쇄 또는 PDF로 저장')),
-    h('p', { class: 'hint' }, '점수는 해당 없음을 뺀 평균입니다(1 매우 불만족 ~ 5 매우 만족). 영역·전체 점수는 문항 평균의 평균입니다. 차이가 +0.5 이상이면 초록, −0.5 이하면 빨강으로 표시합니다.'),
-    h('div', { class: 'scores' },
-      card('ai', ROLE.ai, a.overall.ai, a.counts.ai),
-      card('team', ROLE.team, a.overall.team, a.counts.team),
-      card('user', ROLE.user, a.overall.user, a.counts.user)),
-
-    a.notable.length || a.lowest.length
-      ? h('div', { class: 'card' },
-          h('h3', { style: 'margin-top:0' }, '눈여겨볼 문항'),
-          a.notable.length
-            ? h('div', {}, h('p', {}, '사용자 점수가 팀원·AI 평가와 0.5점 이상 다른 문항:'),
-                h('ul', {}, a.notable.map((r) => h('li', {}, `${r.no}번 ${r.text} (사용자 − 팀원 ${r.userMinusTeam ?? '–'}, 사용자 − AI ${r.userMinusAi ?? '–'})`))))
-            : h('p', {}, '사용자 점수와 팀원·AI 평가가 0.5점 이상 다른 문항은 없습니다.'),
-          a.lowest.length ? h('div', {}, h('p', {}, '사용자 점수가 가장 낮은 문항:'), h('ul', {}, a.lowest.map((r) => h('li', {}, `${r.no}번 ${r.text} (${r.mean.toFixed(2)}점)`)))) : null)
-      : null,
-
-    a.groups.length
-      ? h('div', {}, h('h3', {}, '영역별 비교'), h('div', { class: 'table-wrap' }, h('table', {},
-          h('caption', { class: 'sr-only' }, '영역별 AI, 팀원, 사용자 평균 점수'),
-          compareHead('영역'),
-          h('tbody', {}, a.groups.map((g) => h('tr', {},
-            h('th', { scope: 'row' }, `${g.name} (${g.questions}문항)`),
-            h('td', { class: 'num' }, fmt(g.ai)), h('td', { class: 'num' }, fmt(g.team)), h('td', { class: 'num' }, fmt(g.user)),
-            diffCell(g.userMinusAi), diffCell(g.userMinusTeam)))))))
-      : null,
-
-    h('h3', {}, '문항별 비교'),
-    h('p', { class: 'legend', 'aria-hidden': 'true' }, h('span', { class: 'ai' }, 'AI'), h('span', { class: 'team' }, '팀원'), h('span', { class: 'user' }, '사용자'), ' 괄호 안은 응답 수'),
-    h('div', { class: 'table-wrap' }, h('table', {},
-      h('caption', { class: 'sr-only' }, '문항별 AI, 팀원, 사용자 평균 점수와 차이. 괄호 안은 응답 수'),
-      h('thead', {}, h('tr', {},
-        h('th', { scope: 'col' }, '문항'),
-        h('th', { scope: 'col', class: 'num' }, 'AI'),
-        h('th', { scope: 'col', class: 'num' }, '팀원'),
-        h('th', { scope: 'col', class: 'num' }, '사용자'),
-        h('th', { scope: 'col', class: 'num' }, '사용자 만족 비율'),
-        h('th', { scope: 'col', class: 'num' }, '사용자 − AI'),
-        h('th', { scope: 'col', class: 'num' }, '사용자 − 팀원'))),
-      h('tbody', {}, a.rows.map((r) => h('tr', {},
-        h('th', { scope: 'row', style: 'font-weight:400' }, `${r.no}. ${r.text}`,
-          r.aiDetail.length ? h('details', { class: 'no-print' }, h('summary', {}, 'AI 이유'),
-            h('ul', {}, r.aiDetail.map((d) => h('li', {}, `${d.source}: ${d.score || '해당 없음'}${d.reason ? ` - ${d.reason}` : ''}`)))) : null,
-          r.user.n ? h('details', { class: 'no-print' }, h('summary', {}, '사용자 점수 분포'),
-            h('p', {}, [1, 2, 3, 4, 5].map((sc) => `${sc}점 ${r.user.dist[sc - 1]}명`).join(', ') + (r.user.na ? `, 해당 없음 ${r.user.na}명` : ''))) : null),
-        scoreCell(r.ai, 'ai'), scoreCell(r.team, 'team'), scoreCell(r.user, 'user'),
-        h('td', { class: 'num' }, pct(r.user.satisfied)),
-        diffCell(r.userMinusAi), diffCell(r.userMinusTeam)))))),
-
-    a.comments.length
-      ? h('div', {}, h('h3', {}, `하고 싶은 말 (${a.comments.length}개)`),
-          h('ul', {}, a.comments.map((c) => h('li', {}, h('strong', {}, `${c.role === 'team' ? '팀원' : '사용자'}: `), c.comment))))
       : null);
 }
 
