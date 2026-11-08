@@ -53,13 +53,15 @@ export function validateSurveyInput({ title, questions }) {
   return errors;
 }
 
-// 응답 확인: 모든 문항에 1~5 또는 해당 없음(0). 깨끗하게 고친 답과 빠진 문항 id 목록
+// 응답 확인: 모든 문항에 1~5점. 응답자에게는 "해당 없음"을 두지 않는다(모든 문항에 점수를 받음).
+// 해당 없음(0)은 AI 답(확인할 수 없는 기능)과 예전에 받은 응답에만 남아 평균에서 뺀다.
+// 깨끗하게 고친 답과 빠진 문항 id 목록
 export function checkAnswers(questions, answers = {}) {
   const clean = {};
   const missing = [];
   for (const q of questions) {
     const v = answers?.[q.id];
-    if (Number.isInteger(v) && v >= NA && v <= 5) clean[q.id] = v;
+    if (Number.isInteger(v) && v >= 1 && v <= 5) clean[q.id] = v;
     else missing.push(q.id);
   }
   return { answers: clean, missing };

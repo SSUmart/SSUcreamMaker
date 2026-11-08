@@ -78,7 +78,7 @@ try {
     await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
     for (const [i, score] of scores.entries()) {
       const group = page.getByRole('group', { name: new RegExp(`^${i + 1}\\. `) });
-      await group.getByRole('radio', { name: score ? new RegExp(`^${score}점`) : '해당 없음' }).check();
+      await group.getByRole('radio', { name: new RegExp(`^${score}점`) }).check();
     }
     if (comment) await page.getByLabel('하고 싶은 말 (선택)').fill(comment);
     await page.getByRole('button', { name: '응답 보내기' }).click();
@@ -89,7 +89,7 @@ try {
   await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
   check('고친 안내 문구가 응답 화면에 나옴', (await page.locator('main').innerText()).includes('(고침)'));
   check('응답 화면: 팀원 표시, 문항 묶음 3개', (await page.getByText('팀원 평가', { exact: true }).count()) === 1 && (await page.getByRole('group').count()) === 3);
-  check('점수 버튼에 뜻이 붙어 있음', (await page.getByRole('radio', { name: '1점 매우 불만족' }).count()) === 3 && (await page.getByRole('radio', { name: '해당 없음' }).count()) === 3);
+  check('점수 버튼에 뜻이 붙어 있음, 해당 없음 선택지는 없음', (await page.getByRole('radio', { name: '1점 매우 불만족' }).count()) === 3 && (await page.getByRole('radio', { name: '해당 없음' }).count()) === 0 && (await page.getByRole('radio').count()) === 15);
   await page.getByRole('group', { name: /^1\. / }).getByRole('radio', { name: '4점 만족' }).check();
   await page.getByRole('button', { name: '응답 보내기' }).click();
   const err = await page.locator('#errors').innerText();
@@ -108,7 +108,7 @@ try {
   check('같은 PC에서 새 응답 시작 (빈 양식)', (await page.locator('input[type=radio]:checked').count()) === 0);
 
   await answer(userLink, [5, 4, 2], '상세 이미지 읽기가 조금 느려요');
-  await answer(userLink, [4, 0, 3]);
+  await answer(userLink, [4, 3, 3]);
   check('사용자 응답 2개 완료', true);
 
   console.log('\n== AI 답, 끝내기, 분석표');
