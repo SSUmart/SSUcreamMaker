@@ -410,7 +410,8 @@
     if (item.role === 'text') return item.name;
     const parts = [];
     const roleName = item.role === 'heading' ? `${ROLE_NAMES.heading} ${item.level}` : ROLE_NAMES[item.role] ?? '';
-    if (item.name) parts.push(item.aiName ? `${item.name}, AI 추정` : item.name);
+    // AI가 지은 이름은 "AI 추정", 요소 단서(장바구니 아이콘의 cart 등)로 바로 붙인 이름은 "추정"을 붙여 작성자가 붙인 이름과 구분한다
+    if (item.name) parts.push(item.aiName ? `${item.name}, AI 추정` : item.hintName ? `${item.name}, 추정` : item.name);
     else if (item.needsName) parts.push('이름 없음');
     if (item.countText) parts.push(item.countText);
     if (roleName) parts.push(roleName);
@@ -435,6 +436,7 @@
       countText: weak ? found.name : '', // 이름 대신 들어 있던 숫자 (이름 뒤에 함께 읽는다)
       needsName: NEEDS_NAME.has(role) && !name,
       aiName: false,
+      hintName: false,
       level: role === 'heading' ? headingLevel(el) : 0,
       states: role === 'text' ? [] : statesOf(el, role),
       value: role === 'text' ? '' : valueOf(el, role),
@@ -692,8 +694,8 @@
       // 상태가 바뀐 항목(체크박스를 누른 뒤 등)의 문장을 다시 만든다. 글 항목은 목록을 다시 만들 때 갱신된다.
       if (item.role === 'text') return item;
       const next = makeItem(item.el, item.role, { summary: item.summary });
-      if (item.aiName) {
-        Object.assign(next, { name: item.name, aiName: true, needsName: false });
+      if (item.aiName || item.hintName) {
+        Object.assign(next, { name: item.name, aiName: item.aiName, hintName: item.hintName, needsName: false });
         next.phrase = phraseOf(next);
       }
       return next;

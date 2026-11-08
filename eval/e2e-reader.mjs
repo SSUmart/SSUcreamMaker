@@ -21,7 +21,12 @@ const realVoice = process.argv.includes('--real-voice');
 
 // 가짜 AI: 요청 종류(프롬프트 첫머리)와 요소 단서로 정해진 답을 돌려준다
 function fakeAi(content) {
-  if (Array.isArray(content)) return '식기세척기를 사용하지 마세요. 오후 2시 이전 주문은 당일 출고.';
+  if (Array.isArray(content)) {
+    // 그림을 함께 보낸 이름 짓기 요청은 글 부분으로 답한다
+    const text = content.find((part) => part.type === 'text')?.text ?? '';
+    if (text.startsWith('웹페이지에 이름이 없어')) return fakeAi(text);
+    return '식기세척기를 사용하지 마세요. 오후 2시 이전 주문은 당일 출고.';
+  }
   if (content.startsWith('쇼핑몰 상품 상세')) {
     return JSON.stringify({ sections: [{ title: '주의사항', items: ['식기세척기를 사용하지 마세요.'] }, { title: '배송·교환·반품', items: ['오후 2시 이전 주문은 당일 출고'] }] });
   }
@@ -77,11 +82,25 @@ cb.addEventListener('keydown', (e) => {
 });
 </script></body></html>`;
 
+// 이름 짓기 요청 글 (같은 모양 항목을 한 번만 묻는지 센다)
+const labelCalls = [];
+// 같은 모양 항목·단서 없는 항목 확인 페이지: 앞의 이름 없는 버튼 5개(도움돼요 3개 + 다른 모양 2개)는 페이지를 열 때 미리 분석되고,
+// 맨 뒤 버튼은 미리 분석 범위(앞쪽 5개) 밖이라 가서 읽을 때 분석한다
+const LIKE = '<button type="button" class="btn-like icon-btn"><svg width="16" height="16" aria-hidden="true"><path d="M2 7h3v7H2z"/></svg></button>';
+const SHAPE_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>같은 모양 확인</title></head><body>
+<h1>같은 모양 확인</h1><p>리뷰 1</p>${LIKE}<p>리뷰 2</p>${LIKE}<p>리뷰 3</p>${LIKE}
+<button type="button" class="icon-btn alpha-btn"><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg></button>
+<button type="button" class="icon-btn beta-btn"><svg width="10" height="10" aria-hidden="true"><rect width="8" height="8"/></svg></button>
+<p>끝 문단</p><button type="button" class="icon-btn mystery-btn"><svg width="10" height="10" aria-hidden="true"><path d="M1 1h8v8z"/></svg></button>
+</body></html>`;
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/mock/v1/chat/completions') {
     let body = '';
     for await (const chunk of req) body += chunk;
     const content = JSON.parse(body).messages[0].content;
+    const prompt = typeof content === 'string' ? content : content.find?.((part) => part.type === 'text')?.text ?? '';
+    if (prompt.startsWith('웹페이지에 이름이 없어')) labelCalls.push(prompt);
     // 자동 보완 이름은 조금 늦게 와야 "분석 중" 안내를 확인할 수 있다
     if (typeof content === 'string' && content.startsWith('웹페이지에 이름이 없어')) await new Promise((r) => setTimeout(r, 600));
     res.setHeader('content-type', 'application/json');
@@ -94,6 +113,10 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/search-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     return res.end(SEARCH_FIXTURE);
+  }
+  if (req.url === '/shape-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(SHAPE_FIXTURE);
   }
   if (req.url === '/fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -248,13 +271,13 @@ console.log('\n== AI 자동 보완 (가짜 AI)');
 await sw.evaluate((url) => chrome.storage.local.set({ settings: { aiEnabled: true, provider: 'nim', nim: { apiKey: 'mock', model: 'mock', baseUrl: url } } }), `${base}/mock/v1`);
 await page.reload();
 await page.waitForTimeout(600);
-c = await toItem('KeyB', '이름 없음, 버튼', 6);
-check('이름 없는 공유 버튼: 이름 없음 + AI 분석 중', c.startsWith('이름 없음, 버튼') || (await until((t) => t.includes('AI'), 1500)).includes('AI'), c);
-c = await until((t) => t.includes('분석 결과') || t.includes('공유하기'), 4000);
-check('그 자리에 있으면 결과를 읽음', c.includes('공유하기, AI 추정, 버튼'), c);
+// 요소 단서(btn-share)가 확실하면 AI를 기다리지 않고 바로 "추정"으로 읽는다
+c = await toItem('KeyB', '공유하기', 6);
+check('단서로 바로 이름: 공유 버튼 (AI 없이 "추정")', c.includes('공유하기, 추정, 버튼') && !c.includes('AI'), c);
+check('단서로 이름을 붙인 버튼은 AI에 묻지 않음', !labelCalls.some((t) => t.includes('btn-share')), String(labelCalls.length));
 await page.waitForTimeout(3500); // 미리 분석
-check('옵션 초기화 버튼', (await toItem('KeyB', '초기화')).includes('옵션 초기화, AI 추정, 버튼'), await caption());
-check('div 맨 위로 버튼', (await toItem('KeyB', '맨 위로', 60)).includes('맨 위로, AI 추정, 버튼'), await caption());
+check('옵션 초기화 버튼 (삭제 단서라 AI 교차 검증)', (await toItem('KeyB', '초기화')).includes('옵션 초기화, AI 추정, 버튼'), await caption());
+check('div 맨 위로 버튼 (단서 top-btn)', (await toItem('KeyB', '맨 위로', 60)).includes('맨 위로, 추정, 버튼'), await caption());
 c = await press('Alt+Shift+KeyI', 500);
 check('AI 결과 모음', c.includes('AI 결과 모음') && c.includes('AI 추정'), c);
 await press('Escape', 300);
@@ -322,16 +345,33 @@ await press('Control+Home', 150);
 await press('KeyK', 120);
 await press('KeyK', 120);
 c = await press('KeyK', 120);
-// 페이지를 열 때 AI가 미리 채웠으면 "<AI 이름>, AI 추정, 0, 링크" (이 점검의 가짜 AI는 "이름 후보"라고 답함)
-const cartRead = /^(이름 없음|.+, AI 추정), 0, 링크/;
-check('장바구니 아이콘 링크: 숫자를 이름으로 쓰지 않고 이름 없음(AI 보완)으로 처리, 개수도 읽음', cartRead.test(c), c);
+// 링크 단서(cart-link, cart.html)로 바로 "장바구니, 추정"이라고 읽고, 숫자는 개수로 함께 읽는다
+const cartRead = /^장바구니, 추정, 0, 링크/;
+check('장바구니 아이콘 링크: 숫자를 이름으로 쓰지 않고 단서로 장바구니라고 읽음, 개수도 읽음', cartRead.test(c), c);
 await page.evaluate(() => document.querySelector('.cart-link').focus());
 c = await until((t) => t.includes('0, 링크'), 1500);
 check('Tab으로 장바구니 아이콘에 가도 같게 읽음', cartRead.test(c), c);
+// 일부러 넣은 접근성 문제: 찜하기 버튼에 하트 그림만 있음 → 단서(wish)로 바로 찜하기라고 읽음
+check('온글몰 찜하기 버튼: 단서로 찜하기라고 읽음', (await toItem('KeyB', '찜하기', 30)).includes('찜하기, 추정, 버튼'), await caption());
 await page.goto(`${base}/mall/product.html?id=tumbler`);
 c = await until((t) => t.includes('스텐 진공 텀블러'));
 check('E: 상품 페이지의 첫 편집창은 검색창', (await toItem('KeyE', '상품 검색', 3)).includes('상품 검색'));
 check('C: 색상 선택 상자', (await toItem('KeyC', '색상', 3)).includes('색상'));
+
+console.log('\n== 같은 모양 항목, 단서 없는 항목 (가짜 AI)');
+const callsBefore = labelCalls.length;
+await page.goto(`${base}/shape-fixture/`);
+await page.waitForTimeout(2800); // 미리 분석 (도움돼요는 한 번, 다른 모양 둘)
+const likeCalls = labelCalls.slice(callsBefore).filter((t) => t.includes('btn-like')).length;
+check('같은 모양 도움돼요 버튼 3개를 AI에 한 번만 물음', likeCalls === 1, `${likeCalls}번`);
+await press('Control+Home', 150);
+const likes = [];
+for (let i = 0; i < 3; i++) likes.push(await press('KeyB', 150));
+check('같은 모양 버튼 3개 모두 같은 AI 이름으로 읽음', likes.every((t) => t.startsWith('도움돼요, AI 추정, 버튼')), likes.join(' / '));
+c = await toItem('KeyB', '이름 없음, 버튼', 8);
+check('단서 없는 버튼: 이름 없음 + AI 분석 중', c.startsWith('이름 없음, 버튼') || (await until((t) => t.includes('AI'), 1500)).includes('AI'), c);
+c = await until((t) => t.includes('분석 결과') || t.includes('이름 후보'), 4000);
+check('그 자리에 있으면 결과를 읽음', c.includes('이름 후보, AI 추정, 버튼'), c);
 
 console.log('\n== 교차 검증');
 await page.goto(`${base}/fixture/`);
