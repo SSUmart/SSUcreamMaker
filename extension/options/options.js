@@ -149,7 +149,7 @@ async function refreshChatgpt({ announce = false } = {}) {
     info = await bridgeState();
     if (!info.installed) text = '온글 연결 프로그램이 이 컴퓨터에 설치되어 있지 않습니다.';
     else if (info.outdated) text = '온글 연결 프로그램이 이 온글 버전과 맞지 않습니다. 새 연결 프로그램을 받아 설치를 다시 실행하세요.';
-    else if (!info.codex) text = '온글 연결 프로그램은 있지만 Codex CLI를 찾지 못했습니다. 설치 안내에 따라 Codex CLI를 설치한 뒤 연결 프로그램 설치를 다시 실행하세요.';
+    else if (!info.codex) text = '온글 연결 프로그램은 있지만 Codex CLI를 찾지 못했습니다. 운영체제별 통합 zip을 받아 설치 파일을 다시 실행하세요.';
     else if (info.loggedIn) text = 'ChatGPT 계정에 로그인되어 있습니다.';
     else text = 'ChatGPT 계정에 로그인되어 있지 않습니다. ChatGPT 로그인 버튼을 누르세요.';
   } catch (error) {

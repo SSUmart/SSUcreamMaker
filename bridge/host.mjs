@@ -176,7 +176,7 @@ export function createBridge({
 
   const noCodex = {
     kind: 'no-codex',
-    message: 'Codex CLI를 찾지 못했습니다. 온글 연결 프로그램 설치 안내를 따라 Codex CLI를 설치한 뒤 연결 프로그램 설치를 다시 실행하세요.'
+    message: 'Codex CLI를 찾지 못했습니다. 운영체제별 통합 zip을 받아 설치 파일을 다시 실행하세요.'
   };
 
   const notLoggedIn = {
@@ -198,7 +198,7 @@ export function createBridge({
       if (!codexPath) return { codex: false, loggedIn: false };
       const r = await run(['login', 'status']);
       // 실행이 안 되거나 시간이 지난 것은 "로그인 안 됨"과 다르다
-      if (r.error || r.timedOut) throw { kind: 'codex-broken', message: 'Codex CLI를 실행하지 못했습니다. Codex CLI를 다시 설치한 뒤 연결 프로그램 설치를 다시 실행하세요.' };
+      if (r.error || r.timedOut) throw { kind: 'codex-broken', message: 'Codex CLI를 실행하지 못했습니다. 운영체제별 통합 zip을 받아 설치 파일을 다시 실행하세요.' };
       return { codex: true, loggedIn: r.code === 0 };
     },
 
@@ -263,7 +263,7 @@ export function createBridge({
       const features = await availableFeatures();
       if (!features) {
         log('features list failed');
-        throw { kind: 'codex-broken', message: 'Codex CLI의 기능 목록을 확인하지 못해 실행하지 않았습니다. Codex CLI를 다시 설치한 뒤 다시 시도하세요.' };
+        throw { kind: 'codex-broken', message: 'Codex CLI의 기능 목록을 확인하지 못해 실행하지 않았습니다. 통합 zip의 설치 파일을 다시 실행한 뒤 다시 시도하세요.' };
       }
       const root = await fsp.mkdtemp(path.join(tmpDir, 'ongeul-'));
       tempRoots.add(root);

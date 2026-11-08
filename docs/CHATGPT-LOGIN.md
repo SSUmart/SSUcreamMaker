@@ -4,6 +4,8 @@ API 키 없이, 이미 가진 ChatGPT 계정으로 로그인해서 온글의 AI 
 
 API 키로 쓰는 분은 이 문서가 필요 없습니다. 지금처럼 확장 프로그램만 설치하면 됩니다.
 
+그림과 함께 한 단계씩 따라 하는 설치 가이드 웹페이지는 테스트 서버의 `/guide/`(`eval/guide/`)에 있습니다.
+
 ## 어떻게 동작하나
 
 ```
@@ -12,28 +14,34 @@ API 키로 쓰는 분은 이 문서가 필요 없습니다. 지금처럼 확장 
 
 크롬 확장은 혼자서 ChatGPT에 로그인할 수 없습니다. 그래서 이 컴퓨터에 작은 **온글 연결 프로그램**을 설치하고, 연결 프로그램이 OpenAI의 공식 프로그램인 **Codex CLI**로 로그인과 AI 호출을 대신합니다. 온글은 ChatGPT 비밀번호나 로그인 정보를 보지 않습니다. 구조와 이유는 [설계 문서](CHATGPT-LOGIN-DESIGN.md)에 있습니다.
 
-## 1. 미리 설치할 것
+## 1. 받기
 
-| 프로그램 | 설치 방법 |
+[Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 컴퓨터에 맞는 **통합 zip 하나**를 받습니다. 온글 확장, 연결 프로그램, Node.js, OpenAI Codex CLI가 모두 들어 있어 따로 설치할 것이 없습니다.
+
+| 컴퓨터 | 받을 파일 |
 |---|---|
-| Node.js 20 이상 | https://nodejs.org 에서 LTS 버전을 받아 설치 |
-| OpenAI Codex CLI | Node.js를 설치한 뒤 터미널(Windows는 명령 프롬프트)에서 `npm install -g @openai/codex` (macOS는 `brew install codex`도 됨) |
+| Windows (64비트) | `ongeul-v<버전>-windows-x64.zip` |
+| Mac (애플 실리콘: M1 이후) | `ongeul-v<버전>-macos-arm64.zip` |
 
-설치됐는지는 터미널에서 `node --version`, `codex --version`으로 확인합니다.
+인텔 Mac은 ChatGPT 계정 연결을 지원하지 않습니다(API 키로는 쓸 수 있습니다).
 
-## 2. 연결 프로그램 설치
+압축을 풀어 나온 `ongeul` 폴더를 **지우지 않을 곳**(예: 문서 폴더)에 둡니다. 브라우저가 그 안의 `extension` 폴더를 계속 씁니다.
 
-1. [Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 **`ongeul-bridge-v<버전>.zip`**을 받아 압축을 풉니다(확장 zip과 다른 파일입니다).
+API 키로만 쓰는 분은 작은 `ongeul-v<버전>.zip`(확장만)을 받아도 됩니다.
+
+## 2. 설치
+
+1. **브라우저를 모두 닫습니다.**
 2. 설치를 실행합니다.
-   - **Windows:** `ongeul-bridge` 폴더의 `install-windows.cmd`를 두 번 눌러 실행합니다.
-   - **macOS·Linux:** 터미널에서 `cd` 로 `ongeul-bridge` 폴더에 들어가 `sh install.sh`를 실행합니다.
-3. "온글 연결 프로그램 …을 설치했습니다"와 "Codex CLI: …"가 나오면 끝입니다.
-   - "Codex CLI를 찾지 못했습니다"가 나오면 1장의 Codex CLI를 설치한 뒤 설치를 다시 실행합니다.
-4. **브라우저를 완전히 껐다가 다시 켭니다.**
+   - **Windows:** `ongeul` 폴더의 `install-windows.cmd`를 두 번 눌러 실행합니다.
+   - **Mac:** 터미널에서 `cd` 로 `ongeul` 폴더에 들어가 `sh install.sh`를 실행합니다. Finder에서 `install-macos.command`를 열어도 되며, 막히면 Control 키를 누른 채 클릭해 "열기"를 고릅니다.
+3. "온글 연결 프로그램 …을 설치했습니다"와 "Codex CLI: … (함께 담긴 것)"이 나오면 연결 프로그램 설치가 끝난 것입니다. 이어서 확장 폴더 경로가 나오고, 그 경로를 클립보드에 복사해 둡니다.
+4. 브라우저를 켜고 `chrome://extensions`에서 **개발자 모드**를 켠 뒤, **"압축해제된 확장 프로그램을 로드합니다"**로 `ongeul` 폴더 안의 `extension` 폴더를 고릅니다(폴더 고르는 창의 주소 칸에 붙여넣기). 이미 온글이 설치돼 있으면 새로고침만 누릅니다.
 
-- 관리자 권한은 필요 없습니다. 설치는 사용자 폴더(Windows `%LOCALAPPDATA%\Ongeul`, macOS `~/Library/Application Support/Ongeul`, Linux `~/.config/ongeul`)와, Windows는 현재 사용자 레지스트리(`HKCU`)에만 씁니다.
-- 지원 브라우저: Windows는 Chrome·Edge, macOS·Linux는 Chrome과 설치돼 있는 Chromium·Edge·Whale·Brave.
-- 설치한 뒤에는 압축을 푼 폴더를 지워도 됩니다.
+- 관리자 권한은 필요 없습니다. 연결 프로그램과 함께 담긴 Node.js·Codex CLI는 사용자 폴더(Windows `%LOCALAPPDATA%\Ongeul`, macOS `~/Library/Application Support/Ongeul`)에 복사되고, 브라우저 등록은 Windows는 현재 사용자 레지스트리(`HKCU`), Mac은 사용자 폴더에만 씁니다. 이 컴퓨터에 Node.js나 Codex가 따로 있어도 건드리지 않습니다.
+- 지원 브라우저: Windows는 Chrome·Edge, Mac은 Chrome과 설치돼 있는 Chromium·Edge·Whale·Brave.
+- 새 버전으로 바꿀 때: 새 통합 zip을 같은 자리에 풀어 덮어쓰고(브라우저를 닫은 채) 설치를 다시 실행한 뒤, `chrome://extensions`에서 온글을 새로고침합니다.
+- 이 컴퓨터에 이미 Node.js 20 이상과 Codex CLI(`npm install -g @openai/codex`)가 있다면, 저장소의 `bridge` 폴더만으로도 설치할 수 있습니다(`install-windows.cmd` 또는 `sh install.sh`).
 
 ## 3. 온글 설정에서 로그인
 
@@ -68,15 +76,16 @@ API 키로 쓰는 분은 이 문서가 필요 없습니다. 지금처럼 확장 
 | 증상 | 할 일 |
 |---|---|
 | "온글 연결 프로그램이 이 컴퓨터에 설치되어 있지 않습니다" | 2장 설치를 하고 **브라우저를 완전히 껐다 켭니다**. 그래도 같으면 온글 확장이 ChatGPT 로그인이 들어간 버전(설정에 "ChatGPT 계정으로 연결"이 있음)인지 확인합니다 |
-| "Codex CLI를 찾지 못했습니다" | `npm install -g @openai/codex` 후 연결 프로그램 설치를 다시 실행합니다(설치할 때 Codex 위치를 기억함) |
-| "이 온글 버전과 맞지 않습니다" | 온글과 같은 릴리즈의 `ongeul-bridge` zip으로 다시 설치합니다 |
+| "Codex CLI를 찾지 못했습니다" | 통합 zip(`-windows-x64`, `-macos-…`)을 받았는지 확인하고 설치를 다시 실행합니다 |
+| 설치할 때 "설치하지 못했습니다. 브라우저를 모두 닫고…" | 브라우저가 연결 프로그램을 쓰는 중입니다. 브라우저를 모두 닫고 다시 실행합니다 |
+| "이 온글 버전과 맞지 않습니다" | 온글과 같은 릴리즈의 통합 zip으로 다시 설치합니다 |
 | "ChatGPT 로그인이 풀렸습니다" | 온글 설정에서 다시 로그인합니다 |
 | "ChatGPT 사용 한도에 도달했습니다" | 요금제 한도가 풀릴 때까지 기다리거나, 다른 모델을 고르거나, API 키 연결로 바꿉니다 |
 | 브라우저 로그인 창이 안 열림 | "OpenAI 로그인 페이지 열기" 링크를 누르거나 "기기 코드로 로그인"을 씁니다 |
 
 ## 6. 제거
 
-- **Windows:** `ongeul-bridge` 폴더의 `uninstall-windows.cmd`를 실행합니다.
-- **macOS·Linux:** `sh uninstall.sh`를 실행합니다.
+- **Windows:** `ongeul` 폴더의 `uninstall-windows.cmd`를 실행합니다.
+- **Mac:** `ongeul` 폴더에서 `sh uninstall.sh`를 실행합니다.
 
-연결 프로그램, 브라우저 등록, 온글 전용 Codex 폴더(ChatGPT 로그인 정보 포함)를 모두 지웁니다. Codex CLI와 Node.js는 지우지 않습니다.
+연결 프로그램, 함께 담긴 Node.js·Codex CLI, 브라우저 등록, 온글 전용 Codex 폴더(ChatGPT 로그인 정보 포함)를 모두 지웁니다. 확장은 `chrome://extensions`에서 따로 삭제하고, `ongeul` 폴더는 직접 지웁니다. 이 컴퓨터에 따로 설치한 Node.js·Codex CLI는 지우지 않습니다.

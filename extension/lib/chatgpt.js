@@ -8,7 +8,7 @@ export const PROTOCOL = 1;
 export const BRIDGE_GUIDE_URL = 'https://github.com/SSUmart/SSUcreamMaker/blob/main/docs/CHATGPT-LOGIN.md';
 
 export const NO_BRIDGE_MESSAGE =
-  '온글 연결 프로그램이 설치되어 있지 않습니다. ChatGPT 계정으로 쓰려면 온글 설정의 안내에 따라 연결 프로그램과 Codex CLI를 설치하세요. API 키로 쓰려면 온글 설정에서 연결 방식을 API 키로 바꾸세요.';
+  '온글 연결 프로그램이 설치되어 있지 않습니다. ChatGPT 계정으로 쓰려면 온글 설정의 안내에 따라 통합 zip의 설치 파일을 실행하세요. API 키로 쓰려면 온글 설정에서 연결 방식을 API 키로 바꾸세요.';
 
 function bridgeError(message, kind) {
   return Object.assign(new Error(message), { kind });
