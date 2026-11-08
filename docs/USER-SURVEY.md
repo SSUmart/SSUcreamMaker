@@ -4,7 +4,7 @@
 
 고른 문항은 [평가 설문 서비스](SURVEY-SERVICE.md)의 "새 설문 만들기"에 붙여 넣으면 됩니다. 영역 제목은 `# 시작하기`처럼 `#`과 띄어쓰기를 앞에 붙이고, 문항은 한 줄에 하나씩 씁니다(번호는 그대로 둬도 됩니다). 같은 설문을 팀원·사용자 링크와 AI에 함께 물어 세 점수를 비교할 수 있습니다.
 
-평가 계획 전체는 [EVALUATION-PLAN.md](EVALUATION-PLAN.md)를, 사용자 테스트에서 쓸 가상 쇼핑몰은 [eval/README.md](../eval/README.md#가상-쇼핑몰-온글몰-mall-주문결제까지)를 참고하세요.
+같은 설문을 AI 두 개(Claude, ChatGPT)에 물은 결과는 [AI-SURVEY-EVALUATION.md](AI-SURVEY-EVALUATION.md)에 있습니다. 평가 계획 전체는 [EVALUATION-PLAN.md](EVALUATION-PLAN.md)를, 사용자 테스트에서 쓸 가상 쇼핑몰은 [eval/README.md](../eval/README.md#가상-쇼핑몰-온글몰-mall-주문결제까지)를 참고하세요.
 
 ## 점수
 
