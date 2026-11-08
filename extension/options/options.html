@@ -15,7 +15,7 @@
       <li>NVDA나 센스리더 같은 다른 스크린리더를 끕니다.</li>
       <li id="start-toggle">온글 켜기 단축키를 누릅니다.</li>
       <li id="start-menu">온글 메뉴 단축키를 누르고, 첫 항목 "사용 가이드"에서 사용법을 듣습니다.</li>
-      <li>AI 기능(이름 없는 항목 분석, 요약, 질문, 상세 이미지 읽기)을 쓰려면 아래 "AI 사용"에서 AI를 켜고 API 키를 넣은 뒤 저장합니다.</li>
+      <li>AI 기능(이름 없는 항목 분석, 요약, 질문, 상세 이미지 읽기)을 쓰려면 아래 "AI 사용"에서 AI를 켜고 API 키를 넣거나 ChatGPT 계정으로 로그인한 뒤 저장합니다.</li>
     </ol>
 
     <h2>크롬 단축키</h2>
@@ -109,8 +109,44 @@
         <input type="checkbox" id="ai-enabled" aria-describedby="ai-enabled-help">
         <label for="ai-enabled">AI 기능 켜기 (상세 이미지 읽기, 요약, 질문 응답, 항목 설명)</label>
       </p>
-      <p id="ai-enabled-help">켜면 단축키를 누를 때마다(항목 설명 모드에서는 항목을 클릭할 때마다) 상세 이미지, 페이지 글, 고른 항목의 글자·그림이 아래에서 선택한 AI 서비스로 전송되고, 사용 요금은 입력한 API 키의 계정에 청구됩니다. 입력창에 적은 내용은 보내지 않습니다. Google Gemini 무료 등급은 보낸 내용이 Google의 서비스 개선에 쓰일 수 있으니, 개인정보가 있는 페이지에서는 쓰지 마세요.</p>
+      <p id="ai-enabled-help">켜면 단축키를 누를 때마다(항목 설명 모드에서는 항목을 클릭할 때마다) 상세 이미지, 페이지 글, 고른 항목의 글자·그림이 아래에서 선택한 AI 서비스로 전송됩니다. API 키로 연결하면 사용 요금은 그 키의 계정에 청구되고, ChatGPT 계정으로 연결하면 그 계정의 사용량을 씁니다. 입력창에 적은 내용은 보내지 않습니다. Google Gemini 무료 등급은 보낸 내용이 Google의 서비스 개선에 쓰일 수 있으니, 개인정보가 있는 페이지에서는 쓰지 마세요.</p>
 
+      <p>
+        <input type="checkbox" id="use-chatgpt" aria-describedby="use-chatgpt-help">
+        <label for="use-chatgpt">ChatGPT 계정으로 연결</label>
+      </p>
+      <p id="use-chatgpt-help">켜면 모든 AI 기능(자동 분석 포함)을 ChatGPT 계정으로만 하고, 끄면 아래 API 키로만 합니다. 둘을 섞어 쓰지 않습니다. ChatGPT 계정은 이 컴퓨터에 온글 연결 프로그램을 설치해야 합니다.</p>
+
+      <section id="chatgpt-settings" aria-labelledby="chatgpt-title">
+        <h2 id="chatgpt-title">ChatGPT 계정 설정</h2>
+        <p id="chatgpt-state">연결 상태를 확인하는 중입니다.</p>
+        <p id="chatgpt-install" hidden>
+          ChatGPT 계정으로 쓰려면 이 컴퓨터에 온글 연결 프로그램과 OpenAI Codex CLI를 설치해야 합니다.
+          <a id="chatgpt-guide" target="_blank" rel="noopener">연결 프로그램 설치 안내 (새 탭)</a>
+        </p>
+        <p id="chatgpt-actions">
+          <button type="button" id="chatgpt-login">ChatGPT 로그인 (브라우저)</button>
+          <button type="button" id="chatgpt-device">기기 코드로 로그인</button>
+          <button type="button" id="chatgpt-cancel" hidden>로그인 취소</button>
+          <button type="button" id="chatgpt-logout">로그아웃</button>
+          <button type="button" id="chatgpt-recheck">상태 다시 확인</button>
+        </p>
+        <div id="chatgpt-login-info" hidden>
+          <p id="chatgpt-login-text"></p>
+          <p><a id="chatgpt-login-link" target="_blank" rel="noopener">OpenAI 로그인 페이지 열기 (새 탭)</a></p>
+          <p id="chatgpt-code"></p>
+        </div>
+        <p>
+          <label for="chatgpt-model">모델</label>
+          <select id="chatgpt-model" aria-describedby="chatgpt-model-help">
+            <option value="">자동 (계정 기본 모델)</option>
+          </select>
+          <button type="button" id="chatgpt-models-refresh">모델 목록 새로 받기</button>
+        </p>
+        <p id="chatgpt-model-help">목록은 로그인한 ChatGPT 계정에서 쓸 수 있고 그림을 읽을 수 있는 모델입니다. 쓰는 요금제에 따라 달라집니다. 잘 모르면 자동을 고르세요.</p>
+      </section>
+
+      <div id="api-settings">
       <fieldset>
         <legend>AI 공급자</legend>
         <p>
@@ -161,6 +197,7 @@
       </section>
 
       <p>API 키는 이 컴퓨터의 브라우저에만 저장되며 다른 기기와 동기화되지 않습니다.</p>
+      </div>
 
       <p>
         <button type="submit">저장</button>

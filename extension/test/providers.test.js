@@ -248,3 +248,127 @@ test('오류 안내: 어떤 상태 코드든 코드·원문 없이 할 일을 �
     RETRY.delays = delays;
   }
 });
+
+// --- ChatGPT 계정 (연결 프로그램): chrome.runtime.connectNative를 가짜로 바꿔 주고받는 메시지를 확인한다
+function mockBridge(reply) {
+  const sent = [];
+  globalThis.chrome = {
+    runtime: {
+      lastError: undefined,
+      connectNative(name) {
+        const listeners = { message: [], disconnect: [] };
+        const port = {
+          name,
+          disconnected: false,
+          onMessage: { addListener: (fn) => listeners.message.push(fn) },
+          onDisconnect: { addListener: (fn) => listeners.disconnect.push(fn) },
+          disconnect() {
+            port.disconnected = true;
+          },
+          postMessage(message) {
+            sent.push({ name, message });
+            queueMicrotask(() => {
+              const out = reply(message);
+              if (out === 'missing') {
+                globalThis.chrome.runtime.lastError = { message: 'Specified native messaging host not found.' };
+                listeners.disconnect.forEach((fn) => fn());
+                globalThis.chrome.runtime.lastError = undefined;
+                return;
+              }
+              for (const m of [].concat(out)) listeners.message.forEach((fn) => fn({ id: message.id, ...m }));
+            });
+          }
+        };
+        return port;
+      }
+    }
+  };
+  return sent;
+}
+afterEach(() => delete globalThis.chrome);
+
+test('ChatGPT: 그림 조각을 한 요청에 붙여 연결 프로그램에 보내고 답 글을 받는다', async () => {
+  const sent = mockBridge(() => ({ type: 'result', text: sectionsJson }));
+  const text = await PROVIDERS.chatgpt.extract(tiles, { model: 'gpt-6-luna' });
+  assert.equal(text, sectionsJson);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].name, 'me.jaymong.ongeul');
+  const { message } = sent[0];
+  assert.equal(message.type, 'generate');
+  assert.equal(message.model, 'gpt-6-luna');
+  assert.ok(message.prompt.includes('JSON'));
+  assert.deepEqual(message.images, tiles);
+});
+
+test('ChatGPT: 고른 모델을 쓸 수 없으면 자동 모델로 한 번 다시 시도한다', async () => {
+  const sent = mockBridge((m) =>
+    m.model ? { type: 'error', kind: 'model', message: '고른 모델을 지금 ChatGPT 계정에서 쓸 수 없습니다.' } : { type: 'result', text: '{"a":1}' }
+  );
+  const progress = [];
+  const text = await PROVIDERS.chatgpt.describe('설명', [], { model: 'gone' }, (t) => progress.push(t));
+  assert.equal(text, '{"a":1}');
+  assert.deepEqual(sent.map((s) => s.message.model), ['gone', '']);
+  assert.match(progress[0], /자동 모델로 다시 시도/);
+});
+
+test('ChatGPT: 연결 프로그램 오류와 미설치를 한국어로 알린다', async () => {
+  mockBridge(() => ({ type: 'error', kind: 'limit', message: 'ChatGPT 사용 한도에 도달했습니다.' }));
+  await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.kind === 'limit' && /한도/.test(e.message) && !RAW_ERROR.test(e.message));
+  mockBridge(() => 'missing');
+  await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.kind === 'no-bridge' && /연결 프로그램이 설치되어 있지 않습니다/.test(e.message) && !RAW_ERROR.test(e.message));
+  mockBridge(() => ({ type: 'result', loggedIn: false }));
+  await assert.rejects(PROVIDERS.chatgpt.test({ model: '' }), /로그인되어 있지 않습니다/);
+});
+
+test('ChatGPT: 요청은 하나씩 차례로 보낸다 (자동 보완은 따로 줄을 선다)', async () => {
+  let running = 0;
+  let maxRunning = 0;
+  globalThis.chrome = {
+    runtime: {
+      connectNative() {
+        const listeners = [];
+        return {
+          onMessage: { addListener: (fn) => listeners.push(fn) },
+          onDisconnect: { addListener() {} },
+          disconnect() {},
+          postMessage(message) {
+            running++;
+            maxRunning = Math.max(maxRunning, running);
+            setTimeout(() => {
+              running--;
+              listeners.forEach((fn) => fn({ id: message.id, type: 'result', text: message.prompt }));
+            }, 10);
+          }
+        };
+      }
+    }
+  };
+  const answers = await Promise.all(['1', '2', '3'].map((p) => PROVIDERS.chatgpt.generateJson(p, { model: '' })));
+  assert.deepEqual(answers, ['1', '2', '3']);
+  assert.equal(maxRunning, 1);
+});
+
+test('설정: 연결 방식 기본값은 API, ChatGPT를 켜면 모든 기능이 ChatGPT로만 동작한다', () => {
+  assert.equal(mergeSettings().connection, 'api');
+  assert.equal(mergeSettings({ connection: 'odd' }).connection, 'api');
+  assert.deepEqual(DEFAULT_SETTINGS.chatgpt, { model: '' });
+  // 이전 시험판의 labelWithApi 같은 남은 값은 버린다
+  assert.deepEqual(mergeSettings({ chatgpt: { model: 'm', labelWithApi: true } }).chatgpt, { model: 'm' });
+
+  const chatgptOnly = mergeSettings({ aiEnabled: true, connection: 'chatgpt', chatgpt: { model: 'gpt-6-luna' } });
+  assert.deepEqual(activeProvider(chatgptOnly), { name: 'chatgpt', config: { model: 'gpt-6-luna', background: false } });
+  // 자동 분석도 ChatGPT로 (자동 분석 줄에 세움)
+  assert.deepEqual(activeProvider(chatgptOnly, { task: 'label' }), { name: 'chatgpt', config: { model: 'gpt-6-luna', background: true } });
+
+  // API 키가 저장돼 있어도 ChatGPT를 켜면 API로 보내지 않는다
+  const both = mergeSettings({ aiEnabled: true, connection: 'chatgpt', gemini: { apiKey: 'g' } });
+  assert.equal(activeProvider(both).name, 'chatgpt');
+  assert.equal(activeProvider(both, { task: 'label' }).name, 'chatgpt');
+  // ChatGPT를 끄면 API로만
+  const apiOnly = mergeSettings({ aiEnabled: true, connection: 'api', gemini: { apiKey: 'g' } });
+  assert.equal(activeProvider(apiOnly).name, 'gemini');
+
+  assert.match(activeProvider(mergeSettings({ connection: 'chatgpt' })).error, /꺼져 있습니다/);
+  // API 연결은 지금과 같다
+  assert.equal(activeProvider(mergeSettings({ aiEnabled: true, gemini: { apiKey: 'g' } }), { task: 'label' }).name, 'gemini');
+});

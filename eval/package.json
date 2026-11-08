@@ -7,6 +7,7 @@
     "eval": "node run.mjs",
     "e2e": "node e2e-summary-qa.mjs",
     "e2e:reader": "node e2e-reader.mjs",
+    "e2e:chatgpt": "node e2e-chatgpt.mjs",
     "braille": "node braille/compare.mjs",
     "web": "node web.mjs",
     "shop": "node shop/serve.mjs",

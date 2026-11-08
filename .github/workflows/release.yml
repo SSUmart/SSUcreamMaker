@@ -1,6 +1,7 @@
 # 릴리즈: 태그를 푸시하면 확장 프로그램 zip을 만들어 GitHub Release를 연다
 # - v26.1.0-beta.1 : 사전 릴리즈(베타). v26.1.0 : 정식 릴리즈
 # - Release 첨부: ongeul-<태그>.zip (압축을 풀어 "압축해제된 확장 프로그램 로드"로 설치)
+#                 ongeul-bridge-<태그>.zip (ChatGPT 계정으로 쓸 때만 설치하는 연결 프로그램)
 # - 수동 실행 / 패키징을 바꾼 PR: zip만 만들어 Actions 결과 페이지에 첨부
 name: Release
 
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "scripts/package-extension.sh"
+      - "scripts/package-bridge.sh"
       - ".github/workflows/release.yml"
 
 permissions:
@@ -51,6 +53,8 @@ jobs:
       - run: npm test
       - name: 확장 zip 만들기
         run: scripts/package-extension.sh "$TAG"
+      - name: 연결 프로그램 zip 만들기
+        run: scripts/package-bridge.sh "$TAG"
       - uses: actions/upload-artifact@v7
         with:
           name: ongeul-extension

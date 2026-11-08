@@ -1,6 +1,6 @@
 # ChatGPT 로그인으로 AI 쓰기 설계 (검토용)
 
-> 상태: **설계 검토 중**. 아직 구현하지 않았습니다. 팀 검토 뒤 시험판(11장 1단계)부터 만듭니다.
+> 상태: **구현함** (확장 `lib/chatgpt.js`, 연결 프로그램 `bridge/`, 사용 안내 [CHATGPT-LOGIN.md](CHATGPT-LOGIN.md)). 아래는 설계 당시 내용이며, 구현에서 정한 것은 맨 아래 "구현에서 정한 것"에 적었습니다.
 
 ## 1. 목표
 
@@ -174,3 +174,17 @@ ChatGPT 요금제(무료·Plus·Pro·Business 등)에 따라 쓸 수 있는 모�
 - 연결 프로그램은 온글 확장(고정 ID)에서 온 요청만 받고, 네트워크로 열린 포트가 없습니다(크롬이 표준 입출력으로만 연결).
 - 요약·질문·이미지 읽기를 하면 그 페이지 내용과 이미지가 사용자의 ChatGPT 계정으로 OpenAI에 전송됩니다. 지금 API 공급자와 같은 성격이며, 설정 화면과 사용 가이드에 이 점을 알립니다.
 - `--ephemeral`로 Codex에 대화 기록을 남기지 않고, 임시 파일은 실행 직후 지웁니다.
+
+## 14. 구현에서 정한 것
+
+- **Codex CLI는 동봉하지 않음:** 묶음이 수백 MB가 되어, 사용자가 `npm install -g @openai/codex`로 설치하고 연결 프로그램 설치가 그 위치를 찾아 기록한다(`config.json`). 연결 프로그램은 Node.js로 돌아가므로 Node.js 20 이상도 필요하다.
+- **설치:** `bridge/install.mjs` 하나가 Windows·macOS·Linux를 모두 처리하고, `install-windows.cmd` / `install.sh`가 Node를 찾아 이를 실행한다. 릴리즈에 `ongeul-bridge-<태그>.zip`으로 붙는다(`scripts/package-bridge.sh`).
+- **확장 ID 고정:** `manifest.json`에 `key`를 넣어 ID가 `oaiehepelkgdbabadijehnmgogahkpab`로 정해졌다. 이 버전으로 처음 바꿀 때 설정을 한 번 다시 넣어야 한다.
+- **로그인 창:** `codex login`이 기본 브라우저를 직접 연다. 온글은 같은 주소를 링크로도 보여 주고, 기기 코드는 한 글자씩 읽어 준다.
+- **모델 목록:** `codex debug models`에서 `visibility: list`이고 그림을 받는 모델만 보여 준다. 로그인 전과 후의 목록이 달라서(이 Mac에서 확인) 계정에 따라 목록이 바뀌는 것은 맞다. 요금제별로 실제로 어떻게 달라지는지는 아직 요금제가 다른 계정으로 확인하지 않았다.
+- **끄는 Codex 기능:** 명령 실행, 앱·플러그인, 브라우저·컴퓨터 사용, 그림 만들기, 하위 에이전트, 훅 등을 `--disable`로 끄고 웹 검색은 `web_search="disabled"`. 없는 기능 이름을 끄라고 하면 Codex가 실패하므로 `codex features list`에 있는 것만 끈다.
+- **연결 방식은 토글 하나 (팀 결정):** 6장의 라디오 버튼과 "자동 보완은 API 키로 하기"는 쓰지 않는다. "ChatGPT 계정으로 연결" 토글을 켜면 자동 분석까지 모든 기능이 ChatGPT로만, 끄면 API 키로만 동작하고 둘을 섞지 않는다. 켜면 API 키 칸은 숨긴다.
+- **줄 세우기:** 크롬은 연결마다 연결 프로그램을 새로 띄우므로 줄은 확장(서비스 워커)이 세운다. 사용자 요청과 자동 분석은 줄을 따로 써서 자동 분석이 요약·질문을 오래 붙잡지 않게 했다.
+- **로그인 확인:** 로그인하지 않은 채 `codex exec`를 부르면 Codex가 십수 초 다시 시도하다 실패해서, 답을 만들기 전에 `codex login status`(0.1초 안팎)로 먼저 확인한다.
+- **응답 시간:** 이 Mac에서 그림 한 장 짧은 설명이 약 4초(`codex exec` 한 번).
+- **시험:** `bridge/test`(가짜 Codex로 연결 프로그램 전체 흐름, 설치·제거), `extension/test/providers.test.js`(ChatGPT 공급자·설정), `eval/e2e-chatgpt.mjs`(실제 Chromium + 연결 프로그램 + 가짜 Codex로 설정 화면 로그인부터 요약까지).

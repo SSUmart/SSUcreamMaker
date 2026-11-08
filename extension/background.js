@@ -487,7 +487,7 @@ async function explainItem(item, progress) {
 
 // A1 자동 보완: 이름 없는 항목의 짧은 이름. 같은 항목 정보·같은 모델이면 캐시를 쓴다.
 async function labelItem(item) {
-  const active = activeProvider(await loadSettings());
+  const active = activeProvider(await loadSettings(), { task: 'label' });
   if (active.error) return { error: active.error };
   if (!item?.kind) return { error: '분석할 항목 정보가 없습니다.' };
   const provider = PROVIDERS[active.name];
