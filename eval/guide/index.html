@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온글 설치 가이드</title>
+<meta name="description" content="온글을 설치하고 ChatGPT 계정으로 AI 기능을 켜는 방법을 한 단계씩 안내합니다.">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#steps">설치 단계로 바로 가기</a>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">온글 설치 가이드</p>
+    <h1>온글 설치하고<br><em>ChatGPT 계정</em>으로 AI 켜기</h1>
+    <p class="lead">처음 해 보는 분도 따라 할 수 있게 한 단계씩 안내합니다. 7단계이고 10분쯤 걸립니다. 각 단계를 마치면 "이 단계를 마쳤어요"에 체크해 두세요. 이 컴퓨터의 브라우저에 기억되어 나중에 이어서 할 수 있습니다.</p>
+
+    <div class="os-pick" role="group" aria-labelledby="os-label">
+      <p id="os-label" class="os-label">내 컴퓨터</p>
+      <button type="button" class="os-btn" data-os="win" aria-pressed="true">Windows</button>
+      <button type="button" class="os-btn" data-os="mac" aria-pressed="false">Mac (애플 실리콘)</button>
+    </div>
+    <p class="os-note" role="status" id="os-status">Windows 기준으로 안내합니다.</p>
+
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <p class="progress-text" id="progress-text">0 / 7 단계 마침</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<nav aria-labelledby="toc-title" class="toc">
+  <h2 id="toc-title">순서</h2>
+  <ol>
+    <li><a href="#step-1">설치 파일 받기</a></li>
+    <li><a href="#step-2">압축 풀고 둘 곳 정하기</a></li>
+    <li><a href="#step-3">브라우저 닫고 설치 파일 실행</a></li>
+    <li><a href="#step-4">브라우저에 온글 넣기</a></li>
+    <li><a href="#step-5">온글 설정에서 ChatGPT 켜기</a></li>
+    <li><a href="#step-6">ChatGPT 로그인</a></li>
+    <li><a href="#step-7">저장하고 연결 확인</a></li>
+  </ol>
+  <p class="toc-more"><a href="#trouble">잘 안 될 때</a> · <a href="#remove">지우는 방법</a></p>
+</nav>
+
+<section class="card before" aria-labelledby="before-title">
+  <h2 id="before-title">시작하기 전에 확인하세요</h2>
+  <ul class="checks">
+    <li><b>브라우저:</b> Chrome(크롬)을 권장합니다. Edge, Whale에서도 됩니다.</li>
+    <li><b>ChatGPT 계정:</b> 이미 쓰고 있는 ChatGPT 계정이면 됩니다. 사용량은 그 계정의 요금제 한도에서 나갑니다.</li>
+    <li class="os-win"><b>Windows:</b> 64비트 Windows 10 또는 11. 관리자 권한은 필요 없습니다.</li>
+    <li class="os-mac"><b>Mac:</b> 애플 실리콘(M1, M2, M3, M4 …) Mac만 됩니다. 확인하려면 화면 왼쪽 위 사과 메뉴 → "이 Mac에 관하여"에서 "칩" 항목이 "Apple M…"인지 봅니다. 인텔 Mac은 ChatGPT 연결을 지원하지 않습니다.</li>
+    <li><b>API 키로만 쓸 분:</b> 이 가이드 대신 작은 확장 zip(<code>ongeul-v버전.zip</code>)만 받아 4단계부터 하면 됩니다.</li>
+  </ul>
+</section>
+
+<ol class="steps" id="steps">
+
+<!-- 1 -->
+<li class="step" id="step-1">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">1</span>
+    <h2><span class="sr-only">1단계. </span>설치 파일 받기</h2>
+  </div>
+  <figure class="art"><img src="images/download.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <ol class="do">
+    <li><a href="https://github.com/SSUmart/SSUcreamMaker/releases" target="_blank" rel="noopener">온글 릴리즈 페이지 (새 탭)</a>를 엽니다.</li>
+    <li>맨 위에 있는 가장 새 버전에서 <b>Assets</b>(첨부 파일) 목록을 찾습니다.</li>
+    <li>내 컴퓨터에 맞는 파일 하나를 눌러 받습니다.
+      <div class="file os-win"><span class="tag">Windows</span><code>ongeul-v버전-windows-x64.zip</code><small>약 210MB</small></div>
+      <div class="file os-mac"><span class="tag">Mac</span><code>ongeul-v버전-macos-arm64.zip</code><small>약 180MB</small></div>
+    </li>
+  </ol>
+  <p class="tip">파일이 커서 받는 데 1~2분 걸릴 수 있습니다. 받은 파일은 보통 <b>다운로드</b> 폴더에 있습니다.</p>
+  <label class="done"><input type="checkbox" data-step="1"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 2 -->
+<li class="step" id="step-2">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">2</span>
+    <h2><span class="sr-only">2단계. </span>압축 풀고 둘 곳 정하기</h2>
+  </div>
+  <figure class="art"><img src="images/unzip.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <ol class="do os-win">
+    <li>다운로드 폴더에서 받은 zip 파일을 <b>마우스 오른쪽 버튼</b>으로 누르고 <b>모두 압축 풀기</b>를 고릅니다.</li>
+    <li>"파일을 아래 폴더에 풀기" 칸의 <b>찾아보기</b>를 눌러 <b>문서</b> 폴더를 고른 뒤 <b>압축 풀기</b>를 누릅니다.</li>
+    <li>문서 폴더 안에 <code>ongeul</code> 폴더가 생겼는지 확인합니다.</li>
+  </ol>
+  <ol class="do os-mac">
+    <li>Finder의 다운로드 폴더에서 받은 zip 파일을 <b>두 번 클릭</b>합니다. 옆에 <code>ongeul</code> 폴더가 생깁니다.</li>
+    <li><code>ongeul</code> 폴더를 왼쪽 사이드바의 <b>문서</b>로 끌어다 놓아 옮깁니다.</li>
+  </ol>
+  <p class="warn"><b>중요:</b> <code>ongeul</code> 폴더는 설치한 뒤에도 <b>지우거나 옮기지 마세요.</b> 브라우저가 그 안의 <code>extension</code> 폴더를 계속 씁니다.</p>
+  <label class="done"><input type="checkbox" data-step="2"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 3 -->
+<li class="step" id="step-3">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">3</span>
+    <h2><span class="sr-only">3단계. </span>브라우저 닫고 설치 파일 실행</h2>
+  </div>
+  <figure class="art"><img src="images/install.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <ol class="do os-win">
+    <li>열려 있는 <b>브라우저 창을 모두 닫습니다.</b> (Chrome, Edge 모두)</li>
+    <li><code>ongeul</code> 폴더를 열고 <code>install-windows.cmd</code>를 <b>두 번 클릭</b>합니다. 파일 이름 끝의 <code>.cmd</code>가 안 보이면 <code>install-windows</code>를 찾습니다.</li>
+    <li>파란 <b>"Windows의 PC 보호"</b> 창이 뜨면 <b>추가 정보</b>를 누르고 <b>실행</b>을 누릅니다. (인터넷에서 받은 파일이라 한 번 묻는 것입니다)</li>
+    <li>검은 창에 아래처럼 나오면 성공입니다. 아무 키나 눌러 창을 닫습니다.</li>
+  </ol>
+  <ol class="do os-mac">
+    <li>열려 있는 <b>브라우저를 모두 종료</b>합니다. (Dock의 Chrome 아이콘을 오른쪽 클릭 → 종료)</li>
+    <li><b>터미널</b>을 엽니다: <kbd>Command</kbd>+<kbd>Space</kbd>를 누르고 "터미널"을 입력한 뒤 <kbd>Return</kbd>.</li>
+    <li>터미널 창에 아래 글자를 입력합니다. <b>sh 다음에 띄어쓰기 한 칸</b>이 꼭 있어야 하고, 아직 <kbd>Return</kbd>은 누르지 않습니다.
+      <div class="code"><code id="mac-cmd">sh </code><button type="button" class="copy" data-copy="sh ">복사</button></div>
+    </li>
+    <li>Finder에서 <code>ongeul</code> 폴더를 열고 <code>install.sh</code> 파일을 <b>터미널 창 위로 끌어다 놓습니다.</b> 파일 위치가 자동으로 입력됩니다.</li>
+    <li><kbd>Return</kbd>을 누릅니다. 아래처럼 나오면 성공입니다.</li>
+  </ol>
+  <div class="terminal" aria-label="설치가 끝났을 때 나오는 글 예시">
+<pre>온글 연결 프로그램 1.0.0을 설치했습니다.
+등록한 브라우저: Chrome<span class="os-win">, Edge</span>
+Codex CLI: … (함께 담긴 것)
+
+다음 순서:
+1. 브라우저를 완전히 껐다 켭니다.
+2. chrome://extensions 에서 개발자 모드를 켜고 …
+   (이 경로를 클립보드에 복사해 두었습니다. …)
+3. 온글 설정에서 AI 기능 켜기와 "ChatGPT 계정으로 연결"을 켜고 …</pre>
+  </div>
+  <p class="tip"><b>extension 폴더 경로가 클립보드에 복사</b>되어 있습니다. 4단계에서 붙여넣기만 하면 되니 다른 것을 복사하지 마세요.</p>
+  <label class="done"><input type="checkbox" data-step="3"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 4 -->
+<li class="step" id="step-4">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">4</span>
+    <h2><span class="sr-only">4단계. </span>브라우저에 온글 넣기</h2>
+  </div>
+  <figure class="art"><img src="images/restart.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <ol class="do">
+    <li>브라우저를 다시 켭니다.</li>
+    <li>주소창에 아래 주소를 입력하고 <kbd>Enter</kbd>를 누릅니다. (Edge는 <code>edge://extensions</code>)
+      <div class="code"><code>chrome://extensions</code><button type="button" class="copy" data-copy="chrome://extensions">복사</button></div>
+    </li>
+    <li>오른쪽 위 <b>개발자 모드</b> 스위치를 켭니다.</li>
+    <li>왼쪽 위에 생긴 <b>압축해제된 확장 프로그램을 로드합니다</b> 버튼을 누릅니다.</li>
+  </ol>
+  <figure class="shot">
+    <img src="images/extensions-devmode.png" width="2200" height="840" loading="lazy"
+      alt="크롬 확장 프로그램 화면. 오른쪽 위 개발자 모드 스위치가 켜져 있고, 왼쪽 위 '압축해제된 확장 프로그램을 로드합니다' 버튼이 주황색 테두리로 표시되어 있다. 아래에는 설치된 온글 카드가 보인다.">
+    <figcaption>개발자 모드를 켜면 주황색으로 표시한 버튼이 나타납니다.</figcaption>
+  </figure>
+  <ol class="do" start="5">
+    <li class="os-win">폴더 고르는 창이 열리면 위쪽 <b>주소 칸</b>을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣은 뒤 <kbd>Enter</kbd>, 그다음 <b>폴더 선택</b>을 누릅니다.</li>
+    <li class="os-mac">폴더 고르는 창이 열리면 <kbd>Command</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>를 누르고 <kbd>Command</kbd>+<kbd>V</kbd>로 붙여넣은 뒤 <kbd>Return</kbd>, 그다음 <b>선택</b>을 누릅니다.</li>
+    <li>목록에 <b>온글</b> 카드가 생기고, 온글 설정 화면이 새 탭으로 열리면 성공입니다.</li>
+  </ol>
+  <p class="tip">붙여넣을 경로를 잃어버렸다면 직접 고르면 됩니다: <code class="os-win">문서 → ongeul → extension</code><code class="os-mac">문서 → ongeul → extension</code> 폴더를 선택하세요. <b>ongeul 폴더가 아니라 그 안의 extension 폴더</b>입니다.</p>
+  <p class="warn"><b>예전 온글이 이미 있다면:</b> 목록의 예전 온글 카드에서 <b>삭제</b>를 누른 뒤 위 순서로 새로 넣으세요. 이 버전부터 온글이 새 확장으로 인식되어, API 키 같은 설정을 한 번 다시 넣어야 합니다.</p>
+  <label class="done"><input type="checkbox" data-step="4"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 5 -->
+<li class="step" id="step-5">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">5</span>
+    <h2><span class="sr-only">5단계. </span>온글 설정에서 ChatGPT 켜기</h2>
+  </div>
+  <ol class="do">
+    <li>온글 설정 화면을 엽니다. 4단계에서 자동으로 열렸다면 그대로 씁니다.
+      <span class="sub">닫았다면: 확장 프로그램 화면의 온글 카드에서 <b>세부정보</b> → <b>확장 프로그램 옵션</b>을 누릅니다.</span></li>
+    <li>아래로 내려가 <b>AI 사용</b> 부분을 찾습니다.</li>
+    <li><b>AI 기능 켜기</b>에 체크합니다.</li>
+    <li><b>ChatGPT 계정으로 연결</b>에 체크합니다. 그러면 아래에 "ChatGPT 계정 설정"이 나타납니다.</li>
+  </ol>
+  <figure class="shot narrow">
+    <img src="images/options-login.png" width="1380" height="1336" loading="lazy"
+      alt="온글 설정의 AI 사용 부분. 'AI 기능 켜기'와 'ChatGPT 계정으로 연결' 체크 상자가 체크되어 주황색으로 표시되어 있다. 그 아래 ChatGPT 계정 설정에 '로그인되어 있지 않습니다' 문장과 'ChatGPT 로그인 (브라우저)' 버튼이 주황색으로 표시되어 있다.">
+    <figcaption>두 칸을 체크하면 ChatGPT 로그인 버튼이 보입니다.</figcaption>
+  </figure>
+  <p class="tip">"연결 프로그램이 설치되어 있지 않습니다"라고 나오면 3단계 설치가 안 된 것입니다. 브라우저를 완전히 닫고 3단계를 다시 해 보세요. <a href="#trouble">잘 안 될 때</a>도 참고하세요.</p>
+  <label class="done"><input type="checkbox" data-step="5"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 6 -->
+<li class="step" id="step-6">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">6</span>
+    <h2><span class="sr-only">6단계. </span>ChatGPT 로그인</h2>
+  </div>
+  <figure class="art"><img src="images/login.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <ol class="do">
+    <li><b>ChatGPT 로그인 (브라우저)</b> 버튼을 누릅니다.</li>
+    <li>새 탭에 <b>OpenAI 로그인 페이지</b>가 열립니다. 평소 ChatGPT에 로그인하는 방법(이메일, Google, Apple 등)으로 로그인합니다.</li>
+    <li>"로그인되었습니다"라는 화면이 나오면 그 탭을 닫고 <b>온글 설정 탭으로 돌아옵니다.</b></li>
+    <li>설정 화면에 <b>"ChatGPT 계정에 로그인되어 있습니다"</b>가 보이면 성공입니다.</li>
+  </ol>
+  <p class="tip">로그인 페이지가 안 열리면 화면에 생긴 <b>"OpenAI 로그인 페이지 열기"</b> 링크를 누르세요. 그래도 안 되면 <b>기기 코드로 로그인</b>을 누릅니다. 온글이 일회용 코드(예: AB12-CD345)를 보여 주고 한 글자씩 읽어 주니, 열린 OpenAI 페이지에 그 코드를 입력하면 됩니다. 휴대폰으로 입력해도 됩니다.</p>
+  <label class="done"><input type="checkbox" data-step="6"> 이 단계를 마쳤어요</label>
+</li>
+
+<!-- 7 -->
+<li class="step" id="step-7">
+  <div class="step-head">
+    <span class="num" aria-hidden="true">7</span>
+    <h2><span class="sr-only">7단계. </span>저장하고 연결 확인</h2>
+  </div>
+  <ol class="do">
+    <li><b>모델</b>은 잘 모르면 <b>자동 (계정 기본 모델)</b>을 그대로 둡니다.</li>
+    <li>맨 아래 <b>저장</b>을 누릅니다.</li>
+    <li><b>연결 확인</b>을 누릅니다. 몇 초 뒤 <b>"ChatGPT 연결에 성공했습니다"</b>가 나오면 모두 끝났습니다.</li>
+  </ol>
+  <figure class="shot narrow">
+    <img src="images/options-done.png" width="1380" height="948" loading="lazy"
+      alt="로그인한 뒤의 ChatGPT 계정 설정. '로그인되어 있습니다' 문장, 모델 선택 칸 '자동 (계정 기본 모델)', 저장 버튼과 연결 확인 버튼, 그리고 'ChatGPT 연결에 성공했습니다' 문장이 주황색으로 표시되어 있다.">
+    <figcaption>"ChatGPT 연결에 성공했습니다"가 나오면 준비 끝입니다.</figcaption>
+  </figure>
+  <label class="done"><input type="checkbox" data-step="7"> 이 단계를 마쳤어요</label>
+</li>
+</ol>
+
+<section class="card finish" aria-labelledby="finish-title">
+  <h2 id="finish-title">이제 써 보세요</h2>
+  <p>쇼핑몰 상품 페이지에서 <kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>로 온글을 켜고, <kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>으로 온글 메뉴를 열어 <b>상세 이미지 읽기</b>나 <b>페이지 요약</b>을 골라 보세요.</p>
+  <p><a class="btn" href="/mall/">연습용 쇼핑몰 온글몰 열기</a></p>
+</section>
+
+<section class="card" id="trouble" aria-labelledby="trouble-title">
+  <h2 id="trouble-title">잘 안 될 때</h2>
+  <details>
+    <summary>"온글 연결 프로그램이 이 컴퓨터에 설치되어 있지 않습니다"</summary>
+    <p>브라우저를 <b>완전히</b> 껐다가 켜 보세요. Windows는 화면 오른쪽 아래 알림 영역에 크롬 아이콘이 남아 있으면 오른쪽 클릭 → 종료합니다. 그래도 같으면 3단계 설치 파일을 다시 실행하세요.</p>
+  </details>
+  <details>
+    <summary>설치 창에 "설치하지 못했습니다. 브라우저를 모두 닫고…"가 나옴</summary>
+    <p>브라우저가 온글 연결 프로그램을 쓰고 있어서입니다. 브라우저를 모두 닫고 설치 파일을 다시 실행하세요.</p>
+  </details>
+  <details class="os-win">
+    <summary>Windows에서 설치 파일이 바로 닫히거나 실행되지 않음</summary>
+    <p>압축을 풀지 않고 zip 안에서 바로 실행하면 안 됩니다. 2단계처럼 <b>모두 압축 풀기</b>를 먼저 한 뒤, 풀린 <code>ongeul</code> 폴더 안의 <code>install-windows.cmd</code>를 실행하세요.</p>
+  </details>
+  <details class="os-mac">
+    <summary>Mac에서 "확인되지 않은 개발자" 같은 경고가 나옴</summary>
+    <p>3단계의 <b>터미널 방법</b>(sh 입력 후 install.sh 끌어다 놓기)으로 실행하면 이 경고 없이 설치됩니다.</p>
+  </details>
+  <details>
+    <summary>"ChatGPT 사용 한도에 도달했습니다"</summary>
+    <p>ChatGPT 요금제의 사용 한도를 다 쓴 것입니다. 한도가 풀릴 때까지 기다리거나 설정에서 다른 모델을 고르세요.</p>
+  </details>
+  <details>
+    <summary>"ChatGPT 로그인이 풀렸습니다"</summary>
+    <p>온글 설정의 ChatGPT 계정 설정에서 6단계처럼 다시 로그인하세요.</p>
+  </details>
+  <details>
+    <summary>새 버전으로 바꾸고 싶어요</summary>
+    <p>브라우저를 모두 닫고, 새 zip을 받아 같은 자리(문서 폴더)에 풀어 덮어쓴 뒤 3단계 설치 파일을 다시 실행합니다. 브라우저를 켜고 확장 프로그램 화면에서 온글 카드의 <b>새로고침</b>(동그란 화살표)을 누르면 됩니다. 설정은 그대로 남습니다.</p>
+  </details>
+</section>
+
+<section class="card" id="remove" aria-labelledby="remove-title">
+  <h2 id="remove-title">지우는 방법</h2>
+  <ol class="do">
+    <li class="os-win"><code>ongeul</code> 폴더의 <code>uninstall-windows.cmd</code>를 두 번 클릭합니다.</li>
+    <li class="os-mac">터미널에 <code>sh </code>(띄어쓰기 포함)을 입력하고 <code>ongeul</code> 폴더의 <code>uninstall.sh</code>를 끌어다 놓은 뒤 <kbd>Return</kbd>을 누릅니다.</li>
+    <li>확장 프로그램 화면에서 온글 카드의 <b>삭제</b>를 누릅니다.</li>
+    <li><code>ongeul</code> 폴더를 휴지통에 버립니다.</li>
+  </ol>
+  <p>연결 프로그램, 함께 담긴 프로그램, ChatGPT 로그인 정보가 모두 지워집니다.</p>
+</section>
+
+<section class="card" aria-labelledby="privacy-title">
+  <h2 id="privacy-title">알아 두세요</h2>
+  <ul class="checks">
+    <li>요약·질문·이미지 읽기를 하면 그 페이지의 글과 그림이 내 ChatGPT 계정으로 OpenAI에 전송됩니다. 입력창에 적은 내용은 보내지 않습니다.</li>
+    <li>온글은 ChatGPT 비밀번호나 로그인 정보를 보지 않습니다. 로그인은 OpenAI 공식 프로그램(Codex)이 처리합니다.</li>
+    <li>대화 기록은 남기지 않습니다.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>온글 · <a href="https://github.com/SSUmart/SSUcreamMaker/blob/main/docs/CHATGPT-LOGIN.md" target="_blank" rel="noopener">자세한 설명 문서 (새 탭)</a></p>
+    <p><button type="button" id="reset" class="link">체크한 단계 모두 지우기</button></p>
+  </div>
+</footer>
+
+<script src="guide.js"></script>
+</body>
+</html>
