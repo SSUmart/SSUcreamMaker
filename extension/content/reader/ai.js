@@ -2,6 +2,9 @@
 // - 이름이 없어 읽을 수 없는 항목(이름 없는 버튼·링크, alt 없는 그림 등)을 읽으면 "AI 분석 중"이라고 알리고 탐색을 계속하게 한다.
 //   분석이 끝났을 때 아직 그 항목에 있으면 바로 이어 읽고, 다른 곳에 있으면 알리지 않는다(궁금하면 AI 결과 모음에서 확인).
 //   결과는 그 항목의 이름으로 붙어 다시 오면 "…, AI 추정"으로 읽는다. 페이지를 열면 앞쪽 몇 개는 미리 분석한다.
+// - AI를 부르기 전에, 요소 단서(클래스·아이디·주소)가 흔한 아이콘 이름과 확실히 맞으면(cart → 장바구니, wish·heart → 찜하기 등)
+//   기다리지 않고 바로 "…, 추정"으로 읽는다. AI가 꺼져 있어도 동작한다. 되돌리기 어려운 동작(삭제·결제 등)의 단서가 있으면 AI 교차 검증에 맡긴다.
+// - 모양이 같은 항목(상품마다 반복되는 아이콘 버튼 등)은 한 번만 AI에 묻고 그 이름을 함께 쓴다.
 // - AI 결과 모음(Alt+Shift+I): 자동 보완, 요약, 상세 이미지 읽기, 질문 답, 항목 설명 결과를 모아 다시 듣는다.
 // - 현재 항목 AI 설명(Alt+Shift+E, 기능 키는 설정에서 바꿈): 지금 읽는 항목을 AI가 1~3문장으로 설명한다 (예전 항목 설명 모드를 대신함).
 (() => {
@@ -15,8 +18,30 @@
   const DESTRUCTIVE_HINT = /(delete|remove|trash|cancel|withdraw|leave|unsubscribe|logout|signout|payment|checkout|purchase|(?:clear|empty)[-_]?(?:all|cart|basket|bag|list)|(?:cart|basket|bag)[-_]?(?:clear|empty)|삭제|취소|탈퇴|결제|구매|해지|비우)/i;
   const DESTRUCTIVE_WORD = /(삭제|지우|제거|취소|탈퇴|결제|구매|주문|로그아웃|해지|비우|휴지통|초기화)/;
 
-  const labels = new WeakMap(); // 요소 → { label, confident }
+  // 요소 단서 → 이름. 뜻이 하나로 정해지는 아이콘 말만 둔다 (like는 좋아요·도움돼요 등 뜻이 여럿이라 AI에 맡김).
+  // 앞쪽이 먼저: search-close는 닫기. 짧은 말은 앞뒤가 다른 글자가 아닐 때만 (context의 next, display의 play 등을 피함)
+  const HINT_NAMES = [
+    [/(?<![a-z])(close|dismiss)(?![a-z])/, '닫기'],
+    [/(?<![a-z])(cart|basket)/, ({ role, counted }) => (role === 'link' || counted ? '장바구니' : '장바구니 담기')],
+    [/(?<![a-z])(wish|zzim|jjim|heart)/, '찜하기'],
+    [/(?<![a-z])(search|magnif)/, '검색'],
+    [/(?<![a-z])share/, '공유하기'],
+    [/(?<![a-z])(hamburger|all-?menu|menu-(toggle|btn|open)|btn-menu|nav-toggle|gnb-open)(?![a-z])/, '메뉴'],
+    [/(?<![a-z])(log-?in|sign-?in)(?![a-z])/, '로그인'],
+    [/(?<![a-z])(my-?page|my-?info)(?![a-z])/, '마이페이지'],
+    [/(?<![a-z])(scroll-?top|go-?top|to-top|btn-top|top-btn|back-to-top)(?![a-z])/, '맨 위로'],
+    [/(?<![a-z])(prev|previous)(?![a-z])/, '이전'],
+    [/(?<![a-z])next(?![a-z])/, '다음'],
+    [/(?<![a-z])play(?![a-z])/, '재생'],
+    [/(?<![a-z])pause(?![a-z])/, '일시 정지'],
+    [/(?<![a-z])(notification|alarm|bell)(?![a-z])/, '알림']
+  ];
+  const HINT_ROLES = new Set(['link', 'button']);
+
+  const labels = new WeakMap(); // 요소 → { label, hint } (hint: 요소 단서로 붙인 이름)
   const pending = new WeakSet();
+  const shapeLabels = new Map(); // 모양 → AI 이름
+  const shapeWaiting = new Map(); // 모양 → AI 답을 기다리는 같은 모양 항목들
   const queue = [];
   let running = false;
   let autoCount = 0;
@@ -33,11 +58,74 @@
     return reader()?.settings?.reader?.autoSupplement !== false;
   }
 
-  // 알고 있는 AI 이름을 읽기 항목에 붙인다 (목록을 만들 때, 이동할 때)
+  // 요소 단서 글: 아이디, 클래스, name, data-action, 안의 아이콘(use·i·span·svg)의 주소·클래스, 링크 주소의 경로.
+  // 그림 파일 이름(상품 사진 등)과 주소의 도메인은 넣지 않는다 (heart-bag.jpg, heartmall.com 같은 말에 속지 않게).
+  // fooBar는 foo-bar로 나눠 소문자로 바꾼다
+  function hintText(el) {
+    const parts = [el.id, el.getAttribute('class'), el.getAttribute('name'), el.getAttribute('data-action')];
+    el.querySelectorAll('use, i, span[class], svg[class]').forEach((child) => {
+      parts.push(child.getAttribute('href') || child.getAttribute('xlink:href'), child.getAttribute('class'));
+    });
+    if (el.matches('a[href]')) {
+      try {
+        parts.push(new URL(el.href).pathname);
+      } catch {
+        // 주소가 아니면 넘어간다
+      }
+    }
+    return parts
+      .filter(Boolean)
+      .join(' ')
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      .toLowerCase();
+  }
+
+  // 단서 글로 정한 이름 (없으면 ''). counted: 이름 대신 개수 숫자만 있던 항목(장바구니 개수 등)
+  function hintName(text, { role, counted = false } = {}) {
+    if (!text || DESTRUCTIVE_HINT.test(text)) return '';
+    for (const [pattern, name] of HINT_NAMES) {
+      if (pattern.test(text)) return typeof name === 'function' ? name({ role, counted }) : name;
+    }
+    return '';
+  }
+
+  // 모양: 같은 모양의 이름 없는 항목은 같은 이름을 갖는다고 본다 (상품마다 반복되는 찜 버튼 등).
+  // 링크 주소와 그림 주소를 넣어, 주소나 그림이 다른 항목(상품마다 다른 사진 링크 등)은 서로 다른 모양이 된다.
+  // 클래스·아이콘·그림·주소 단서가 하나도 없으면 같은 모양으로 묶지 않는다
+  function shapeKey(item) {
+    const el = item.el;
+    const icons = [...el.querySelectorAll('svg, img, i, use')]
+      .slice(0, 5)
+      .map((child) => child.getAttribute('src') || child.getAttribute('href') || child.getAttribute('class') || child.innerHTML.slice(0, 300));
+    const cls = el.getAttribute('class') ?? '';
+    const href = el.getAttribute('href') ?? '';
+    if (!cls.trim() && !href && !icons.some(Boolean)) return '';
+    return [item.role, el.tagName, cls, href, ...icons].join('|');
+  }
+
+  // 이미 알고 있는 이름: 이 요소에 붙인 이름 → 요소 단서 → 같은 모양 항목의 AI 이름
+  function knownLabel(item) {
+    const el = item.el;
+    let known = labels.get(el);
+    if (known) return known;
+    if (HINT_ROLES.has(item.role)) {
+      const label = hintName(hintText(el), { role: item.role, counted: Boolean(item.countText) });
+      if (label) known = { label, hint: true };
+    }
+    if (!known) {
+      const key = shapeKey(item);
+      if (key && shapeLabels.has(key)) known = { label: shapeLabels.get(key) };
+    }
+    if (known) labels.set(el, known);
+    return known;
+  }
+
+  // 알고 있는 이름을 읽기 항목에 붙인다 (목록을 만들 때, 이동할 때)
   function decorate(item) {
-    const known = item && labels.get(item.el);
-    if (!known || !item.needsName) return item;
-    const next = { ...item, name: known.label, aiName: true, needsName: false };
+    if (!item?.needsName) return item;
+    const known = knownLabel(item);
+    if (!known) return item;
+    const next = { ...item, name: known.label, aiName: !known.hint, hintName: Boolean(known.hint), needsName: false };
     next.phrase = ns.model.phraseOf(next);
     return next;
   }
@@ -58,11 +146,20 @@
 
   function request(item, { announce }) {
     const el = item.el;
-    if (labels.has(el) || pending.has(el) || autoCount >= MAX_AUTO_PER_PAGE || aiError) return false;
+    if (labels.has(el) || pending.has(el) || aiError) return false;
+    // 같은 모양 항목을 이미 묻고 있으면 새로 묻지 않고 그 답을 기다린다 (분석 개수에도 세지 않음)
+    const key = shapeKey(item);
+    if (key && shapeWaiting.has(key)) {
+      pending.add(el);
+      shapeWaiting.get(key).push(item);
+      return true;
+    }
+    if (autoCount >= MAX_AUTO_PER_PAGE) return false;
     pending.add(el);
     autoCount++;
+    if (key) shapeWaiting.set(key, []);
     const entry = addResult({ kind: 'label', title: `${roleName(item)}, AI 분석 중`, el, status: 'pending' });
-    queue.push({ item, entry, announce });
+    queue.push({ item, entry, announce, key });
     pump();
     return true;
   }
@@ -71,15 +168,18 @@
   async function pump() {
     if (running || !queue.length) return;
     running = true;
-    const { item, entry, announce } = queue.shift();
+    const { item, entry, announce, key } = queue.shift();
+    const waiting = () => (key && shapeWaiting.get(key)) || [];
     try {
       const response = await chrome.runtime.sendMessage({ type: 'label-item', item: ns.describe.describeElement(item.el, item) });
       if (!response || response.error) throw new Error(response?.error ?? '응답이 없습니다.');
       const label = finalLabel(item.el, response);
       labels.set(item.el, { label });
+      if (key) shapeLabels.set(key, label);
+      for (const other of waiting()) labels.set(other.el, { label });
       entry.status = 'done';
       entry.title = `${label}, ${roleName(item)}, AI 추정`;
-      delivered(item);
+      delivered([item, ...waiting()]);
     } catch (error) {
       entry.status = 'error';
       entry.title = `${roleName(item)}, AI 분석 실패`;
@@ -96,6 +196,8 @@
       }
     } finally {
       pending.delete(item.el);
+      for (const other of waiting()) pending.delete(other.el);
+      if (key) shapeWaiting.delete(key);
       running = false;
       pump();
     }
@@ -103,12 +205,13 @@
 
   // 분석 결과 전달: 아직 그 항목에 있으면 바로 이어 읽는다. 다른 곳에 있으면 알리지 않는다
   // (분석이 끝날 때마다 말하면 너무 많으므로, 궁금하면 사용자가 AI 결과 모음을 연다)
-  function delivered(item) {
+  // items: 이 답으로 이름이 붙은 항목들 (같은 모양 항목 포함)
+  function delivered(items) {
     const r = reader();
     if (!r?.enabled) return;
     r.rebuild();
     const current = r.items[r.index];
-    if (current?.el === item.el && !r.sayingAll) say(`분석 결과: ${current.phrase}`, { interrupt: false });
+    if (current && items.some((item) => item.el === current.el) && !r.sayingAll) say(`분석 결과: ${current.phrase}`, { interrupt: false });
   }
 
   // 읽기 엔진이 항목을 읽을 때 부른다 (reader.moveTo)
@@ -195,5 +298,5 @@
   }
 
   // finalLabel은 평가 도구(eval/ai-eval.mjs)가 사용자가 실제로 듣는 이름으로 채점할 때도 쓴다
-  ns.ai = { decorate, onItemRead, prefetch, addResult, openResults, explainCurrent, results, finalLabel };
+  ns.ai = { decorate, onItemRead, prefetch, addResult, openResults, explainCurrent, results, finalLabel, hintName };
 })();
