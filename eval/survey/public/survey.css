@@ -87,3 +87,4 @@ summary { cursor: pointer; color: var(--accent); }
   .card, .table-wrap { border-color: #999; }
 }
 input[type='checkbox'] { width: 22px; height: 22px; margin: 0; }
+.preview-box { border: 2px solid var(--focus); border-radius: 10px; padding: 14px 18px; background: #fff8e6; margin: 8px 0 16px; }

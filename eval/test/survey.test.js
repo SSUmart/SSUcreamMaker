@@ -375,7 +375,7 @@ test('저장소: 결과 페이지 순번은 만든 순서대로, 예전 설문�
   }
 });
 
-test('서버: 결과 페이지는 끝낸 설문만, 관리자는 언제나, 그 밖에는 공개한 결과만 보인다', () =>
+test('서버: 결과 페이지는 관리자는 언제나(끝내기 전은 미리보기), 그 밖에는 끝내고 공개한 결과만 보인다', () =>
   withServer(async ({ call, base }) => {
     await call('/api/admin/session', { method: 'POST', body: { password: 'pw-1234' } });
     const s = (await call('/api/admin/surveys', { method: 'POST', body: { title: '결과 시험', description: '', questionsText: QUESTIONS_TEXT } })).data;
@@ -388,13 +388,28 @@ test('서버: 결과 페이지는 끝낸 설문만, 관리자는 언제나, 그 
     assert.match((await anon('/result-1')).data, /assets\/result\.js/);
     for (const bad of ['/result-0', '/result-01', '/result-x', '/result-1/']) assert.equal((await anon(bad)).status, 404, bad);
 
-    // 끝내기 전: 관리자에게는 "아직 끝나지 않음", 다른 사람에게는 없는 결과와 똑같이
-    assert.equal((await call('/api/result/1')).status, 409);
+    // 끝내기 전: 관리자는 미리보기, 다른 사람에게는 없는 결과와 똑같이
+    let preview = await call('/api/result/1');
+    assert.equal(preview.status, 200);
+    assert.equal(preview.data.preview, true);
+    assert.equal(preview.data.analysis.counts.user, 0);
     assert.equal((await anon('/api/result/1')).status, 404);
     assert.equal((await anon('/api/result/2')).status, 404);
     assert.equal((await anon('/api/result/1')).data.error, (await anon('/api/result/2')).data.error);
 
+    // 미리보기는 지금까지 받은 응답으로 바로 바뀐다
     await call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 5, q2: 4, q3: 2 }, comment: '느려요' }, admin: false, csrf: false });
+    preview = await call('/api/result/1');
+    assert.equal(preview.data.analysis.counts.user, 1);
+    assert.equal(preview.data.analysis.rows[2].user.mean, 2);
+
+    // 결과를 공개해 두어도 끝내기 전에는 다른 사람에게 보이지 않는다
+    await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: true } });
+    const early = await anon('/api/result/1');
+    assert.equal(early.status, 404);
+    assert.equal(early.data.error, (await anon('/api/result/2')).data.error);
+    await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: false } });
+
     await call(`/api/admin/surveys/${s.id}/close`, { method: 'POST' });
 
     // 끝낸 뒤, 공개 전: 관리자만
@@ -402,6 +417,7 @@ test('서버: 결과 페이지는 끝낸 설문만, 관리자는 언제나, 그 
     assert.equal(mine.status, 200);
     assert.equal(mine.data.admin, true);
     assert.equal(mine.data.id, s.id);
+    assert.equal(mine.data.preview, false);
     assert.equal(mine.data.analysis.rows[2].user.mean, 2);
     assert.equal((await anon('/api/result/1')).status, 404);
 

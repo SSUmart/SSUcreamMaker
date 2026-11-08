@@ -123,11 +123,24 @@ try {
   await page.getByRole('button', { name: 'AI 답 저장' }).click();
   await page.getByText('2번 문항의 답을 찾지 못했습니다').waitFor();
   check('빠진 AI 답 안내', true);
+  check('오류 상자에 빈 값 글자(null) 없음', !/\bnull\b/.test(await page.locator('.error-box').filter({ hasText: '찾지 못했습니다' }).innerText()));
   await page.getByRole('button', { name: '빠진 문항은 해당 없음으로 저장' }).click();
   await page.getByText('AI 답 1개').waitFor();
   check('AI 답 저장', (await page.getByRole('button', { name: 'Claude 답 지우기' }).count()) === 1);
 
-  check('끝내기 전: 결과 페이지 주소를 미리 알려 줌, 분석표 열기 버튼은 없음', (await page.getByLabel('결과 페이지 주소').inputValue()) === `${base}/result-1` && (await page.getByRole('link', { name: '분석표 열기' }).count()) === 0);
+  check('끝내기 전: 결과 페이지 주소를 미리 알려 줌, 분석표 열기 대신 결과 미리보기', (await page.getByLabel('결과 페이지 주소').inputValue()) === `${base}/result-1` && (await page.getByRole('link', { name: '분석표 열기' }).count()) === 0);
+  await page.getByRole('link', { name: '결과 미리보기' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가 결과 미리보기', level: 1 }).waitFor();
+  const previewText = await page.locator('main').innerText();
+  check('미리보기: 진행 중 안내와 지금까지의 분석표(사용자 응답 2개), 빈 값 글자(null) 없음', !/\bnull\b/.test(previewText) && previewText.includes('아직 진행 중인 설문입니다') && previewText.includes('사용자 응답 2개') && (await page.getByRole('row', { name: /^3\. 상세 이미지/ }).count()) === 1, previewText.slice(0, 200));
+  await shot('result-preview');
+  const guestEarly = await browser.newPage({ locale: 'ko-KR' });
+  await guestEarly.goto(`${base}/result-1`);
+  await guestEarly.getByRole('heading', { name: '결과를 볼 수 없습니다', level: 1 }).waitFor();
+  check('미리보기는 관리자만: 로그인하지 않은 사람은 볼 수 없음', true);
+  await guestEarly.close();
+  await page.getByRole('link', { name: '설문 관리로 돌아가기' }).click();
+  await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
   await page.getByRole('button', { name: '설문 끝내기' }).click();
   await page.getByRole('link', { name: '분석표 열기' }).waitFor();
   check('끝낸 뒤: 분석표 열기 버튼', true);
@@ -164,7 +177,7 @@ try {
   await guest.reload();
   await guest.getByRole('heading', { name: '온글 1차 평가 결과', level: 1 }).waitFor();
   const guestText = await guest.locator('main').innerText();
-  check('공개 후: 로그인 없이 결과 페이지에서 분석표를 봄 (관리 링크·안내는 없음)', guestText.includes('사용자 평가') && guestText.includes('상세 이미지 읽기가 조금 느려요') && !guestText.includes('설문 관리로') && !guestText.includes('관리자만'));
+  check('공개 후: 로그인 없이 결과 페이지에서 분석표를 봄 (관리 링크·안내·null 글자 없음)', !/\bnull\b/.test(guestText) && guestText.includes('사용자 평가') && guestText.includes('상세 이미지 읽기가 조금 느려요') && !guestText.includes('설문 관리로') && !guestText.includes('관리자만'));
   await page.reload();
   await page.getByRole('heading', { name: '온글 1차 평가', level: 1 }).waitFor();
   check('공개 설정이 저장됨', await page.getByLabel('결과 공개 (로그인 없이 주소로 보기)').isChecked());

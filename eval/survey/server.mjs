@@ -172,13 +172,14 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
     }
 
     // ----- 결과 페이지 -----
-    // 공개하지 않은 결과는 관리자가 아니면 없는 결과와 똑같이 답한다 (어떤 번호가 있는지 알 수 없게)
+    // 관리자가 아니면 끝낸 설문의 공개한 결과만 보인다. 그 밖(없는 번호, 공개 안 함, 진행 중)은 모두 같은 답 (어떤 번호가 있는지 알 수 없게)
+    // 관리자는 끝내기 전에도 지금까지 받은 응답으로 만든 분석표를 미리 본다 (preview)
     if ((hit = m(/^\/api\/result\/([1-9]\d{0,6})$/)) && req.method === 'GET') {
       const s = await store.byNumber(Number(hit[1]));
       const admin = isAdmin(req);
-      if (!s || (!s.resultPublic && !admin)) throw new HttpError(404, '결과를 찾을 수 없습니다. 주소를 확인하거나, 설문 관리자에게 결과를 공개했는지 물어보세요.');
-      if (s.status !== 'closed') throw new HttpError(409, '아직 끝나지 않은 설문입니다. 설문을 끝내면 이 주소에서 분석표를 볼 수 있습니다.');
+      if (!s || (!admin && (!s.resultPublic || s.status !== 'closed'))) throw new HttpError(404, '결과를 찾을 수 없습니다. 주소를 확인하거나, 설문 관리자에게 설문을 끝내고 결과를 공개했는지 물어보세요.');
       return json(res, 200, {
+        preview: s.status !== 'closed',
         no: s.no,
         title: s.title,
         createdAt: s.createdAt,
