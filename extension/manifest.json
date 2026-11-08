@@ -4,11 +4,13 @@
   "short_name": "온글",
   "description": "AI를 결합한 웹 스크린리더. 웹페이지를 화면 자막과 음성으로 읽고, 읽을 수 없는 그림 속 글자는 AI로 채우며, 긴 페이지 요약과 질문 응답을 제공합니다.",
   "version": "0.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq6oUa3WG3E58tfFQaXGd/HHrfwZkX8JM5s7hUAMwJe82qwDZGJxaAlb19d/OdfG4LSuwd1vygdm+Qu6tDwt+mUkcUIBx7hHp0x1qES3yCPkSY3jnyHE0DtYmLp47v96DslbqGoW3ePxxYYWjSkb64O+jhtTIL3LWPbi6cwojgIwwssc0nmYTuMBQu8wTqNpWxNBiHkwocYv0hTji6cOxjVX94C7yfg8SzZYETkK77zFSimafyl1EJ/qnuVBEdmLO2nY3hG3VU3A2+QgLwMUjp2Jqb7iiIy0prpfMmfpy1xSzBi4qhwU8YkoV5XsFznQ1YBBwc9SChqCxeuEyoWfY5QIDAQAB",
   "permissions": [
     "scripting",
     "storage",
     "tabs",
-    "tts"
+    "tts",
+    "nativeMessaging"
   ],
   "host_permissions": [
     "<all_urls>"

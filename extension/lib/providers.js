@@ -1,4 +1,5 @@
 import { STRUCTURE_PROMPT, TRANSCRIBE_PROMPT, isNoText } from './structure.js';
+import { bridgeRequest, generate as chatgptGenerate } from './chatgpt.js';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const TILE_ORDER_NOTE =
@@ -214,4 +215,24 @@ const nim = {
   }
 };
 
-export const PROVIDERS = { gemini, nim };
+// --- ChatGPT 계정: PC의 온글 연결 프로그램이 Codex CLI로 부른다 (lib/chatgpt.js). 그림 조각을 한 요청에 모두 붙인다.
+const chatgpt = {
+  label: 'ChatGPT',
+  maxBase64Length: Infinity,
+  async extract(tiles, config, onProgress = () => {}) {
+    return chatgptGenerate(`${STRUCTURE_PROMPT}\n${TILE_ORDER_NOTE}`, tiles, config, onProgress);
+  },
+  async generateJson(prompt, config) {
+    return chatgptGenerate(prompt, [], config);
+  },
+  async describe(prompt, tiles, config, onProgress = () => {}) {
+    return chatgptGenerate(prompt, tiles, config, onProgress);
+  },
+  async test(config) {
+    const { loggedIn } = await bridgeRequest('status');
+    if (!loggedIn) throw new Error('ChatGPT에 로그인되어 있지 않습니다. ChatGPT 로그인 버튼으로 먼저 로그인하세요.');
+    await chatgptGenerate('OK라고만 답하세요.', [], config);
+  }
+};
+
+export const PROVIDERS = { gemini, nim, chatgpt };

@@ -83,8 +83,9 @@
     } catch (error) {
       entry.status = 'error';
       entry.title = `${roleName(item)}, AI 분석 실패`;
-      // AI가 꺼져 있거나 키가 없으면 더 묻지 않고 한 번만 알린다
-      if (/꺼져 있습니다|API 키가 없습니다|모델을 고르지/.test(error.message)) {
+      // AI가 꺼져 있거나 키가 없거나, ChatGPT 연결이 준비되지 않았거나(연결 프로그램 없음, 로그인 안 됨) 사용 한도에 닿으면
+      // 더 묻지 않고 한 번만 알린다
+      if (/꺼져 있습니다|API 키가 없습니다|모델을 고르지|연결 프로그램이 설치되어 있지 않습니다|로그인되어 있지 않습니다|로그인이 풀렸습니다|사용 한도|Codex CLI를 찾지 못했습니다|Codex CLI를 실행하지 못했습니다/.test(error.message)) {
         aiError = error.message;
         queue.length = 0;
         // 미리 분석(사용자가 아직 그 항목에 가지 않음)에서 난 오류는 알리지 않고, 사용자가 이름 없는 항목에 갔을 때 알린다

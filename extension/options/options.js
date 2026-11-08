@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, NIM_RECOMMENDED_MODELS, activeProvider, loadSettings, saveSettings } from '../lib/settings.js';
 import { PROVIDERS } from '../lib/providers.js';
 import { userMessage } from '../lib/errors.js';
+import { BRIDGE_GUIDE_URL, bridgeRequest, bridgeState, spellCode } from '../lib/chatgpt.js';
 import { listVoices, pickKoreanVoice, speak } from '../lib/speech.js';
 
 const $ = (id) => document.getElementById(id);
@@ -117,9 +118,130 @@ function showProviderSection(provider) {
   $('nim-settings').hidden = provider !== 'nim';
 }
 
+// ChatGPT 연결 토글: 켜면 ChatGPT 칸만, 끄면 API 키 칸만 보인다 (둘 중 하나로만 동작)
+function showConnectionSection(connection) {
+  $('chatgpt-settings').hidden = connection !== 'chatgpt';
+  $('api-settings').hidden = connection === 'chatgpt';
+  if (connection === 'chatgpt') void refreshChatgpt();
+}
+
+// --- ChatGPT 계정 (온글 연결 프로그램)
+const chatgptModel = $('chatgpt-model');
+$('chatgpt-guide').href = BRIDGE_GUIDE_URL;
+let loginAbort = null;
+let chatgptReady = false;
+
+function setChatgptButtons({ installed = false, loggedIn = false } = {}) {
+  const loggingIn = Boolean(loginAbort);
+  $('chatgpt-login').hidden = loggingIn || !installed || loggedIn;
+  $('chatgpt-device').hidden = loggingIn || !installed || loggedIn;
+  $('chatgpt-cancel').hidden = !loggingIn;
+  $('chatgpt-logout').hidden = loggingIn || !installed || !loggedIn;
+  $('chatgpt-models-refresh').disabled = !loggedIn;
+}
+
+// 연결 상태를 확인해 화면에 보여 주고, 로그인돼 있으면 모델 목록을 받는다. announce면 결과를 상태 줄로 읽어 준다.
+async function refreshChatgpt({ announce = false } = {}) {
+  const state = $('chatgpt-state');
+  let text;
+  let info = {};
+  try {
+    info = await bridgeState();
+    if (!info.installed) text = '온글 연결 프로그램이 이 컴퓨터에 설치되어 있지 않습니다.';
+    else if (info.outdated) text = '온글 연결 프로그램이 이 온글 버전과 맞지 않습니다. 새 연결 프로그램을 받아 설치를 다시 실행하세요.';
+    else if (!info.codex) text = '온글 연결 프로그램은 있지만 Codex CLI를 찾지 못했습니다. 설치 안내에 따라 Codex CLI를 설치한 뒤 연결 프로그램 설치를 다시 실행하세요.';
+    else if (info.loggedIn) text = 'ChatGPT 계정에 로그인되어 있습니다.';
+    else text = 'ChatGPT 계정에 로그인되어 있지 않습니다. ChatGPT 로그인 버튼을 누르세요.';
+  } catch (error) {
+    text = `연결 상태를 확인하지 못했습니다. ${userMessage(error)}`;
+  }
+  state.textContent = text;
+  $('chatgpt-install').hidden = Boolean(info.installed && info.codex && !info.outdated);
+  chatgptReady = Boolean(info.loggedIn);
+  setChatgptButtons({ installed: Boolean(info.installed && info.codex && !info.outdated), loggedIn: info.loggedIn });
+  if (announce) status.textContent = text;
+  if (info.loggedIn) await loadModels();
+}
+
+// 저장된 모델이 목록에 없으면(요금제가 바뀌었거나 모델이 사라짐) 자동으로 돌리고 알린다
+async function loadModels({ announce = false } = {}) {
+  const saved = chatgptModel.value;
+  try {
+    const { models } = await bridgeRequest('models');
+    chatgptModel.replaceChildren(new Option('자동 (계정 기본 모델)', ''), ...models.map((m) => new Option(m.name, m.slug)));
+    if (saved && !models.some((m) => m.slug === saved)) {
+      chatgptModel.value = '';
+      status.textContent = `고른 모델 ${saved}을 지금 계정에서 쓸 수 없어 자동으로 바꿨습니다. 저장을 누르면 반영됩니다.`;
+    } else {
+      chatgptModel.value = saved;
+      if (announce) status.textContent = `모델 목록을 받았습니다. 자동을 포함해 ${models.length + 1}개입니다.`;
+    }
+  } catch (error) {
+    status.textContent = `모델 목록을 받지 못했습니다. ${userMessage(error)}`;
+  }
+}
+
+async function login(method) {
+  loginAbort = new AbortController();
+  setChatgptButtons({ installed: true });
+  const info = $('chatgpt-login-info');
+  const link = $('chatgpt-login-link');
+  const code = $('chatgpt-code');
+  info.hidden = true;
+  status.textContent = method === 'device' ? '기기 코드를 받는 중입니다.' : 'OpenAI 로그인 페이지를 여는 중입니다.';
+  try {
+    await bridgeRequest('login', { method }, {
+      signal: loginAbort.signal,
+      onProgress(progress) {
+        if (!progress.url) return;
+        link.href = progress.url;
+        info.hidden = false;
+        if (method === 'device' && progress.code) {
+          $('chatgpt-login-text').textContent =
+            '아래 로그인 페이지를 열어 ChatGPT 계정으로 로그인한 뒤 일회용 코드를 입력하세요. 다른 기기(휴대폰 등)에서 같은 주소로 들어가도 됩니다. 코드는 15분 동안 쓸 수 있습니다.';
+          code.textContent = `일회용 코드: ${progress.code} (한 글자씩: ${spellCode(progress.code)})`;
+          status.textContent = `일회용 코드는 ${spellCode(progress.code)}입니다. 로그인 페이지 열기 링크를 눌러 코드를 입력하세요.`;
+        } else {
+          $('chatgpt-login-text').textContent =
+            'OpenAI 로그인 페이지가 기본 브라우저에 열렸습니다. 열리지 않았으면 아래 링크를 누르세요. 로그인을 마치면 이 설정 화면으로 돌아오세요.';
+          code.textContent = '';
+          status.textContent = 'OpenAI 로그인 페이지가 기본 브라우저에 열렸습니다. 로그인을 마치면 이 화면으로 돌아오세요.';
+        }
+      }
+    });
+    status.textContent = 'ChatGPT에 로그인했습니다.';
+  } catch (error) {
+    status.textContent = error.kind === 'cancelled' ? '로그인을 취소했습니다.' : `로그인하지 못했습니다. ${userMessage(error)}`;
+  } finally {
+    loginAbort = null;
+    info.hidden = true;
+    // 상태 줄은 그대로 두고 화면(버튼·모델 목록)만 새로 고친다
+    await refreshChatgpt();
+  }
+}
+
+$('chatgpt-login').addEventListener('click', () => login('browser'));
+$('chatgpt-device').addEventListener('click', () => login('device'));
+$('chatgpt-cancel').addEventListener('click', () => loginAbort?.abort());
+$('chatgpt-recheck').addEventListener('click', () => refreshChatgpt({ announce: true }));
+$('chatgpt-models-refresh').addEventListener('click', () => loadModels({ announce: true }));
+$('chatgpt-logout').addEventListener('click', async () => {
+  try {
+    const { remains } = await bridgeRequest('logout');
+    status.textContent = remains
+      ? '로그아웃했지만 인증 파일이 남아 있습니다. 로그아웃을 다시 눌러 보세요.'
+      : 'ChatGPT에서 로그아웃했습니다.';
+  } catch (error) {
+    status.textContent = `로그아웃하지 못했습니다. ${userMessage(error)}`;
+  }
+  await refreshChatgpt();
+});
+
 function readForm() {
   return {
     aiEnabled: $('ai-enabled').checked,
+    connection: $('use-chatgpt').checked ? 'chatgpt' : 'api',
+    chatgpt: { model: chatgptModel.value },
     provider: form.elements.provider.value,
     gemini: {
       apiKey: $('gemini-key').value.trim(),
@@ -152,6 +274,11 @@ function readForm() {
 async function init() {
   const settings = await loadSettings();
   $('ai-enabled').checked = settings.aiEnabled;
+  $('use-chatgpt').checked = settings.connection === 'chatgpt';
+  // 목록을 받기 전에도 저장된 모델이 보이게 넣어 둔다
+  if (settings.chatgpt.model) chatgptModel.append(new Option(settings.chatgpt.model, settings.chatgpt.model));
+  chatgptModel.value = settings.chatgpt.model;
+  showConnectionSection(settings.connection);
   form.elements.provider.value = settings.provider;
   $('gemini-key').value = settings.gemini.apiKey;
   $('gemini-model').value = settings.gemini.model;
@@ -190,6 +317,7 @@ $('speech-test').addEventListener('click', async () => {
 
 form.addEventListener('change', (event) => {
   if (event.target.name === 'provider') showProviderSection(event.target.value);
+  if (event.target.id === 'use-chatgpt') showConnectionSection(event.target.checked ? 'chatgpt' : 'api');
   if (event.target === nimChoice) {
     showNimCustom();
     if (nimChoice.value === 'custom') $('nim-model-custom').focus();
@@ -206,9 +334,13 @@ form.addEventListener('submit', async (event) => {
   }
   await saveSettings(settings);
   status.textContent =
-    settings.provider === 'nim' && !settings.nim.model
-      ? '저장했습니다. NVIDIA NIM 모델을 아직 고르지 않았습니다.'
-      : '저장했습니다.';
+    settings.connection === 'chatgpt'
+      ? chatgptReady
+        ? '저장했습니다. ChatGPT 계정으로 연결합니다.'
+        : '저장했습니다. ChatGPT 계정에 아직 로그인하지 않았습니다. ChatGPT 로그인 버튼을 누르세요.'
+      : settings.provider === 'nim' && !settings.nim.model
+        ? '저장했습니다. NVIDIA NIM 모델을 아직 고르지 않았습니다.'
+        : '저장했습니다.';
 });
 
 $('test-button').addEventListener('click', async () => {
