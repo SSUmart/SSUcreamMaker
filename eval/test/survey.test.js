@@ -28,9 +28,10 @@ test('문항 글: 번호를 떼고, # 줄로 영역을 묶는다', () => {
   assert.equal(parseQuestions('#태그 기능에 만족하셨나요?')[0].text, '#태그 기능에 만족하셨나요?');
 });
 
-test('응답 확인: 1~5와 해당 없음(0)만 받고 빠진 문항을 알려 준다', () => {
+test('응답 확인: 1~5점만 받고 빠진 문항을 알려 준다 (응답자에게는 해당 없음이 없음)', () => {
   const qs = parseQuestions(QUESTIONS_TEXT);
-  assert.deepEqual(checkAnswers(qs, { q1: 5, q2: 0, q3: 3 }).missing, []);
+  assert.deepEqual(checkAnswers(qs, { q1: 5, q2: 1, q3: 3 }).missing, []);
+  assert.deepEqual(checkAnswers(qs, { q1: 5, q2: 0, q3: 3 }).missing, ['q2']);
   assert.deepEqual(checkAnswers(qs, { q1: 6, q2: '3', q3: 2.5 }).missing, ['q1', 'q2', 'q3']);
   assert.deepEqual(checkAnswers(qs, { q1: 4, q2: 4, q3: 4, extra: 1 }).answers, { q1: 4, q2: 4, q3: 4 });
 });
@@ -72,7 +73,7 @@ test('분석표: AI·팀원·사용자 점수와 차이, 영역, 눈여겨볼 �
     responses: [
       { role: 'team', answers: { q1: 4, q2: 4, q3: 5 } },
       { role: 'user', answers: { q1: 4, q2: 3, q3: 2 }, comment: '상세 이미지가 느려요' },
-      { role: 'user', answers: { q1: 5, q2: 0, q3: 3 } }
+      { role: 'user', answers: { q1: 5, q2: 0, q3: 3 } } // 해당 없음이 있던 때의 응답도 평균에서 빼고 읽는다
     ]
   };
   const a = analyze(survey);
@@ -195,10 +196,14 @@ test('서버: 설문 만들기 → 팀원·사용자 링크로 응답 → 끝내
     const partial = await call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 5 } }, admin: false, csrf: false });
     assert.equal(partial.status, 400);
     assert.deepEqual(partial.data.missing, ['q2', 'q3']);
+    // 응답자에게는 해당 없음(0)이 없다
+    const na = await call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 5, q2: 0, q3: 3 } }, admin: false, csrf: false });
+    assert.equal(na.status, 400);
+    assert.deepEqual(na.data.missing, ['q2']);
     // 동시에 여러 응답이 와도 모두 남는다
     await Promise.all([
       call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 5, q2: 4, q3: 2 }, comment: '<b>좋아요</b>' }, admin: false, csrf: false }),
-      call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 4, q2: 0, q3: 3 } }, admin: false, csrf: false }),
+      call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 4, q2: 3, q3: 3 } }, admin: false, csrf: false }),
       call(`/api/s/${s.tokens.team}`, { method: 'POST', body: { answers: { q1: 4, q2: 4, q3: 5 } }, admin: false, csrf: false })
     ]);
 

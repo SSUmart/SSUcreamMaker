@@ -52,7 +52,6 @@ fieldset.q legend { font-weight: 700; padding: 0 4px; float: left; width: 100%; 
 .choices label { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.92rem; }
 .choices label:has(input:checked) { border: 2px solid var(--accent); background: #eef3fd; font-weight: 700; }
 .choices input { width: 22px; height: 22px; margin: 0; }
-.choices .na { color: var(--muted); }
 @media (max-width: 640px) {
   .choices { grid-template-columns: 1fr; }
   .choices label { flex-direction: row; justify-content: flex-start; padding: 10px 12px; }

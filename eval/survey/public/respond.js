@@ -1,4 +1,4 @@
-// 응답 화면: /s/<토큰>. 문항마다 1~5점과 해당 없음 중 하나를 고르고 보낸다.
+// 응답 화면: /s/<토큰>. 문항마다 1~5점 중 하나를 고르고 보낸다 (해당 없음은 두지 않음).
 import { $, SCALE, api, h } from './common.js';
 
 const token = location.pathname.split('/').pop();
@@ -44,10 +44,10 @@ function renderForm(survey) {
         h('legend', {}, `${i + 1}. ${q.text}`),
         h('p', { class: 'sr-only', id: `err-${q.id}`, hidden: true }, '답하지 않은 문항입니다.'),
         h('div', { class: 'choices' },
-          [...SCALE, { score: 0, label: '해당 없음' }].map((c) =>
-            h('label', { class: c.score ? null : 'na' },
+          SCALE.map((c) =>
+            h('label', {},
               h('input', { type: 'radio', name: q.id, value: String(c.score), id: c.score === 1 ? `first-${q.id}` : null }),
-              c.score ? `${c.score}점 ${c.label}` : c.label))))
+              `${c.score}점 ${c.label}`))))
     );
   });
   form.append(
@@ -110,7 +110,7 @@ function renderForm(survey) {
     survey.description ? h('p', { style: 'white-space: pre-line' }, survey.description) : null,
     h('div', { class: 'card' },
       h('p', {}, `문항은 모두 ${survey.questions.length}개입니다. 문항마다 1점(매우 불만족)부터 5점(매우 만족) 중 하나를 고르세요.`),
-      h('p', {}, '써 보지 않은 기능이면 "해당 없음"을 고르세요. 이름 등 개인 정보는 받지 않습니다.')),
+      h('p', {}, '이름 등 개인 정보는 받지 않습니다.')),
     errorBox,
     form
   );
