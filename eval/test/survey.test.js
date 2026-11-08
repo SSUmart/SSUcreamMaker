@@ -347,3 +347,81 @@ test('서버: 설문 수정·복제·삭제 (문항은 응답 전까지만, 삭�
     assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'trash', trashed[0]), 'utf8')).responses.length, 1);
     assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'DELETE' })).status, 404);
   }));
+
+test('저장소: 결과 페이지 순번은 만든 순서대로, 예전 설문에도 붙이고, 지운 설문의 번호는 다시 쓰지 않는다', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'survey-no-'));
+  try {
+    // 순번이 없던 때의 설문 두 개 (파일 이름 순서와 만든 순서가 다르게)
+    const legacy = (id, createdAt) => fs.writeFileSync(path.join(dataDir, `${id}.json`), JSON.stringify({ id, title: id, description: '', questions: parseQuestions('문항'), status: 'closed', createdAt, closedAt: createdAt, tokens: { team: `${id}-t`, user: `${id}-u` }, responses: [], aiAnswers: [] }));
+    legacy('aaaaaaaa-new', '2026-11-02T00:00:00.000Z');
+    legacy('zzzzzzzz-old', '2026-11-01T00:00:00.000Z');
+    const store = createStore(dataDir);
+    const byId = Object.fromEntries((await store.list()).map((s) => [s.id, s.no]));
+    assert.deepEqual(byId, { 'zzzzzzzz-old': 1, 'aaaaaaaa-new': 2 });
+    // 동시에 만들어도 번호가 겹치지 않는다
+    const made = await Promise.all([1, 2, 3].map((i) => store.create({ title: `새 ${i}`, description: '', questions: parseQuestions('문항') })));
+    assert.deepEqual(made.map((s) => s.no).sort(), [3, 4, 5]);
+    assert.equal(made[0].resultPublic, false);
+    // 지운 설문(5번)의 번호는 다시 쓰지 않는다
+    const last = made.find((s) => s.no === 5);
+    await store.remove(last.id);
+    assert.equal((await store.create({ title: '그다음', description: '', questions: parseQuestions('문항') })).no, 6);
+    assert.equal(await store.byNumber(5), null);
+    assert.equal((await store.byNumber(1)).id, 'zzzzzzzz-old');
+    // 서버를 다시 켜도 번호는 그대로
+    assert.equal((await createStore(dataDir).byNumber(2)).id, 'aaaaaaaa-new');
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test('서버: 결과 페이지는 끝낸 설문만, 관리자는 언제나, 그 밖에는 공개한 결과만 보인다', () =>
+  withServer(async ({ call, base }) => {
+    await call('/api/admin/session', { method: 'POST', body: { password: 'pw-1234' } });
+    const s = (await call('/api/admin/surveys', { method: 'POST', body: { title: '결과 시험', description: '', questionsText: QUESTIONS_TEXT } })).data;
+    assert.equal(s.no, 1);
+    assert.equal(s.resultPublic, false);
+    const anon = (p) => fetch(base + p).then(async (r) => ({ status: r.status, data: (r.headers.get('content-type') ?? '').includes('json') ? await r.json() : await r.text() }));
+
+    // 화면 주소: result-<1 이상의 숫자>
+    assert.equal((await anon('/result-1')).status, 200);
+    assert.match((await anon('/result-1')).data, /assets\/result\.js/);
+    for (const bad of ['/result-0', '/result-01', '/result-x', '/result-1/']) assert.equal((await anon(bad)).status, 404, bad);
+
+    // 끝내기 전: 관리자에게는 "아직 끝나지 않음", 다른 사람에게는 없는 결과와 똑같이
+    assert.equal((await call('/api/result/1')).status, 409);
+    assert.equal((await anon('/api/result/1')).status, 404);
+    assert.equal((await anon('/api/result/2')).status, 404);
+    assert.equal((await anon('/api/result/1')).data.error, (await anon('/api/result/2')).data.error);
+
+    await call(`/api/s/${s.tokens.user}`, { method: 'POST', body: { answers: { q1: 5, q2: 4, q3: 2 }, comment: '느려요' }, admin: false, csrf: false });
+    await call(`/api/admin/surveys/${s.id}/close`, { method: 'POST' });
+
+    // 끝낸 뒤, 공개 전: 관리자만
+    const mine = await call('/api/result/1');
+    assert.equal(mine.status, 200);
+    assert.equal(mine.data.admin, true);
+    assert.equal(mine.data.id, s.id);
+    assert.equal(mine.data.analysis.rows[2].user.mean, 2);
+    assert.equal((await anon('/api/result/1')).status, 404);
+
+    // 공개: 쓰기 요청이라 전용 머리글이 필요하고, 값은 참·거짓만
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: true }, csrf: false })).status, 403);
+    assert.equal((await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: 'yes' } })).status, 400);
+    const opened = await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: true } });
+    assert.equal(opened.data.resultPublic, true);
+    assert.equal(opened.data.title, '결과 시험'); // 공개만 바꾸면 제목·문항은 그대로
+    const pub = await anon('/api/result/1');
+    assert.equal(pub.status, 200);
+    assert.equal(pub.data.title, '결과 시험');
+    assert.equal(pub.data.analysis.comments[0].comment, '느려요');
+    // 공개 결과에도 관리용 정보(설문 ID, 응답 링크)는 없다
+    assert.equal(pub.data.id, undefined);
+    assert.equal(pub.data.admin, undefined);
+    assert.ok(!JSON.stringify(pub.data).includes(s.tokens.user));
+
+    // 다시 끄면 관리자만
+    await call(`/api/admin/surveys/${s.id}`, { method: 'PATCH', body: { resultPublic: false } });
+    assert.equal((await anon('/api/result/1')).status, 404);
+    assert.equal((await call('/api/admin/surveys')).data[0].resultPublic, false);
+  }));

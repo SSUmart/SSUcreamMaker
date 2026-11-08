@@ -2,7 +2,7 @@
 //   /mall/   가상 쇼핑몰 온글몰 (주문·결제까지)
 //   /shop/   평가용 쇼핑몰 상품 페이지
 //   /guide/  온글 설치 가이드 (ChatGPT 계정 연결까지, 사용자에게 주는 페이지)
-//   /survey/ 평가 설문 (관리자 /survey/admin, 응답 링크 /survey/s/<토큰>). SURVEY_ADMIN_PASSWORD가 있을 때만 켠다
+//   /survey/ 평가 설문 (관리자 /survey/admin, 응답 링크 /survey/s/<토큰>, 결과 페이지 /survey/result-<순번>). SURVEY_ADMIN_PASSWORD가 있을 때만 켠다
 //
 // 실행 (eval 폴더에서): SURVEY_ADMIN_PASSWORD=<비밀번호> npm run web
 //   PORT(기본 8080), HOST(기본 127.0.0.1, 다른 PC·nginx에서 열려면 0.0.0.0), START(/ 로 들어오면 갈 곳, 기본 /mall/),

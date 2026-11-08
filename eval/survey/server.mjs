@@ -1,4 +1,5 @@
-// 온글 평가 설문 서버: 응답자는 링크(/s/<토큰>)로 답하고, 관리자(/admin)는 설문을 만들고·보고·끝내고 분석표를 본다.
+// 온글 평가 설문 서버: 응답자는 링크(/s/<토큰>)로 답하고, 관리자(/admin)는 설문을 만들고·보고·끝낸다.
+// 끝낸 설문의 분석표는 결과 페이지(/result-<순번>)에서 본다. 관리자는 언제나, 그 밖의 사람은 관리자가 공개한 결과만.
 // 외부 패키지 없이 Node만으로 동작한다. 응답은 DATA_DIR(기본 eval/survey/data)의 JSON 파일에 남는다.
 //
 // 실행 (eval 폴더에서): SURVEY_ADMIN_PASSWORD=<비밀번호> npm run survey
@@ -102,10 +103,12 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
   // 관리자 목록·상세에 내려줄 모양
   const summary = (s) => ({
     id: s.id,
+    no: s.no,
     title: s.title,
     status: s.status,
     createdAt: s.createdAt,
     closedAt: s.closedAt,
+    resultPublic: Boolean(s.resultPublic),
     questions: s.questions.length,
     counts: {
       team: s.responses.filter((r) => r.role === 'team').length,
@@ -142,6 +145,7 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
       if (p === '/' || p === '') return send(res, 302, '', { location: `${base}/admin` });
       if (p === '/admin') return serveFile(res, 'admin.html');
       if (m(/^\/s\/[A-Za-z0-9_-]+$/)) return serveFile(res, 'respond.html');
+      if (m(/^\/result-[1-9]\d{0,6}$/)) return serveFile(res, 'result.html');
       if ((hit = m(/^\/assets\/([a-z0-9-]+\.(?:css|js))$/))) return serveFile(res, hit[1]);
     }
 
@@ -165,6 +169,26 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
         if (!saved) throw new HttpError(404, '설문을 찾을 수 없습니다.');
         return json(res, 201, { ok: true });
       }
+    }
+
+    // ----- 결과 페이지 -----
+    // 공개하지 않은 결과는 관리자가 아니면 없는 결과와 똑같이 답한다 (어떤 번호가 있는지 알 수 없게)
+    if ((hit = m(/^\/api\/result\/([1-9]\d{0,6})$/)) && req.method === 'GET') {
+      const s = await store.byNumber(Number(hit[1]));
+      const admin = isAdmin(req);
+      if (!s || (!s.resultPublic && !admin)) throw new HttpError(404, '결과를 찾을 수 없습니다. 주소를 확인하거나, 설문 관리자에게 결과를 공개했는지 물어보세요.');
+      if (s.status !== 'closed') throw new HttpError(409, '아직 끝나지 않은 설문입니다. 설문을 끝내면 이 주소에서 분석표를 볼 수 있습니다.');
+      return json(res, 200, {
+        no: s.no,
+        title: s.title,
+        createdAt: s.createdAt,
+        closedAt: s.closedAt,
+        questions: s.questions.length,
+        resultPublic: Boolean(s.resultPublic),
+        // 관리자에게만: 설문 관리 화면으로 돌아갈 주소에 쓰는 설문 ID
+        ...(admin ? { admin: true, id: s.id } : {}),
+        analysis: analyze(s)
+      });
     }
 
     // ----- 관리자 로그인 -----
@@ -228,6 +252,11 @@ export function createSurveyHandler({ dataDir, password, basePath = '' }) {
           const errors = validateSurveyInput(next);
           if (errors.length) throw new HttpError(400, errors.join(' '), { errors });
           Object.assign(s, next);
+          // 결과 공개: 켜면 로그인 없이 결과 페이지 주소로 분석표를 볼 수 있다
+          if (data.resultPublic !== undefined) {
+            if (typeof data.resultPublic !== 'boolean') throw new HttpError(400, '결과 공개 값이 올바르지 않습니다.');
+            s.resultPublic = data.resultPublic;
+          }
         });
         if (!s) throw new HttpError(404, '설문을 찾을 수 없습니다.');
         return json(res, 200, detail(s));
