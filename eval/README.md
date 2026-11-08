@@ -191,7 +191,7 @@ npm run e2e:mall  # 주문 흐름 점검: 실제 Chromium으로 메인부터 결
 같은 설문을 AI, 팀원, 실제 사용자가 답하게 하고 세 점수를 문항별로 비교하는 작은 웹 서비스입니다. 관리자는 설문을 만들고 끝내며, 응답자는 팀원용·사용자용 링크로 로그인 없이 답합니다. 설문을 끝내면 분석표가 나옵니다.
 
 ```bash
-SURVEY_ADMIN_PASSWORD='비밀번호' npm run web      # 8080 하나로 /mall/, /shop/, /survey/admin
+SURVEY_ADMIN_PASSWORD='비밀번호' npm run web      # 8080 하나로 /mall/, /shop/, /guide/, /survey/admin
 SURVEY_ADMIN_PASSWORD='비밀번호' npm run survey   # 설문만: http://127.0.0.1:8090/admin
 npm run e2e:survey                                 # 화면 점검 (한 포트 서버의 /survey/, 임시 폴더 사용)
 ```
@@ -283,3 +283,11 @@ NVIDIA_API_KEY=... node nim-models.mjs 모델1 모델2  # 원하는 모델만
 ```
 
 후보마다 성공 여부, 걸린 시간, 정답 단어를 몇 개 맞혔는지가 나옵니다. 설정 화면의 "연결 확인"은 글만 보내므로 이미지 지원 여부는 이 스크립트나 실제 상세 이미지 읽기로 확인하세요.
+
+## 설치 가이드 (`guide/`)
+
+사용자에게 주는 온글 설치 가이드 웹페이지입니다. 운영체제별 통합 zip 받기부터 ChatGPT 로그인·연결 확인까지 7단계를 그림과 함께 안내합니다. 테스트 서버(`npm run web`)의 `/guide/`에서 열립니다.
+
+- `guide/index.html`, `guide.css`, `guide.js`: 페이지. Windows·Mac 안내를 버튼으로 바꾸고, 마친 단계는 그 브라우저에만 기억합니다
+- `guide/images/`: 실제 화면(`extensions-devmode.png`, `options-*.png`)과 Codex로 만든 설명 그림(`*.jpg`)
+- 설정 화면이 바뀌면 실제 화면을 다시 찍습니다: `node guide/capture-screens.mjs` (가짜 Codex로 찍으므로 이 컴퓨터의 크롬·ChatGPT 계정은 건드리지 않음)

@@ -77,6 +77,8 @@ flowchart TD
 
 ## 설치
 
+ChatGPT 계정으로 AI를 쓰려면 운영체제별 **통합 zip**(`ongeul-v<버전>-windows-x64.zip`, 애플 실리콘 Mac용 `-macos-arm64.zip`: 확장 + 연결 프로그램 + Node.js + Codex CLI)을 받아 [docs/CHATGPT-LOGIN.md](docs/CHATGPT-LOGIN.md)대로 설치 파일을 한 번 실행한 뒤 아래 2~5를 합니다. API 키로만 쓸 때는 아래대로 확장만 설치합니다.
+
 1. [Releases](https://github.com/SSUmart/SSUcreamMaker/releases)에서 `ongeul-v<버전>.zip` (26.1.0까지는 `ssucreammaker-v<버전>.zip`)을 받아 압축 풀기 (소스로 설치할 때는 저장소의 `extension` 폴더)
 2. Chrome, Edge, Whale에서 `chrome://extensions` 열기 (Edge는 `edge://extensions`)
 3. 개발자 모드 켜기
@@ -91,7 +93,7 @@ ChatGPT 로그인이 들어간 버전부터 확장 ID가 하나로 고정됩니�
 
 1. "AI 기능 켜기" 체크
 2. **ChatGPT 계정으로 연결** 토글: 켜면 모든 AI 기능을 ChatGPT 계정으로만, 끄면(기본) 아래 3·4의 API 키로만 씁니다
-   - ChatGPT 계정은 이 컴퓨터에 온글 연결 프로그램과 OpenAI Codex CLI를 설치해야 합니다. 설치·로그인 방법은 [docs/CHATGPT-LOGIN.md](docs/CHATGPT-LOGIN.md)
+   - ChatGPT 계정은 통합 zip의 설치 파일로 온글 연결 프로그램을 설치해야 합니다(Node.js·Codex CLI 포함). 설치·로그인 방법은 [docs/CHATGPT-LOGIN.md](docs/CHATGPT-LOGIN.md)
 3. AI 공급자 선택 (API 키로 연결할 때)
    - Google Gemini: [Google AI Studio](https://aistudio.google.com/)에서 API 키 발급
    - NVIDIA NIM: [build.nvidia.com](https://build.nvidia.com/)에서 API 키 발급. NIM은 기본 모델이 없으니 "모델" 목록에서 추천 후보를 고르거나 "직접 입력"으로 모델 이름을 넣습니다. 직접 설치한 NIM을 쓰면 API 주소 변경. NVIDIA 무료 키는 개발·테스트 용도로만 쓸 수 있습니다.

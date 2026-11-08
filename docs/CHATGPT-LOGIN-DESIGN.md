@@ -177,8 +177,8 @@ ChatGPT 요금제(무료·Plus·Pro·Business 등)에 따라 쓸 수 있는 모�
 
 ## 14. 구현에서 정한 것
 
-- **Codex CLI는 동봉하지 않음:** 묶음이 수백 MB가 되어, 사용자가 `npm install -g @openai/codex`로 설치하고 연결 프로그램 설치가 그 위치를 찾아 기록한다(`config.json`). 연결 프로그램은 Node.js로 돌아가므로 Node.js 20 이상도 필요하다.
-- **설치:** `bridge/install.mjs` 하나가 Windows·macOS·Linux를 모두 처리하고, `install-windows.cmd` / `install.sh`가 Node를 찾아 이를 실행한다. 릴리즈에 `ongeul-bridge-<태그>.zip`으로 붙는다(`scripts/package-bridge.sh`).
+- **Codex CLI·Node.js 동봉 (26.3.0-beta.2부터):** 처음(26.3.0-beta.1)에는 사용자가 npm으로 Codex를 설치하게 했으나, 설치를 AML처럼 간단히 하려고 운영체제별 통합 zip(`scripts/package-bundle.sh`)에 확장·연결 프로그램·Node.js·Codex CLI 실행 파일(npm 공식 패키지의 운영체제별 `vendor` 폴더)을 함께 담는다. 버전은 `bridge/runtime.json`에 고정. 설치하면 사용자 폴더로 복사해 쓴다. zip 크기는 Windows 약 210MB, Mac 약 180MB. 크롬은 확장이 PC에 프로그램을 설치하지 못하게 하므로 설치 파일 한 번 실행은 피할 수 없다.
+- **설치:** `bridge/install.mjs` 하나가 Windows·macOS·Linux를 모두 처리하고, `install-windows.cmd` / `install.sh`가 Node를 찾아 이를 실행한다. 26.3.0-beta.1에는 `ongeul-bridge-<태그>.zip`으로 따로 붙였고, 이후로는 운영체제별 통합 zip에 들어간다. 통합 zip이면 함께 담긴 `runtime/`의 Node.js로 설치를 실행하고 Node.js·Codex를 사용자 폴더(`…/Ongeul/bridge/runtime`)로 복사한다.
 - **확장 ID 고정:** `manifest.json`에 `key`를 넣어 ID가 `oaiehepelkgdbabadijehnmgogahkpab`로 정해졌다. 이 버전으로 처음 바꿀 때 설정을 한 번 다시 넣어야 한다.
 - **로그인 창:** `codex login`이 기본 브라우저를 직접 연다. 온글은 같은 주소를 링크로도 보여 주고, 기기 코드는 한 글자씩 읽어 준다.
 - **모델 목록:** `codex debug models`에서 `visibility: list`이고 그림을 받는 모델만 보여 준다. 로그인 전과 후의 목록이 달라서(이 Mac에서 확인) 계정에 따라 목록이 바뀌는 것은 맞다. 요금제별로 실제로 어떻게 달라지는지는 아직 요금제가 다른 계정으로 확인하지 않았다.

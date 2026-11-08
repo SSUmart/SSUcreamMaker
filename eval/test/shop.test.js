@@ -14,6 +14,17 @@ test('/shop/은 index.html을 내려준다', () => {
   assert.equal(shopFile('/shop/images/detail-01.jpg'), path.join(shopDir, 'images/detail-01.jpg'));
 });
 
+test('/guide/는 설치 가이드와 그림을 내려주고, 화면 찍는 스크립트는 내려주지 않는다', () => {
+  const guideDir = path.join(evalDir, 'guide');
+  assert.equal(shopFile('/guide/'), path.join(guideDir, 'index.html'));
+  assert.equal(shopFile('/guide/images/options-done.png'), path.join(guideDir, 'images/options-done.png'));
+  assert.equal(shopFile('/guide/capture-screens.mjs'), null);
+  assert.equal(shopFile('/guide/../web.mjs'), null);
+  for (const src of fs.readFileSync(path.join(guideDir, 'index.html'), 'utf8').matchAll(/(?:src|href)="((?:images\/)?[\w.-]+\.(?:png|jpg|css|js))"/g)) {
+    assert.ok(fs.existsSync(path.join(guideDir, src[1])), `가이드가 쓰는 파일이 없음: ${src[1]}`);
+  }
+});
+
 test('shop 폴더 밖이나 내려줄 종류가 아닌 파일은 거부한다', () => {
   assert.equal(shopFile('/shop/../package.json'), null);
   assert.equal(shopFile('/shop/%2e%2e/run.mjs'), null);

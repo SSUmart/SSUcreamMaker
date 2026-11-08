@@ -2,6 +2,10 @@
 chcp 65001 >nul
 rem 온글 연결 프로그램 제거 (Windows)
 cd /d "%~dp0"
-node install.mjs --uninstall
+if exist "runtime\node\node.exe" (
+  "runtime\node\node.exe" install.mjs --uninstall
+) else (
+  node install.mjs --uninstall
+)
 echo.
 pause

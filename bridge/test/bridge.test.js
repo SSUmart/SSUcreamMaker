@@ -292,3 +292,41 @@ test('Windows 실행 파일은 찾아 둔 node로 host.mjs를 띄운다', () => 
   );
   assert.equal(launcherScript('linux', "/it's/node", '/h.mjs'), `#!/bin/sh\nexec '/it'\\''s/node' '/h.mjs' "$@"\n`);
 });
+
+test('통합 zip 설치: 함께 담긴 Node.js·Codex를 사용자 폴더로 옮겨 쓰고, 다시 설치하면 새것으로 바꾼다', unixOnly, () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ongeul-bundle-test-'));
+  try {
+    const platform = process.platform === 'darwin' ? 'darwin' : 'linux';
+    const source = path.join(home, 'zip', 'bridge');
+    fs.mkdirSync(path.join(source, 'runtime', 'node'), { recursive: true });
+    fs.mkdirSync(path.join(source, 'runtime', 'codex', 'codex-resources'), { recursive: true });
+    for (const file of ['host.mjs', 'protocol.mjs']) fs.copyFileSync(path.join(here, '..', file), path.join(source, file));
+    fs.writeFileSync(path.join(source, 'runtime', 'node', 'node'), 'node-v1');
+    fs.mkdirSync(path.join(source, 'runtime', 'codex', 'bin'), { recursive: true });
+    fakeCodex(path.join(source, 'runtime', 'codex', 'bin'));
+    fs.writeFileSync(path.join(source, 'runtime', 'codex', 'codex-resources', 'r.json'), '{}');
+    // PATH에 다른 codex가 있어도 함께 담긴 것을 쓴다
+    const other = path.join(home, 'other');
+    fs.mkdirSync(other);
+    fakeCodex(other);
+    const env = { PATH: other, HOME: home };
+
+    const result = install({ platform, home, env, nodePath: '/usr/bin/node', source });
+    const runtime = path.join(result.dest, 'runtime');
+    assert.equal(result.bundled, true);
+    assert.equal(result.codexPath, path.join(runtime, 'codex', 'bin', 'codex'));
+    assert.ok(fs.existsSync(path.join(runtime, 'codex', 'codex-resources', 'r.json')));
+    assert.match(fs.readFileSync(path.join(result.dest, 'run.sh'), 'utf8'), new RegExp(`exec '${path.join(runtime, 'node', 'node').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
+    assert.equal(JSON.parse(fs.readFileSync(path.join(result.dest, 'config.json'), 'utf8')).codexPath, result.codexPath);
+
+    fs.writeFileSync(path.join(source, 'runtime', 'node', 'node'), 'node-v2');
+    fs.rmSync(path.join(source, 'runtime', 'codex', 'codex-resources', 'r.json'));
+    install({ platform, home, env, source });
+    assert.equal(fs.readFileSync(path.join(runtime, 'node', 'node'), 'utf8'), 'node-v2');
+    assert.ok(!fs.existsSync(path.join(runtime, 'codex', 'codex-resources', 'r.json')), '예전 파일은 남지 않음');
+    uninstall({ platform, home, env });
+    assert.ok(!fs.existsSync(result.dest));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

@@ -1,0 +1,5 @@
+{
+  "//": "통합 zip(scripts/package-bundle.sh)에 함께 담는 Node.js와 OpenAI Codex CLI 버전. 바꾸면 e2e와 실제 로그인을 다시 확인한다.",
+  "node": "24.22.0",
+  "codex": "0.166.0"
+}
