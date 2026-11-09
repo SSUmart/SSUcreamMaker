@@ -5,6 +5,7 @@ import { cutTiles } from './lib/tiles.js';
 import { PROVIDERS } from './lib/providers.js';
 import { userMessage } from './lib/errors.js';
 import { parseSections } from './lib/structure.js';
+import { demoDetail, demoSummary } from './lib/demo.js';
 import { buildQuestionPrompt, buildSummaryPrompt, parseAnswer, parseSummary } from './lib/answer.js';
 import { MAX_EXPLAIN_TILES, buildExplainPrompt, buildLabelPrompt, parseExplanation, parseLabel } from './lib/explain.js';
 import { listVoices, pickKoreanVoice, speak } from './lib/speech.js';
@@ -309,8 +310,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 const HANDLERS = {
-  'extract-detail': (message, progress) => extractDetail(message.urls, progress),
-  'summarize-page': (message, progress) => summarizePage(message.page, progress),
+  'extract-detail': (message, progress, sender) => extractDetail(message.urls, progress, sender.tab.url),
+  'summarize-page': (message, progress, sender) => summarizePage(message.page, progress, sender.tab.url),
   'ask-page': (message) => askPage(message.page, message.question, message.history),
   'explain-item': (message, progress) => explainItem(message.item, progress),
   'label-item': (message) => labelItem(message.item)
@@ -326,7 +327,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 진행 안내는 어느 작업의 것인지(task) 함께 보낸다 (요약 중에 상세 이미지 안내 영역이 읽지 않게)
   const progress = (text) =>
     chrome.tabs.sendMessage(sender.tab.id, { type: 'progress', task: message.type, text }).catch(() => {});
-  handler(message, progress).then(sendResponse, (error) => sendResponse({ error: userError(error) }));
+  handler(message, progress, sender).then(sendResponse, (error) => sendResponse({ error: userError(error) }));
   return true;
 });
 
@@ -355,7 +356,10 @@ function startHeartbeat(progress, label) {
   };
 }
 
-async function extractDetail(urls, progress) {
+async function extractDetail(urls, progress, pageUrl) {
+  const demo = demoDetail(pageUrl, urls);
+  if (demo) return demo;
+
   const active = activeProvider(await loadSettings());
   if (active.error) return { error: active.error };
   const provider = PROVIDERS[active.name];
@@ -413,7 +417,10 @@ async function loadImages(urls) {
 }
 
 // F4 요약: 같은 페이지 글·같은 모델이면 캐시를 쓴다.
-async function summarizePage(page, progress = () => {}) {
+async function summarizePage(page, progress = () => {}, pageUrl) {
+  const demo = demoSummary(pageUrl, page);
+  if (demo) return demo;
+
   const active = activeProvider(await loadSettings());
   if (active.error) return { error: active.error };
   if (!page?.paragraphs?.length) return { error: '요약할 글을 찾지 못했습니다.' };
