@@ -156,7 +156,15 @@ details p { margin: 8px 0 0; color: var(--muted); }
 .table-wrap thead th { background: var(--panel2); font-size: 15px; }
 .table-wrap tbody tr:last-child td { border-bottom: none; }
 .table-wrap td:first-child { white-space: nowrap; }
+.api h3 { margin: 20px 0 8px; font-size: 20px; }
+.api .do { margin-top: 8px; }
+.api .table-wrap tbody th { font-weight: 700; white-space: nowrap; background: var(--panel2); }
+.api .table-wrap td:first-child { white-space: normal; }
 @media (max-width: 640px) {
   .toc ul { columns: 1; }
+  .api .table-wrap tbody th { white-space: normal; }
+  .api .table-wrap table { table-layout: fixed; font-size: 15px; }
+  .api .table-wrap th, .api .table-wrap td { padding: 8px; overflow-wrap: anywhere; }
+  .api .table-wrap th:first-child { width: 68px; }
   .table-wrap td:first-child { white-space: normal; }
 }

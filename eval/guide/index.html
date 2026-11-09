@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>온글 설치·사용 가이드</title>
-<meta name="description" content="온글을 설치하고 ChatGPT 계정으로 AI 기능을 켜는 방법과, 설치한 뒤 키와 AI 기능을 쓰는 방법을 안내합니다.">
+<meta name="description" content="온글을 설치하고 ChatGPT 계정이나 Gemini, NVIDIA NIM API 키로 AI 기능을 켜는 방법과, 설치한 뒤 키와 AI 기능을 쓰는 방법을 안내합니다.">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="guide.css">
 </head>
@@ -16,7 +16,7 @@
   <div class="wrap">
     <p class="kicker">온글 설치·사용 가이드</p>
     <h1>온글 설치하고<br><em>ChatGPT 계정</em>으로 AI 켜기</h1>
-    <p class="lead">처음 해 보는 분도 따라 할 수 있게 한 단계씩 안내합니다. 7단계이고 10분쯤 걸립니다. 각 단계를 마치면 "이 단계를 마쳤어요"에 체크해 두세요. 이 컴퓨터의 브라우저에 기억되어 나중에 이어서 할 수 있습니다. 설치를 마친 뒤에는 아래 <a href="#usage">사용법</a>에서 키와 AI 기능을 익힐 수 있습니다.</p>
+    <p class="lead">처음 해 보는 분도 따라 할 수 있게 한 단계씩 안내합니다. 7단계이고 10분쯤 걸립니다. 각 단계를 마치면 "이 단계를 마쳤어요"에 체크해 두세요. 이 컴퓨터의 브라우저에 기억되어 나중에 이어서 할 수 있습니다. 설치를 마친 뒤에는 아래 <a href="#usage">사용법</a>에서 키와 AI 기능을 익힐 수 있습니다. ChatGPT 대신 Gemini나 NVIDIA NIM을 쓰려면 <a href="#api-key">API 키로 연결하기</a>를 보세요.</p>
 
     <div class="os-pick" role="group" aria-labelledby="os-label">
       <p id="os-label" class="os-label">내 컴퓨터</p>
@@ -44,6 +44,10 @@
     <li><a href="#step-6">ChatGPT 로그인</a></li>
     <li><a href="#step-7">저장하고 연결 확인</a></li>
   </ol>
+  <p class="toc-sub">ChatGPT 대신 쓰기 (선택)</p>
+  <ul>
+    <li><a href="#api-key">API 키로 연결하기 (Gemini, NVIDIA NIM)</a></li>
+  </ul>
   <p class="toc-sub">사용법</p>
   <ul>
     <li><a href="#use-ready">쓰기 전에 확인</a></li>
@@ -63,7 +67,7 @@
     <li><b>ChatGPT 계정:</b> 이미 쓰고 있는 ChatGPT 계정이면 됩니다. <b>무료 계정으로도 쓸 수 있습니다.</b> 다만 요금제에 따라 쓸 수 있는 모델과 사용 한도가 다르고, <b>모델에 따라 결과의 정확도와 속도에 차이</b>가 있을 수 있습니다. 사용량은 그 계정의 요금제 한도에서 나갑니다.</li>
     <li class="os-win"><b>Windows:</b> 64비트 Windows 10 또는 11. 관리자 권한은 필요 없습니다.</li>
     <li class="os-mac"><b>Mac:</b> 애플 실리콘(M1, M2, M3, M4 …) Mac만 됩니다. 확인하려면 화면 왼쪽 위 사과 메뉴 → "이 Mac에 관하여"에서 "칩" 항목이 "Apple M…"인지 봅니다. 인텔 Mac은 ChatGPT 연결을 지원하지 않습니다.</li>
-    <li><b>API 키로만 쓸 분:</b> 이 가이드 대신 작은 확장 zip(<code>ongeul-v버전.zip</code>)만 받아 4단계부터 하면 됩니다.</li>
+    <li><b>ChatGPT 대신 API 키로 쓸 분:</b> 설치 파일을 실행할 필요가 없습니다. 아래 <a href="#api-key">API 키로 연결하기</a>를 따라 하세요.</li>
   </ul>
 </section>
 
@@ -235,6 +239,40 @@ Codex CLI: … (함께 담긴 것)
 </li>
 </ol>
 
+<section class="card api" id="api-key" aria-labelledby="api-key-title">
+  <h2 id="api-key-title">ChatGPT 대신 API 키로 연결하기</h2>
+  <p>ChatGPT 계정이 없거나, 연결 프로그램을 설치하기 어렵거나, 다른 AI 모델을 쓰고 싶을 때 고르는 방법입니다. <b>Google Gemini</b>나 <b>NVIDIA NIM</b>의 API 키를 온글 설정에 넣으면 됩니다. 필요한 경우에만 하면 되고, ChatGPT를 연결했다면 건너뛰어도 됩니다.</p>
+
+  <h3>어느 쪽을 쓸까요</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">구분</th><th scope="col">Google Gemini</th><th scope="col">NVIDIA NIM</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">API 키 받는 곳</th><td><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio (새 탭)</a></td><td><a href="https://build.nvidia.com/" target="_blank" rel="noopener">build.nvidia.com (새 탭)</a></td></tr>
+      <tr><th scope="row">모델</th><td>기본 모델이 채워져 있어 그대로 써도 됩니다.</td><td>기본 모델이 없습니다. 목록의 추천 후보를 고르거나 "직접 입력"으로 넣어야 합니다.</td></tr>
+      <tr><th scope="row">긴 상세 이미지</th><td>그림 조각을 한 번에 보냅니다.</td><td>조각마다 글자를 읽은 뒤 정리하므로, 조각이 많으면 더 오래 걸릴 수 있습니다.</td></tr>
+      <tr><th scope="row">알아 둘 점</th><td>무료 등급은 보낸 내용이 Google의 서비스 개선에 쓰일 수 있습니다. 개인정보가 있는 페이지에서는 쓰지 마세요.</td><td>무료 키는 개발·테스트 용도로만 쓸 수 있고, 요청 한도가 있습니다. 한국어 글자 인식 품질은 모델별로 아직 비교하지 않았습니다.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="tip"><b>공급자와 모델에 따라 속도가 다릅니다.</b> 같은 일을 시켜도 고른 공급자와 모델, 그때의 서버 상황에 따라 답이 오는 시간이 크게 차이 날 수 있습니다. 결과의 정확도도 달라질 수 있으니, 너무 느리거나 아쉬우면 다른 모델로 바꿔 보세요.</p>
+
+  <h3>연결 순서</h3>
+  <ol class="do">
+    <li>위 표의 사이트에서 API 키를 받아 복사해 둡니다.</li>
+    <li>온글을 브라우저에 넣습니다.
+      <span class="sub">위 1~4단계를 이미 했다면 그대로 두면 됩니다. 처음이라면 <a href="https://github.com/SSUmart/SSUcreamMaker/releases" target="_blank" rel="noopener">릴리즈 페이지 (새 탭)</a>에서 작은 확장 파일 <code>ongeul-v버전.zip</code>만 받아 압축을 풉니다. 설치 파일 실행은 필요 없습니다. 4단계의 폴더 고르는 곳에서는 압축을 푼 폴더 자체(<code>manifest.json</code>이 있는 폴더)를 선택합니다.</span></li>
+    <li>온글 설정의 <b>AI 사용</b> 부분에서 <b>AI 기능 켜기</b>에 체크합니다.</li>
+    <li><b>ChatGPT 계정으로 연결</b>의 체크를 끕니다. 그러면 "AI 공급자" 선택이 나타납니다.</li>
+    <li><b>Google Gemini</b>나 <b>NVIDIA NIM</b>을 고르고, 복사한 키를 <b>API 키</b> 칸에 붙여넣습니다.</li>
+    <li>NVIDIA NIM이면 <b>모델</b>도 고릅니다.</li>
+    <li><b>저장</b>을 누른 뒤 <b>연결 확인</b>을 누릅니다. "Gemini 연결에 성공했습니다" 또는 "NVIDIA NIM 연결에 성공했습니다"가 나오면 끝입니다.</li>
+  </ol>
+  <ul class="checks">
+    <li><b>요금:</b> API 사용 요금은 그 키의 계정에 청구됩니다. 무료 범위와 가격은 각 사이트에서 확인하세요.</li>
+    <li><b>키 보관:</b> API 키는 이 컴퓨터의 브라우저에만 저장되고 다른 기기와 동기화되지 않습니다. 다른 사람에게 보여 주지 마세요.</li>
+    <li><b>한 번에 한 가지:</b> 모든 AI 기능은 ChatGPT 계정과 API 키 중 고른 한쪽으로만 동작합니다.</li>
+  </ul>
+</section>
+
 <section class="card finish" aria-labelledby="finish-title">
   <h2 id="finish-title">설치 끝! 이제 써 보세요</h2>
   <p>아무 웹페이지에서 <kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>로 온글을 켜고 <kbd>↓</kbd>를 누르면 한 항목씩 읽습니다. 키와 AI 기능은 바로 아래 사용법에서 하나씩 익혀 보세요.</p>
@@ -296,7 +334,7 @@ Codex CLI: … (함께 담긴 것)
 
   <section class="card" id="use-ai" aria-labelledby="use-ai-title">
     <h3 id="use-ai-title">AI 기능 쓰기</h3>
-    <p>설치 단계에서 ChatGPT를 연결했다면 바로 쓸 수 있습니다. 온글 메뉴(<kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>)에서도 고를 수 있습니다.</p>
+    <p>ChatGPT를 연결했거나 API 키를 넣었다면 바로 쓸 수 있습니다. 온글 메뉴(<kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>)에서도 고를 수 있습니다.</p>
     <div class="table-wrap"><table>
       <caption class="sr-only">AI 기능과 키</caption>
       <thead><tr><th scope="col">키</th><th scope="col">기능</th><th scope="col">어떻게 되나</th></tr></thead>
@@ -336,7 +374,7 @@ Codex CLI: … (함께 담긴 것)
     <ul class="checks">
       <li><b>안내 길이:</b> 처음 몇 번은 무엇을 누르면 어떻게 되는지 자세히 안내하고, 익숙해지면 짧게 안내합니다. 온글 설정의 "안내를 얼마나 자세히 읽을까요?"에서 항상 자세히, 항상 짧게로 바꿀 수 있습니다.</li>
       <li><b>기능 키 글자:</b> 요약(S), 질문(Q), 상세 이미지(D), 현재 항목 설명(E), 메뉴(M) 글자는 온글 설정에서 바꿉니다.</li>
-      <li><b>AI 모델:</b> 온글 설정의 ChatGPT 계정 설정에서 모델을 고릅니다. 잘 모르면 "자동"이 좋습니다.</li>
+      <li><b>AI 모델:</b> ChatGPT는 온글 설정의 ChatGPT 계정 설정에서 고르고, 잘 모르면 "자동"이 좋습니다. Gemini와 NVIDIA NIM은 각 공급자 설정의 "모델"에서 바꿉니다. 모델에 따라 속도와 정확도가 다릅니다.</li>
       <li><b>온글 설정 여는 곳:</b> <code>chrome://extensions</code>의 온글 카드 → <b>세부정보</b> → <b>확장 프로그램 옵션</b></li>
     </ul>
   </section>
@@ -365,8 +403,20 @@ Codex CLI: … (함께 담긴 것)
     <p>ChatGPT 요금제의 사용 한도를 다 쓴 것입니다. 한도가 풀릴 때까지 기다리거나 설정에서 다른 모델을 고르세요. 무료 계정은 한도가 낮아 더 빨리 닿을 수 있습니다.</p>
   </details>
   <details>
+    <summary>"API 키가 올바르지 않습니다"</summary>
+    <p>키를 빠짐없이 복사했는지, 고른 공급자의 키가 맞는지 확인하고 다시 붙여넣은 뒤 저장하세요.</p>
+  </details>
+  <details>
+    <summary>"AI 모델을 고르지 않았습니다"</summary>
+    <p>NVIDIA NIM은 기본 모델이 없습니다. 온글 설정의 NVIDIA NIM 설정에서 모델을 고르고 저장하세요.</p>
+  </details>
+  <details>
+    <summary>"요청 한도를 넘었습니다" 또는 "서버가 붐빕니다"</summary>
+    <p>API 키의 사용 한도에 닿았거나 공급자 서버가 바쁜 것입니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.</p>
+  </details>
+  <details>
     <summary>AI 결과가 느리거나 정확하지 않아요</summary>
-    <p>고른 모델과 요금제에 따라 정확도와 속도가 다를 수 있습니다. 온글 설정의 ChatGPT 계정 설정에서 다른 모델을 골라 보세요. 상세 이미지는 그림이 많을수록 오래 걸립니다(1~2분). AI 결과에는 "AI 추정", "AI 추출"이 붙으니, 가격 같은 중요한 내용은 원문 위치로 이동해 확인하세요.</p>
+    <p>고른 공급자, 모델, 요금제에 따라 정확도와 속도가 다를 수 있습니다. 온글 설정에서 다른 모델을 골라 보세요. 상세 이미지는 그림이 많을수록 오래 걸리고(1~2분), NVIDIA NIM은 조각마다 글자를 읽어 더 걸릴 수 있습니다. AI 결과에는 "AI 추정", "AI 추출"이 붙으니, 가격 같은 중요한 내용은 원문 위치로 이동해 확인하세요.</p>
   </details>
   <details>
     <summary>온글 키를 눌러도 아무 반응이 없어요</summary>
@@ -396,7 +446,7 @@ Codex CLI: … (함께 담긴 것)
 <section class="card" aria-labelledby="privacy-title">
   <h2 id="privacy-title">알아 두세요</h2>
   <ul class="checks">
-    <li>요약·질문·이미지 읽기를 하면 그 페이지의 글과 그림이 내 ChatGPT 계정으로 OpenAI에 전송됩니다. 입력창에 적은 내용은 보내지 않습니다.</li>
+    <li>요약·질문·이미지 읽기를 하면 그 페이지의 글과 그림이 고른 AI 서비스로 전송됩니다. ChatGPT 계정이면 OpenAI, API 키면 Google이나 NVIDIA입니다. 입력창에 적은 내용은 보내지 않습니다.</li>
     <li>온글은 ChatGPT 비밀번호나 로그인 정보를 보지 않습니다. 로그인은 OpenAI 공식 프로그램(Codex)이 처리합니다.</li>
     <li>대화 기록은 남기지 않습니다.</li>
   </ul>
