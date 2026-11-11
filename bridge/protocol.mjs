@@ -1,5 +1,5 @@
 // 온글 연결 프로그램의 순수 함수 모음 (프로세스·파일을 건드리지 않아 테스트하기 쉬운 부분)
-// 설계: docs/CHATGPT-LOGIN-DESIGN.md
+// 설치·사용: docs/CHATGPT-LOGIN.md
 
 export const BRIDGE_VERSION = '1.0.0';
 // 확장과 연결 프로그램이 주고받는 메시지 모양의 버전. 바뀌면 확장이 "연결 프로그램을 업데이트하세요"라고 안내한다.

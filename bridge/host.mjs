@@ -2,7 +2,7 @@
 // 온글 연결 프로그램 (Native Messaging host)
 // 크롬이 온글 확장의 요청이 있을 때 이 프로그램을 띄우고, 표준 입출력으로 메시지를 주고받는다. 네트워크 포트는 열지 않는다.
 // ChatGPT 로그인과 AI 호출은 OpenAI 공식 Codex CLI(`codex login`, `codex exec`)가 하고, 이 프로그램은 인증 정보를 읽지 않는다.
-// 설계: docs/CHATGPT-LOGIN-DESIGN.md, 설치: docs/CHATGPT-LOGIN.md
+// 설치·사용: docs/CHATGPT-LOGIN.md
 import { spawn as nodeSpawn } from 'node:child_process';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
