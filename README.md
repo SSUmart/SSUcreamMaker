@@ -9,7 +9,7 @@ AI를 결합한 웹 스크린리더 (크롬 확장 프로그램)
 
 설치형 프로그램 대신 크롬 확장으로 만든 이유는 시각장애인에게 프로그램 설치 단계 하나가 큰 장벽이기 때문입니다. 브라우저에 추가만 하면 됩니다.
 
-> **개발 중**: 스크린리더 기본 기능(읽기, 이동, 화면 자막, 음성, 온글 메뉴), 점자 출력, AI 기능을 만들었고, 지금은 실제 AI 평가와 Windows 확인을 하고 있습니다. 진행 단계는 [docs/PROPOSAL.md](docs/PROPOSAL.md) 10장을 참고하세요.
+> **개발 중**: 스크린리더 기본 기능(읽기, 이동, 화면 자막, 음성, 온글 메뉴), 점자 출력, AI 기능을 만들고 사용자 평가 설문까지 마쳤습니다. 설문 결과와 개선 방향은 [docs/SURVEY-RESULTS.md](docs/SURVEY-RESULTS.md), 진행 단계는 [docs/PROPOSAL.md](docs/PROPOSAL.md) 10장을 참고하세요.
 
 | 출력 | 내용 |
 |---|---|
@@ -176,14 +176,45 @@ ChatGPT 로그인이 들어간 버전부터 확장 ID가 하나로 고정됩니�
 4. "전체 확인 시작"을 누르고 끝날 때까지 기다림 (1분 안팎)
 5. "귀로 확인"에 답하고 "결과 복사"를 눌러 개발 담당자에게 전달
 
+## 문서와 페이지
+
+평가용 웹 서비스([운영 가이드](docs/EVAL-WEB-SERVICE.md))가 테스트 서버 `https://ssu.jaymong.me`에서 아래 페이지를 함께 띄웁니다.
+
+| 페이지 | 내용 |
+|---|---|
+| `/guide/` | 설치 가이드: 확장 설치, API 키·ChatGPT 계정 연결, 기본 키 |
+| `/info/` | 프로젝트 공유 페이지: 온글을 만들며 측정으로 확인한 디지털미디어 원리 7가지 |
+| `/mall/`, `/shop/` | 평가용 쇼핑몰과 주문까지 해 보는 온글몰 |
+| `/survey/` | 평가 설문 |
+
+| 문서 | 내용 |
+|---|---|
+| [PROPOSAL.md](docs/PROPOSAL.md) | 프로젝트 구성안: 범위, 기능 상세, 구조, 평가 계획, 진행 단계 |
+| [EVALUATION-PLAN.md](docs/EVALUATION-PLAN.md) | 평가 잣대·정답지 계획과 측정 결과 |
+| [SURVEY-RESULTS.md](docs/SURVEY-RESULTS.md) | 사용자 평가 설문 결과(AI·팀원·사용자 비교)와 개선 방향 |
+| [AI-SURVEY-EVALUATION.md](docs/AI-SURVEY-EVALUATION.md) | 같은 설문에 AI 두 개가 답한 점수와 이유 |
+| [BRAILLE-DEVICES.md](docs/BRAILLE-DEVICES.md) | 실제 점자 디스플레이를 기기 종류별로 연결하는 설계 |
+| [CHATGPT-LOGIN.md](docs/CHATGPT-LOGIN.md) | ChatGPT 계정 연결 프로그램 설치·사용 |
+| [TEST-PAGE.md](docs/TEST-PAGE.md) | 평가용 쇼핑몰을 다른 PC에서 띄우기 |
+| [SURVEY-SERVICE.md](docs/SURVEY-SERVICE.md) | 평가 설문 서비스 띄우기와 분석표 읽는 법 |
+| [EVAL-WEB-SERVICE.md](docs/EVAL-WEB-SERVICE.md) | 평가용 웹 서비스를 systemd로 운영하기 |
+
 ## 개발
 
 ```bash
-npm test   # 단위 테스트 (Node 20 이상, 의존성 없음)
+npm test                          # 저장소 루트: 단위 테스트 (Node 20 이상, 의존성 없음)
+cd eval
+npm run e2e:reader                # 온글 전체 동작 (가짜 AI·가짜 음성, API 키 불필요)
+npm run reader:accuracy           # 쇼핑몰 읽기 정확성 (정답표와 비교)
+npm run braille                   # 한국 점자 규정 예문 비교
 ```
+
+`eval`의 점검은 처음 한 번 `cd eval && npm install && npx playwright install chromium`이 필요합니다.
 
 Gemini·NVIDIA NIM 추출 품질 비교와, API 키 없이 요약·질문 응답 흐름을 실제 브라우저에서 확인하는 E2E 점검(`npm run e2e`)은 [eval/README.md](eval/README.md)를 참고하세요.
 
 확장 코드를 고친 뒤에는 `chrome://extensions`에서 새로고침하세요.
+
+문제를 찾았으면 어떤 페이지에서, 어떤 키를 눌렀을 때, 무엇을 읽었는지(화면 아래 자막 그대로)와 운영체제(Windows/macOS)를 함께 적어 알려 주세요.
 
 브랜치·커밋·버전·CHANGELOG 규칙은 [협업 규칙](.claude/skills/collab-rules/SKILL.md)을 따릅니다. 변경 내역은 [CHANGELOG.md](CHANGELOG.md)에 기록합니다.

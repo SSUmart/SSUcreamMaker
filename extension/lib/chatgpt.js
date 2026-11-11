@@ -1,6 +1,6 @@
 // ChatGPT 계정 연결: PC에 설치한 온글 연결 프로그램(bridge/host.mjs)과 Native Messaging으로 이야기한다.
 // 로그인과 AI 호출은 연결 프로그램이 OpenAI 공식 Codex CLI로 하고, 온글은 인증 정보를 보지 않는다.
-// 설계: docs/CHATGPT-LOGIN-DESIGN.md
+// 설치·사용: docs/CHATGPT-LOGIN.md
 
 export const HOST_NAME = 'me.jaymong.ongeul';
 // 연결 프로그램과 주고받는 메시지 모양의 버전 (bridge/protocol.mjs의 PROTOCOL과 같아야 함)
