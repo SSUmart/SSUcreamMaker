@@ -9,7 +9,7 @@ AI를 결합한 웹 스크린리더 (크롬 확장 프로그램)
 
 설치형 프로그램 대신 크롬 확장으로 만든 이유는 시각장애인에게 프로그램 설치 단계 하나가 큰 장벽이기 때문입니다. 브라우저에 추가만 하면 됩니다.
 
-> **개발 중**: 스크린리더 기본 기능(읽기, 이동, 화면 자막, 음성, 온글 메뉴), 점자 출력, AI 기능을 만들고 사용자 평가 설문까지 마쳤습니다. 설문 결과와 개선 방향은 [docs/SURVEY-RESULTS.md](docs/SURVEY-RESULTS.md), 진행 단계는 [docs/PROPOSAL.md](docs/PROPOSAL.md) 10장을 참고하세요.
+> **개발 중**: 스크린리더 기본 기능(읽기, 이동, 화면 자막, 음성, 온글 메뉴), 점자 출력, AI 기능을 만들고 평가를 마쳤습니다. 진행 단계는 [docs/PROPOSAL.md](docs/PROPOSAL.md) 10장을 참고하세요.
 
 | 출력 | 내용 |
 |---|---|
@@ -178,25 +178,20 @@ ChatGPT 로그인이 들어간 버전부터 확장 ID가 하나로 고정됩니�
 
 ## 문서와 페이지
 
-평가용 웹 서비스([운영 가이드](docs/EVAL-WEB-SERVICE.md))가 테스트 서버 `https://ssu.jaymong.me`에서 아래 페이지를 함께 띄웁니다.
+테스트 서버 `https://ssu.jaymong.me`에서 아래 페이지를 열 수 있습니다([운영 가이드](docs/EVAL-WEB-SERVICE.md)).
 
 | 페이지 | 내용 |
 |---|---|
 | `/guide/` | 설치 가이드: 확장 설치, API 키·ChatGPT 계정 연결, 기본 키 |
-| `/info/` | 프로젝트 공유 페이지: 온글을 만들며 측정으로 확인한 디지털미디어 원리 7가지 |
-| `/mall/`, `/shop/` | 평가용 쇼핑몰과 주문까지 해 보는 온글몰 |
-| `/survey/` | 평가 설문 |
+| `/mall/` | 상품 고르기부터 주문까지 온글로 해 보는 시험용 쇼핑몰(온글몰) |
 
 | 문서 | 내용 |
 |---|---|
 | [PROPOSAL.md](docs/PROPOSAL.md) | 프로젝트 구성안: 범위, 기능 상세, 구조, 평가 계획, 진행 단계 |
 | [EVALUATION-PLAN.md](docs/EVALUATION-PLAN.md) | 평가 잣대·정답지 계획과 측정 결과 |
-| [SURVEY-RESULTS.md](docs/SURVEY-RESULTS.md) | 사용자 평가 설문 결과(AI·팀원·사용자 비교)와 개선 방향 |
-| [AI-SURVEY-EVALUATION.md](docs/AI-SURVEY-EVALUATION.md) | 같은 설문에 AI 두 개가 답한 점수와 이유 |
 | [BRAILLE-DEVICES.md](docs/BRAILLE-DEVICES.md) | 실제 점자 디스플레이를 기기 종류별로 연결하는 설계 |
 | [CHATGPT-LOGIN.md](docs/CHATGPT-LOGIN.md) | ChatGPT 계정 연결 프로그램 설치·사용 |
-| [TEST-PAGE.md](docs/TEST-PAGE.md) | 평가용 쇼핑몰을 다른 PC에서 띄우기 |
-| [SURVEY-SERVICE.md](docs/SURVEY-SERVICE.md) | 평가 설문 서비스 띄우기와 분석표 읽는 법 |
+| [TEST-PAGE.md](docs/TEST-PAGE.md) | 시험용 쇼핑몰을 다른 PC에서 띄우기 |
 | [EVAL-WEB-SERVICE.md](docs/EVAL-WEB-SERVICE.md) | 평가용 웹 서비스를 systemd로 운영하기 |
 
 ## 개발

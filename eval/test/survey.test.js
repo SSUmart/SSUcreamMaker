@@ -258,7 +258,11 @@ test('합친 서버(web.mjs): 쇼핑몰과 설문을 한 포트에서, 설문은
   try {
     assert.equal((await get('/')).headers.get('location'), '/mall/');
     assert.equal((await get('/mall/')).status, 200);
-    assert.equal((await get('/shop/')).status, 200);
+    // 평가용 쇼핑몰 페이지는 내려주지 않고, 온글몰이 쓰는 그림만 내려준다
+    assert.equal((await get('/shop/')).status, 404);
+    assert.equal((await get('/shop/index.html')).status, 404);
+    assert.equal((await get('/shop/unnamed.html')).status, 404);
+    assert.equal((await get('/shop/images/detail-01.jpg')).status, 200);
     assert.equal((await get('/healthz')).status, 200);
     assert.equal((await get('/survey')).headers.get('location'), '/survey/admin');
     assert.equal((await get('/survey/')).headers.get('location'), '/survey/admin');
