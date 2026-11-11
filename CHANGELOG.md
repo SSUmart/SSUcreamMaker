@@ -12,6 +12,7 @@
 - 프로젝트 구성안(`docs/PROPOSAL.md`)을 지금 상태로 갱신: 현재 진행, ChatGPT 계정 연결(구조도·구성 요소·기술 스택·권한), 저장소 구조, 평가 지표의 측정 결과(상세 이미지, 만족도 설문), 진행 단계(S8 완료, S9 진행, S11 설문 결과에 따른 개선 추가). README의 진행 상태 안내도 함께 고치고, README에 "문서와 페이지" 절(테스트 서버의 설치 가이드·공유 페이지·쇼핑몰·설문 주소, docs 문서별 용도)을 더함
 
 ### Removed
+- 발표 시연용 저장 결과(26.3.1에서 더함)를 뺌: 이제 `ssu.jaymong.me`의 온글몰에서도 상세 이미지 읽기와 요약이 다른 사이트처럼 설정한 AI로 실제 실행됨. 저장 결과 데이터(`extension/lib/demo-data.js`)와 처리 코드, 만들기·점검 스크립트(`npm run demo:capture`, `npm run e2e:demo`)도 함께 지움
 - 구현이 끝나 더 이상 참고하지 않는 문서를 정리: ChatGPT 로그인 설계 문서(`docs/CHATGPT-LOGIN-DESIGN.md`, 설치·사용은 `docs/CHATGPT-LOGIN.md`에 그대로 있음), 26.2.0 뒤 수정 브랜치 요약(`docs/FIX-REVIEW-FINDINGS.md`), 설문 문항 후보 30개(`docs/USER-SURVEY.md`, 쓰는 설문은 평가 설문 서비스에 있음), 팀원용 테스트 가이드(`docs/TESTING-GUIDE.md`, 설치·키 안내는 설치 가이드 페이지와 겹침. 자동 점검 명령과 문제 보고 방법은 README의 "개발"로 옮김). 코드 주석과 문서의 링크도 함께 고침
 
 ## [26.3.1] - 2026-11-09
