@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온글에서 배운 디지털미디어 원리</title>
+<meta name="description" content="AI를 결합한 웹 스크린리더 온글을 만들며 측정으로 확인한 디지털미디어 원리 7가지와, 다른 분께 드리는 시사점, 아직 남은 한계를 정리했습니다.">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="info.css">
+</head>
+<body>
+<a class="skip" href="#principles">원리 7가지로 바로 가기</a>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">온글 프로젝트 공유</p>
+    <h1>그림 속 글자가<br><em>소리가 되기까지</em></h1>
+    <p class="lead">온글은 시각장애인이 웹페이지를 읽고, 이동하고, 이미지 속 정보까지 들을 수 있게 돕는 AI 웹 스크린리더(크롬 확장 프로그램)입니다. 디지털미디어원리 수업의 팀 프로젝트로 만들면서, 화면의 정보를 소리와 점자로 옮길 때 무엇이 사라지고 무엇을 다시 붙여야 하는지 직접 재 보았습니다. 그 결과를 원리 7가지로 정리했습니다.</p>
+    <ul class="facts">
+      <li><b>162/162</b><span>읽기 순서·종류·이름·상태가 정답표와 일치 (평가용 쇼핑몰 7개 상황)</span></li>
+      <li><b>141/141</b><span>2024 한국 점자 규정 예문과 일치한 점자 변환</span></li>
+      <li><b>53개</b><span>상세 이미지 읽기를 잰 정답 문구 (4개 사례)</span></li>
+    </ul>
+  </div>
+</header>
+
+<main class="wrap">
+
+<nav aria-labelledby="toc-title" class="toc">
+  <h2 id="toc-title">차례</h2>
+  <ol>
+    <li><a href="#p1">글자를 그림으로 만들면 정보가 사라진다</a></li>
+    <li><a href="#p2">AI 판독은 복원이 아니라 추정이다</a></li>
+    <li><a href="#p3">자르는 곳에서 정보가 깨진다</a></li>
+    <li><a href="#p4">공간을 시간으로 바꾸면 탐색이 필요하다</a></li>
+    <li><a href="#p5">출력 매체마다 대역폭이 다르다</a></li>
+    <li><a href="#p6">시간도 미디어 경험의 일부다</a></li>
+    <li><a href="#p7">흔들리는 결과는 조건을 기록해야 한다</a></li>
+  </ol>
+  <p class="toc-more"><a href="#ladder">다섯 칸으로 보기</a> · <a href="#limits">아직 남은 한계</a> · <a href="#more">더 보기</a></p>
+</nav>
+
+<section class="card" id="ladder" aria-labelledby="ladder-title">
+  <h2 id="ladder-title">다섯 칸으로 보기</h2>
+  <p>수업에서는 어떤 미디어 문제든 아래 다섯 칸으로 진단합니다. 아래 칸이 흔들리면 그 위는 모두 흔들립니다. 온글이 상품 상세 이미지를 읽어 주는 과정을 이 다섯 칸에 놓으면 다음과 같습니다.</p>
+  <ol class="ladder">
+    <li><span class="rung">01 신호·원본</span><span><span class="q">현실의 어떤 정보를, 어떤 단위로 표현했는가?</span><span class="ours">쇼핑몰이 가격·옵션·주의사항을 글이 아니라 그림으로 올렸다 → <a href="#p1">원리 1</a></span></span></li>
+    <li><span class="rung">02 형식·압축</span><span><span class="q">저장하고 압축하면서 무엇을 버렸는가?</span><span class="ours">긴 그림을 줄이고, 자르고, JPEG로 다시 압축했다 → <a href="#p3">원리 3</a></span></span></li>
+    <li><span class="rung">03 추출·인식</span><span><span class="q">재생·복원·분석할 때 어떤 오류가 생기는가?</span><span class="ours">AI가 글자를 읽다가 놓치거나 지어냈다 → <a href="#p2">원리 2</a></span></span></li>
+    <li><span class="rung">04 맥락·구조</span><span><span class="q">꺼낸 정보를 무엇에 붙여야 되찾을 수 있는가?</span><span class="ours">제목·분류·"AI 추출" 표시를 붙이고, 건너뛰는 키를 만들었다 → <a href="#p4">원리 4</a>, <a href="#p5">원리 5</a></span></span></li>
+    <li><span class="rung">05 활용·검증</span><span><span class="q">이 결과가 실제 사용 목적에 적합한가?</span><span class="ours">정답지로 재고, 시간을 재고, 실행 조건을 남겼다 → <a href="#p6">원리 6</a>, <a href="#p7">원리 7</a></span></span></li>
+  </ol>
+</section>
+
+<ol class="principles" id="principles">
+
+<li class="principle" id="p1">
+  <div class="p-head"><span class="num" aria-hidden="true">1</span><h2>글자를 그림으로 만들면 정보가 사라진다</h2></div>
+  <span class="chip">01 신호·원본</span>
+  <figure class="art"><img src="images/pixels.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>같은 내용이라도 글로 담으면 기계가 읽을 수 있고, 픽셀로 담으면 읽을 수 없습니다. 사람에게는 같은 "가격 12,900원"이지만, 컴퓨터에게 한쪽은 글자 일곱 개이고 다른 쪽은 색이 다른 점 수만 개입니다. 콘텐츠는 같아도 <b>표현</b>이 바뀐 것입니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <ul>
+    <li>국내 쇼핑몰은 가격, 옵션, 영양정보, 주의사항을 세로로 긴 상세 이미지 한 장에 넣는 경우가 많습니다.</li>
+    <li>이런 페이지에서 기존 스크린리더는 그림의 대체 텍스트만 읽습니다. 대체 텍스트가 "상세 이미지"뿐이면 사용자가 들을 수 있는 정보가 없습니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> 콘텐츠를 만드는 쪽에서 중요한 정보는 글로 남기거나 대체 텍스트를 붙여 주세요. 그림이 된 글자를 나중에 AI로 되살리는 것은 처음부터 글로 두는 것보다 느리고, 비싸고, 부정확합니다.</p>
+</li>
+
+<li class="principle" id="p2">
+  <div class="p-head"><span class="num" aria-hidden="true">2</span><h2>AI 판독은 복원이 아니라 추정이다</h2></div>
+  <span class="chip">03 추출·인식</span>
+  <figure class="art"><img src="images/guess.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>한 번 버린 정보는 되돌아오지 않습니다. AI가 그림 속 글자를 읽는 것은 남은 픽셀로 원래 글자를 추정하는 일입니다. 그래서 오류는 두 가지로 나타납니다. 있는 글자를 빠뜨리는 <b>놓침</b>, 없는 내용을 그럴듯하게 만드는 <b>헛짚음</b>입니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>상세 이미지 읽기 측정 (Gemini, 같은 날 12분 간격 두 번 실행)</caption>
+      <thead><tr><th scope="col">사례</th><th scope="col" class="n">정답 문구</th><th scope="col">첫 실행</th><th scope="col">두 번째 실행</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">직접 그린 그림</th><td class="n">10</td><td>인식 100%</td><td>인식 100%</td></tr>
+        <tr><th scope="row">취소선·작은 글씨·표</th><td class="n">11</td><td>인식 100%</td><td>인식 100%</td></tr>
+        <tr><th scope="row">실제 쇼핑몰 상품</th><td class="n">15</td><td><span class="bad">인식 87%</span> (영양정보 2개 놓침)</td><td>인식 100%</td></tr>
+        <tr><th scope="row">평가용 쇼핑몰 상품</th><td class="n">17</td><td><span class="bad">시간 초과 실패</span></td><td>인식 100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li>놓침은 정답 문구가 결과에 있는지로 자동으로 잴 수 있었습니다.</li>
+    <li>틀린 숫자나 지어낸 문장은 자동으로 잡히지 않아, 사람이 결과를 한 줄씩 봐야 했습니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> AI가 만든 결과에는 출처를 표시해 주세요. 온글은 "AI 추출", "AI 추정"이라고 먼저 알려 줍니다. 가격, 알레르기, 주의사항처럼 틀리면 해로운 정보는 따로 검증해야 합니다.</p>
+</li>
+
+<li class="principle" id="p3">
+  <div class="p-head"><span class="num" aria-hidden="true">3</span><h2>자르는 곳에서 정보가 깨진다</h2></div>
+  <span class="chip">02 형식·압축</span>
+  <figure class="art"><img src="images/tiles.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>표본화와 분할은 "어디서 자를지"를 정하는 선택입니다. 오디오의 샘플링레이트, 이미지의 해상도, 비디오의 프레임레이트가 모두 얼마나 촘촘히 자를지의 문제이듯, AI에 그림을 보낼 때도 크기와 경계를 정해야 합니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <p>세로로 수천 픽셀인 상세 이미지는 AI에 한 장으로 보내면 글자가 너무 작아집니다. 그래서 다음처럼 나눠 보냅니다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>온글이 상세 이미지를 나누는 값</caption>
+      <thead><tr><th scope="col">설계값</th><th scope="col">온글의 값</th><th scope="col">왜</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">폭</th><td>최대 1000px로 줄임</td><td>AI가 받는 크기에 맞춤. 많이 줄일수록 작은 글씨가 먼저 뭉개짐</td></tr>
+        <tr><th scope="row">조각 높이</th><td>1000px</td><td>한 조각에 글자 크기를 유지할 만큼만 담음</td></tr>
+        <tr><th scope="row">겹침</th><td>80px</td><td>경계에 걸친 글자 줄이 두 조각 중 한쪽에는 온전히 들어가게 함</td></tr>
+        <tr><th scope="row">압축</th><td>JPEG, 용량 제한을 넘으면 품질을 낮춤</td><td>보낼 수 있는 크기 안에 맞춤. 대신 글자 가장자리가 흐려짐</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="share"><b>드리는 말:</b> 용량을 줄이려고 해상도나 품질을 낮추면 인식률도 함께 떨어집니다. 줄이는 비율, 자르는 크기, 겹치는 폭은 결과를 바꾸는 설계값이니 정할 때 이유를 남겨 두세요.</p>
+</li>
+
+<li class="principle" id="p4">
+  <div class="p-head"><span class="num" aria-hidden="true">4</span><h2>공간을 시간으로 바꾸면 탐색이 필요하다</h2></div>
+  <span class="chip">04 맥락·구조</span>
+  <figure class="art"><img src="images/timeline.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>화면은 공간에 펼쳐져 있어 눈으로 한 번에 훑어볼 수 있습니다. 음성과 점자는 시간 순서로만 전달됩니다. 웹페이지를 소리로 바꾸는 것은 2차원 공간을 한 줄의 시간축으로 펼치는 일이고, 펼치면 원하는 곳까지 가는 데 시간이 듭니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <ul>
+    <li>페이지를 처음부터 끝까지 읽으면 "배송비"에 닿기까지 오래 걸립니다.</li>
+    <li>그래서 제목(<kbd>H</kbd>), 링크(<kbd>K</kbd>), 버튼(<kbd>B</kbd>)처럼 한 글자 키로 건너뛰는 이동과, 페이지 요약, 페이지에 묻는 질문 응답을 만들었습니다. 요약과 답에는 근거가 된 원문 위치를 붙여 바로 이동할 수 있게 했습니다.</li>
+    <li>탐색 명령 34개가 모두 기대한 위치로 이동했고, 같은 설문을 AI 두 개에 물었을 때도 "한 글자 키 이동"이 가장 높은 점수(평균 4.5점)를 받았습니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> 미디어를 옮길 때는 내용만이 아니라 구조(제목, 목록, 표)도 함께 옮겨야 다시 찾을 수 있습니다. 웹페이지를 만들 때 제목 태그와 목록을 제대로 쓰는 것만으로도 스크린리더 사용자는 훨씬 빨리 이동합니다.</p>
+</li>
+
+<li class="principle" id="p5">
+  <div class="p-head"><span class="num" aria-hidden="true">5</span><h2>출력 매체마다 대역폭이 다르다</h2></div>
+  <span class="chip">04 맥락·구조</span>
+  <figure class="art"><img src="images/outputs.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>매체마다 한 번에 전할 수 있는 양이 다릅니다. 화면은 한 번에 수천 글자를 보여 주지만, 음성은 한 번에 한 문장이고, 점자 디스플레이는 한 줄에 20~80칸입니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <ul>
+    <li><b>점자:</b> 글을 한국 점자 규정에 따라 점자 칸으로 바꾸고, 기기 칸 수에 맞게 줄을 나누는 일은 스크린리더가 합니다. 기기는 받은 점 배열대로 핀을 올릴 뿐입니다. 온글은 가상 점자 디스플레이로 이를 구현했고, 규정 예문 141개와 모두 일치했습니다.</li>
+    <li><b>음성:</b> 속도를 높일 수는 있지만, 문장이 길면 듣는 사람이 기억해야 할 양이 늘어납니다. 그래서 AI 요약은 한 항목에 정보 하나만 담고, 최대 7개까지로 제한했습니다.</li>
+    <li><b>화면:</b> 화면을 일부 볼 수 있는 사람이나 옆에서 돕는 사람을 위해, 지금 읽는 글을 자막과 테두리로 함께 보여 줍니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> 같은 정보라도 출력 매체에 맞춰 길이와 단위를 다시 설계해야 합니다. 화면용 문장을 그대로 읽어 주면 귀로는 길고, 점자로는 더 깁니다.</p>
+</li>
+
+<li class="principle" id="p6">
+  <div class="p-head"><span class="num" aria-hidden="true">6</span><h2>시간도 미디어 경험의 일부다</h2></div>
+  <span class="chip">05 활용·검증</span>
+  <figure class="art"><img src="images/waiting.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>처리에 걸리는 시간은 품질과 맞바꾸는 관계에 있습니다. 결과가 정확해도 너무 늦게 나오면 사용자는 기다리지 않고 다른 방법을 찾습니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <ul>
+    <li>상세 이미지 읽기에 걸린 시간은 같은 사례에서도 130초에서 21초까지 흔들렸고, 한 번은 시간 초과로 실패했습니다.</li>
+    <li>같은 설문을 AI 두 개에 물었을 때 가장 낮은 점수를 받은 문항이 "AI 결과를 기다리는 시간과 안내"(평균 2.5점)였습니다.</li>
+    <li>그래서 분석하는 동안에도 다른 항목으로 이동할 수 있게 하고, 진행 상황을 소리로 알려 주며, 끝난 결과는 AI 결과 모음에서 다시 들을 수 있게 했습니다.</li>
+    <li>수업 시연에서는 기다림 때문에 흐름이 끊기지 않도록, 시연용 쇼핑몰에 한해 미리 받아 둔 AI 결과를 바로 보여 주기로 했습니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> 정확도만이 아니라 걸린 시간의 중간값과 느린 쪽(p50, p95)도 함께 재 보세요. 기다리는 동안 무엇을 알려 줄지도 설계 대상입니다.</p>
+</li>
+
+<li class="principle" id="p7">
+  <div class="p-head"><span class="num" aria-hidden="true">7</span><h2>흔들리는 결과는 조건을 기록해야 한다</h2></div>
+  <span class="chip">05 활용·검증</span>
+  <figure class="art"><img src="images/records.jpg" alt="" width="1200" height="675" loading="lazy"></figure>
+  <h3>원리</h3>
+  <p>측정을 다시 해 볼 수 있으려면 측정 조건이 남아 있어야 합니다. AI는 같은 입력에도 매번 조금씩 다른 결과를 내므로, 한 번 잰 숫자만으로는 좋아졌는지 나빠졌는지 말할 수 없습니다.</p>
+  <h3>우리가 확인한 것</h3>
+  <ul>
+    <li>원리 2의 두 실행은 12분 간격인데 결과와 시간이 크게 달랐습니다. 그런데 결과 파일에 모델 이름과 코드 버전이 없어서, 차이가 AI의 흔들림인지 코드 수정 때문인지 가릴 수 없었습니다.</li>
+    <li>이후에는 결과마다 공급자, 모델, 코드 버전(커밋), 날짜를 함께 저장하도록 바꿨습니다.</li>
+    <li>평가도 한쪽에만 맡기지 않습니다. 같은 설문을 팀원, 실제 사용자, AI에게 따로 받아 세 점수를 나란히 비교합니다. AI 점수는 문서를 읽고 매긴 기준점일 뿐 사용 경험을 대신하지 않습니다.</li>
+  </ul>
+  <p class="share"><b>드리는 말:</b> AI를 쓰는 미디어 처리는 같은 조건으로 여러 번 돌려 평균과 흩어짐을 보여 주세요. 결과 옆에 모델, 버전, 날짜를 적는 습관이 나중에 원인을 찾게 해 줍니다.</p>
+</li>
+
+</ol>
+
+<section class="card limits" id="limits" aria-labelledby="limits-title">
+  <h2 id="limits-title">아직 남은 한계</h2>
+  <ul>
+    <li>기존 스크린리더(NVDA, 센스리더)와 같은 과제로 직접 견준 결과는 아직 없습니다. "더 낫다"고 말할 근거는 그 비교가 끝난 뒤에 생깁니다.</li>
+    <li>정답지 대부분이 우리가 만든 페이지입니다. 개발하며 맞춘 문제로 시험 본 셈이라, 처음 보는 사이트에서는 점수가 떨어질 수 있습니다.</li>
+    <li>상세 이미지 사례는 4개이고, 그중 실제 쇼핑몰은 1개입니다.</li>
+    <li>실제 시각장애 사용자의 평가는 설문으로 받는 중입니다.</li>
+  </ul>
+</section>
+
+<section class="card" id="more" aria-labelledby="more-title">
+  <h2 id="more-title">더 보기</h2>
+  <ul class="links">
+    <li><a href="../guide/">온글 설치·사용 가이드</a>: 직접 설치해 써 볼 수 있습니다.</li>
+    <li><a href="../mall/">연습용 쇼핑몰 온글몰</a>: 상품 찾기부터 주문까지 온글로 해 볼 수 있습니다.</li>
+    <li><a href="https://github.com/SSUmart/SSUcreamMaker" target="_blank" rel="noopener">GitHub 저장소 (새 탭)</a>: 코드와 측정 기록, 평가 계획 문서가 있습니다.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>온글 · 숭실대학교 디지털미디어원리 2026학년도 2학기 팀 프로젝트</p>
+    <p>숫자는 저장소의 측정 기록(docs/EVALUATION-PLAN.md, docs/AI-SURVEY-EVALUATION.md)에서 가져왔습니다. 그림은 Codex로 만든 설명 그림입니다.</p>
+  </div>
+</footer>
+
+</body>
+</html>

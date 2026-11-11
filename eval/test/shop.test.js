@@ -25,6 +25,19 @@ test('/guide/는 설치 가이드와 그림을 내려주고, 화면 찍는 스�
   }
 });
 
+test('/info/는 공유 페이지와 그림을 내려주고, 폴더 밖은 거부한다', () => {
+  const infoDir = path.join(evalDir, 'info');
+  assert.equal(shopFile('/info/'), path.join(infoDir, 'index.html'));
+  assert.equal(shopFile('/info/images/tiles.jpg'), path.join(infoDir, 'images/tiles.jpg'));
+  assert.equal(shopFile('/info/../web.mjs'), null);
+  const html = fs.readFileSync(path.join(infoDir, 'index.html'), 'utf8');
+  const files = [...html.matchAll(/(?:src|href)="((?:images\/)?[\w.-]+\.(?:png|jpg|css|js))"/g)].map((m) => m[1]);
+  assert.ok(files.length >= 8, '공유 페이지가 쓰는 그림·스타일을 찾지 못함');
+  for (const f of files) assert.ok(fs.existsSync(path.join(infoDir, f)), `공유 페이지가 쓰는 파일이 없음: ${f}`);
+  // 그림 7장은 모두 설명 그림이라 본문이 내용을 전하고, 스크린리더가 파일 이름을 읽지 않도록 alt를 비운다
+  for (const img of html.matchAll(/<img [^>]*>/g)) assert.match(img[0], /alt=""/);
+});
+
 test('shop 폴더 밖이나 내려줄 종류가 아닌 파일은 거부한다', () => {
   assert.equal(shopFile('/shop/../package.json'), null);
   assert.equal(shopFile('/shop/%2e%2e/run.mjs'), null);
