@@ -1,5 +1,5 @@
 // 쇼핑몰형 테스트 페이지를 내려준다: 상품 페이지 하나(eval/shop)는 /shop/, 주문까지 되는 가상 쇼핑몰(eval/mall)은 /mall/,
-// 사용자에게 주는 설치 가이드(eval/guide)는 /guide/.
+// 사용자에게 주는 설치 가이드(eval/guide)는 /guide/, 프로젝트에서 배운 것을 나누는 공유 페이지(eval/info)는 /info/.
 // 평가 도구(run.mjs)가 가져다 쓰고, 직접 실행하면 브라우저와 스크린리더로 둘러볼 주소를 띄운다.
 import fs from 'node:fs';
 import http from 'node:http';
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // 주소 앞부분 → 내려줄 폴더
-const ROOTS = { '/shop/': ROOT, '/mall/': path.resolve(ROOT, '../mall'), '/guide/': path.resolve(ROOT, '../guide') };
+const ROOTS = { '/shop/': ROOT, '/mall/': path.resolve(ROOT, '../mall'), '/guide/': path.resolve(ROOT, '../guide'), '/info/': path.resolve(ROOT, '../info') };
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',

@@ -191,7 +191,7 @@ npm run e2e:mall  # 주문 흐름 점검: 실제 Chromium으로 메인부터 결
 같은 설문을 AI, 팀원, 실제 사용자가 답하게 하고 세 점수를 문항별로 비교하는 작은 웹 서비스입니다. 관리자는 설문을 만들고 끝내며, 응답자는 팀원용·사용자용 링크로 로그인 없이 답합니다. 설문을 끝내면 결과 페이지(`/survey/result-<순번>`)에서 분석표를 보고, 설문마다 결과를 공개해 로그인 없이 주소로 나눌 수 있습니다.
 
 ```bash
-SURVEY_ADMIN_PASSWORD='비밀번호' npm run web      # 8080 하나로 /mall/, /shop/, /guide/, /survey/admin
+SURVEY_ADMIN_PASSWORD='비밀번호' npm run web      # 8080 하나로 /mall/, /shop/, /guide/, /info/, /survey/admin
 SURVEY_ADMIN_PASSWORD='비밀번호' npm run survey   # 설문만: http://127.0.0.1:8090/admin
 npm run e2e:survey                                 # 화면 점검 (한 포트 서버의 /survey/, 임시 폴더 사용)
 ```
@@ -300,3 +300,11 @@ NVIDIA_API_KEY=... node nim-models.mjs 모델1 모델2  # 원하는 모델만
 - `guide/index.html`, `guide.css`, `guide.js`: 페이지. Windows·Mac 안내를 버튼으로 바꾸고, 마친 단계는 그 브라우저에만 기억합니다
 - `guide/images/`: 실제 화면(`extensions-devmode.png`, `options-*.png`)과 Codex로 만든 설명 그림(`*.jpg`)
 - 설정 화면이 바뀌면 실제 화면을 다시 찍습니다: `node guide/capture-screens.mjs` (가짜 Codex로 찍으므로 이 컴퓨터의 크롬·ChatGPT 계정은 건드리지 않음)
+
+## 프로젝트 공유 페이지 (`info/`)
+
+프로젝트 발표 뒤 다른 사람과 나누는 웹페이지입니다. 온글을 만들며 측정으로 확인한 디지털미디어 원리 7가지를 수업의 다섯 칸 진단(신호·원본 → 형식·압축 → 추출·인식 → 맥락·구조 → 활용·검증)과 함께 정리했습니다. 테스트 서버(`npm run web`)의 `/info/`에서 열립니다.
+
+- `info/index.html`, `info.css`: 페이지. 색과 글꼴은 설치 가이드와 같습니다
+- `info/images/`: Codex로 만든 설명 그림 7장(`*.jpg`, 1200×675). 내용은 본문이 전하므로 `alt`를 비워 둡니다
+- 숫자는 `docs/EVALUATION-PLAN.md`, `docs/AI-SURVEY-EVALUATION.md`에서 가져왔습니다. 측정을 다시 하면 이 페이지의 숫자도 함께 고칩니다

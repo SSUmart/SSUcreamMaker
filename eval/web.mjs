@@ -2,6 +2,7 @@
 //   /mall/   가상 쇼핑몰 온글몰 (주문·결제까지)
 //   /shop/   평가용 쇼핑몰 상품 페이지
 //   /guide/  온글 설치 가이드 (ChatGPT 계정 연결까지, 사용자에게 주는 페이지)
+//   /info/   온글 프로젝트에서 확인한 디지털미디어 원리를 나누는 공유 페이지
 //   /survey/ 평가 설문 (관리자 /survey/admin, 응답 링크 /survey/s/<토큰>, 결과 페이지 /survey/result-<순번>). SURVEY_ADMIN_PASSWORD가 있을 때만 켠다
 //
 // 실행 (eval 폴더에서): SURVEY_ADMIN_PASSWORD=<비밀번호> npm run web
@@ -24,9 +25,9 @@ export function createWebServer({ start = '/mall/', survey } = {}) {
       res.writeHead(302, { location: start });
       return res.end();
     }
-    // 끝의 / 없이 들어오면 붙여 준다 (가이드의 그림 주소가 상대 경로라서)
-    if (pathname === '/guide') {
-      res.writeHead(301, { location: '/guide/' });
+    // 끝의 / 없이 들어오면 붙여 준다 (가이드·공유 페이지의 그림 주소가 상대 경로라서)
+    if (pathname === '/guide' || pathname === '/info') {
+      res.writeHead(301, { location: `${pathname}/` });
       return res.end();
     }
     if (surveyHandler?.(req, res)) return;
@@ -56,6 +57,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`가상 쇼핑몰(온글몰): http://${host}:${port}/mall/`);
     console.log(`평가용 쇼핑몰(상품 페이지): http://${host}:${port}/shop/`);
     console.log(`설치 가이드: http://${host}:${port}/guide/`);
+    console.log(`프로젝트 공유 페이지: http://${host}:${port}/info/`);
     if (password) console.log(`평가 설문 관리자: http://${host}:${port}${basePath}/admin (응답 저장: ${dataDir})`);
     else console.log('평가 설문: 꺼짐 (SURVEY_ADMIN_PASSWORD가 없음)');
   });
