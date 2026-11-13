@@ -48,6 +48,7 @@
         "content/reader/ai.js",
         "content/reader/guide-content.js",
         "content/reader/guide.js",
+        "content/reader/product.js",
         "content/reader/menu.js",
         "content/reader/input-language.js",
         "content/reader/reader.js"

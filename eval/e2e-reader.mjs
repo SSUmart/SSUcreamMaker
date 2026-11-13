@@ -409,6 +409,44 @@ check('온글몰 사이즈 버튼을 누르면 고른 값을 읽음', c.includes
 c = await toItem('KeyB', '250mm', 30);
 check('온글몰 사이즈 버튼: 고른 뒤 다시 가면 선택됨', c.startsWith('250mm, 버튼, 선택됨'), c);
 
+console.log('\n== 상품 핵심 정보 (Alt+Shift+P)');
+await page.goto(`${base}/mall/product.html?id=tumbler`);
+c = await until((t) => t.includes('스텐 진공 텀블러'));
+c = await press('Alt+Shift+KeyP', 500);
+check('상품 핵심 정보 목록이 상품명부터 열림', c.startsWith('상품 핵심 정보') && c.includes('상품명, 스텐 진공 텀블러'), c);
+const productEntries = [c];
+for (let i = 0; i < 5; i++) productEntries.push(await press('ArrowDown', 150));
+const productText = productEntries.join(' / ');
+check('가격을 찾음', /가격, [^/]*원/.test(productText), productText);
+check('옵션(색상 선택 상자)을 찾음', productText.includes('옵션, 색상'), productText);
+check('수량을 찾음', productText.includes('수량,'), productText);
+check('구매 버튼을 찾음', productText.includes('구매, 바로 구매'), productText);
+check('장바구니 버튼을 찾음', productText.includes('장바구니, 장바구니 담기'), productText);
+// 목록에서 구매 버튼으로 간다: Alt+Shift+P → 위쪽 화살표 두 번(끝에서 거꾸로) → Enter, 키 네 번
+await press('Escape', 200);
+await press('Escape', 200);
+await press('Control+Home', 150);
+await press('Alt+Shift+KeyP', 400);
+await press('ArrowUp', 150);
+c = await press('ArrowUp', 150);
+check('목록 끝에서 거꾸로 두 번이면 구매 버튼', c.startsWith('구매, 바로 구매'), c);
+c = await press('Enter', 500);
+check('키 네 번으로 구매 버튼으로 이동', c.startsWith('바로 구매, 버튼'), c);
+await page.goto(`${base}/mall/product.html?id=socks`);
+c = await until((t) => t.includes('면 양말'));
+c = await press('Alt+Shift+KeyP', 500);
+const socks = [c];
+for (let i = 0; i < 6; i++) socks.push(await press('ArrowDown', 150));
+check('사이즈 버튼 묶음을 옵션으로 찾음', socks.join(' / ').includes('옵션, 사이즈, 230mm'), socks.join(' / '));
+await press('Escape', 200);
+await press('Escape', 200);
+await page.goto(`${base}/mall/`);
+c = await until((t) => t.includes('온글몰'));
+c = await press('Alt+Shift+KeyP', 500);
+check('상품 페이지가 아니면 찾지 못했다고 알림', c.includes('상품 정보를 찾지 못했습니다'), c);
+await press('Escape', 200);
+await press('Escape', 200);
+
 console.log('\n== 같은 모양 항목, 단서 없는 항목 (가짜 AI)');
 const callsBefore = labelCalls.length;
 await page.goto(`${base}/shape-fixture/`);

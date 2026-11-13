@@ -482,6 +482,11 @@
         return true;
       }
     }
+    // 상품 핵심 정보 목록 (기능 키를 P로 바꾼 사용자는 그 기능이 먼저)
+    if (event.code === 'KeyP') {
+      ns.menu.openProduct();
+      return true;
+    }
     return false;
   }
 
