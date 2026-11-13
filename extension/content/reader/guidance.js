@@ -86,6 +86,7 @@
       mode: comboText('Space'),
       help: comboText('Digit1'),
       results: comboText('KeyI'),
+      product: comboText('KeyP'),
       modifier: shortcutText(MODIFIER)
     };
   }
@@ -255,6 +256,11 @@
         '위아래 화살표로 고르고 Enter를 누르면 그 위치로 이동해 읽습니다. Esc를 누르면 온글 메뉴로 돌아갑니다.',
       short: (p) => `${p.title}. ${p.count}개 중 ${p.position}번, ${p.label}`
     },
+    'product-empty': {
+      always: true,
+      detailed: () =>
+        '이 페이지에서 상품 정보를 찾지 못했습니다. 제목 목록이나 링크 목록, 또는 B 키로 버튼을 찾아 보세요. 온글 메뉴로 돌아갑니다.'
+    },
     'list-empty': {
       always: true,
       detailed: (p) => `이 페이지에서 찾은 ${p.label}, 0개. 온글 메뉴로 돌아갑니다. 다른 기능을 고르거나 Esc로 메뉴를 닫으세요.`
@@ -308,6 +314,7 @@
       { label: '상세 이미지 읽기', keyText: k.detail },
       { label: '현재 항목 AI 설명', keyText: k.explain },
       { label: 'AI 결과 모음', keyText: k.results },
+      { label: '상품 핵심 정보 목록. 상품명, 가격, 옵션, 수량, 구매와 장바구니 버튼으로 바로 이동', keyText: k.product },
       { label: '이 키 도움말', keyText: k.help },
       { label: '이름 없는 버튼이나 그림을 읽으면 AI가 자동으로 이름을 붙이고, 그 이름 뒤에는 AI 추정이라고 읽습니다. 장바구니나 찜하기처럼 흔한 아이콘은 AI 없이 바로 이름을 붙이고 추정이라고 읽습니다' },
       { label: '온글 켜고 끄기', keyText: p.toggle || '단축키가 지정되지 않음, 온글 설정에서 확인' },

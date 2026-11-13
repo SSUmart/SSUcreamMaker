@@ -121,7 +121,13 @@
       if (hasDetailImages()) list.push({ label: '상세 이미지 읽기', keyText: keys.detail, action: run('read-detail') });
       list.push(
         { label: '현재 항목 AI로 설명 듣기', keyText: keys.explain, action: () => ns.ai.explainCurrent() },
-        { label: 'AI 결과 모음', keyText: keys.results, action: () => ns.ai.openResults() }
+        { label: 'AI 결과 모음', keyText: keys.results, action: () => ns.ai.openResults() },
+        {
+          label: '상품 핵심 정보',
+          keyText: keys.product,
+          hint: '상품명, 가격, 옵션, 수량, 구매와 장바구니 버튼을 모아 듣고, 고르면 그 위치로 이동',
+          action: () => openProduct()
+        }
       );
     }
     list.push(
@@ -195,6 +201,22 @@
     show(list);
     ns.output.raise?.();
     guide('list-opened', { title, count: entries.length, position: 1, label: entries[0].label }, { interrupt: true });
+  }
+
+  // 상품 핵심 정보 목록 (product.js): 상품명, 가격, 옵션, 수량, 구매·장바구니. 고르면 그 위치로 이동해 읽는다
+  function openProduct() {
+    const reader = ns.reader;
+    if (!reader?.enabled) return;
+    const points = ns.product.keyPoints(reader.items, ns.product.pageMeta());
+    if (!points.length) {
+      guide('product-empty', {}, { interrupt: true });
+      openMenu({ interrupt: false });
+      return;
+    }
+    openEntries(
+      '상품 핵심 정보',
+      points.map(({ label, item }) => ({ label, action: () => reader.moveToElement(item.el) }))
+    );
   }
 
   // 제목·링크·영역 목록: 고르면 그 위치로 이동해 읽는다
@@ -340,6 +362,7 @@
     },
     openMenu,
     openEntries,
+    openProduct,
     openHelp,
     openChoice,
     close,
