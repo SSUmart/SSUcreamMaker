@@ -142,6 +142,16 @@
         action: () => openList('링크 목록', '링크', (item) => item.category === 'link')
       },
       {
+        label: '버튼 목록',
+        hint: '버튼만 모아 듣고, 고르면 그 버튼으로 이동. 이름이 같은 버튼은 바로 앞 제목을 함께 읽음',
+        action: () => openList('버튼 목록', '버튼', (item) => item.category === 'button')
+      },
+      {
+        label: '입력 요소 목록',
+        hint: '편집창, 선택 상자, 체크박스, 라디오 버튼만 모아 듣고, 고르면 그 위치로 이동',
+        action: () => openList('입력 요소 목록', '입력 요소', (item) => item.category === 'field')
+      },
+      {
         label: '영역 목록',
         hint: '머리말, 메뉴, 본문, 검색, 바닥글처럼 페이지를 나눈 구역을 모아 듣고, 고르면 그 구역 처음으로 이동',
         action: () => openList('영역 목록', '영역', (item) => item.category === 'landmark')
@@ -219,19 +229,52 @@
     );
   }
 
-  // 제목·링크·영역 목록: 고르면 그 위치로 이동해 읽는다
+  // 같은 이름이 여러 번 나오는 항목(상품마다 있는 "장바구니 담기" 등)은 바로 앞 제목을 붙여 구분한다.
+  // 돌려주는 값: Map(항목 → "스텐 텀블러 아래"). 앞에 제목이 없거나 앞 제목까지 같으면 "3번째"처럼 순서를 붙인다
+  function placeNames(all, items) {
+    const count = new Map();
+    for (const item of items) count.set(item.phrase, (count.get(item.phrase) ?? 0) + 1);
+    const where = new Map();
+    const seen = new Map();
+    let heading = '';
+    const wanted = new Set(items);
+    for (const item of all) {
+      if (item.category === 'heading' && item.name) heading = item.name;
+      if (!wanted.has(item) || item.role === 'heading' || count.get(item.phrase) < 2) continue;
+      where.set(item, heading ? `${heading} 아래` : '');
+    }
+    // 앞 제목으로도 구분되지 않으면 같은 이름 가운데 몇 번째인지 붙인다
+    const byPlace = new Map();
+    for (const [item, place] of where) {
+      const key = `${item.phrase}\n${place}`;
+      byPlace.set(key, (byPlace.get(key) ?? 0) + 1);
+    }
+    for (const [item, place] of where) {
+      const key = `${item.phrase}\n${place}`;
+      if (byPlace.get(key) < 2) continue;
+      const nth = (seen.get(key) ?? 0) + 1;
+      seen.set(key, nth);
+      where.set(item, [place, `${nth}번째`].filter(Boolean).join(', '));
+    }
+    for (const [item, place] of where) if (!place) where.delete(item);
+    return where;
+  }
+
+  // 제목·링크·영역·버튼·입력 요소 목록: 고르면 그 위치로 이동해 읽는다
   function openList(title, label, test) {
-    const items = ns.reader.items.filter(test);
+    const all = ns.reader.items;
+    const items = all.filter(test);
     if (!items.length) {
       // 오류 안내를 끝까지 들을 수 있게 메뉴 안내는 그 뒤에 이어서 읽는다
       guide('list-empty', { label }, { interrupt: true });
       openMenu({ interrupt: false });
       return;
     }
+    const where = placeNames(all, items);
     setList(title);
     show(
       items.map((item) => ({
-        label: item.role === 'heading' ? `${item.name || '이름 없음'}, 제목 ${item.level}` : item.phrase,
+        label: item.role === 'heading' ? `${item.name || '이름 없음'}, 제목 ${item.level}` : where.has(item) ? `${item.phrase}, ${where.get(item)}` : item.phrase,
         action: () => ns.reader.moveToElement(item.el)
       }))
     );
