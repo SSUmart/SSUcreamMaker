@@ -325,8 +325,40 @@
     return el.getAttribute(`aria-${name}`);
   }
 
+  // 고른 칸을 클래스(색·테두리)로만 표시한 옵션 버튼: 쇼핑몰 사이즈·색상 버튼에서 흔하다 (NVDA는 알리지 않음).
+  // 같은 모양 형제(2개 이상) 가운데 일부에만 "고름" 클래스가 있을 때만 고른 것으로 본다 (전부 붙어 있으면 꾸밈으로 봄)
+  const SELECTED_CLASS = /^(?:on|active|selected|checked|current|is-(?:on|active|selected|checked|current))$|[-_](?:on|active|selected|checked)$/i;
+  const SELECTION_ATTRS = ['aria-pressed', 'aria-selected', 'aria-checked', 'aria-current'];
+
+  function hasSelectedClass(node) {
+    return [...(node?.classList ?? [])].some((token) => SELECTED_CLASS.test(token));
+  }
+
+  function selectedByClass(el) {
+    if (SELECTION_ATTRS.some((name) => el.hasAttribute?.(name))) return false;
+    // <li class="on"><button>S</button></li>처럼 표시가 감싼 목록 항목에 붙는 경우도 본다
+    const parent = el.parentElement;
+    const holder = parent && tagOf(parent) === 'LI' && parent.children.length === 1 ? parent : el;
+    const box = holder.parentElement;
+    if (!box) return false;
+    const peers = [...box.children].filter((child) => tagOf(child) === tagOf(holder));
+    if (peers.length < 2) return false;
+    const marked = (peer) => hasSelectedClass(peer) || (peer !== el && tagOf(peer) === 'LI' && hasSelectedClass(peer.firstElementChild));
+    const markedCount = peers.filter(marked).length;
+    return (hasSelectedClass(holder) || hasSelectedClass(el)) && markedCount < peers.length;
+  }
+
+  // 지금 가리키는 항목(aria-activedescendant)인지: 단일 선택 목록은 가리키면 곧 고른 것이라 "선택됨"을 따로 읽지 않는다 (NVDA와 같음)
+  function isActiveDescendant(el) {
+    const id = el.id;
+    if (!id) return false;
+    return [...el.ownerDocument.querySelectorAll('[aria-activedescendant]')].some((owner) => owner.getAttribute('aria-activedescendant') === id);
+  }
+
   function statesOf(el, role) {
     const states = [];
+    if (role === 'option' && aria(el, 'selected') === 'true' && !isActiveDescendant(el)) states.push('선택됨');
+    if (['button', 'option'].includes(role) && selectedByClass(el)) states.push('선택됨');
     if (['checkbox', 'radio', 'switch'].includes(role)) {
       const checked = tagOf(el) === 'INPUT' ? el.checked : aria(el, 'checked') === 'true';
       if (aria(el, 'checked') === 'mixed' || el.indeterminate) states.push('일부 선택됨');

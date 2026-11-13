@@ -82,6 +82,20 @@ cb.addEventListener('keydown', (e) => {
 });
 </script></body></html>`;
 
+// 고른 옵션 알림: 쇼핑몰이 직접 만든 옵션. 고른 칸을 클래스로만 표시하는 버튼(사이즈), 목록 항목에 표시가 붙는 버튼(색상),
+// 가리키는 항목이 따로 없는 목록 상자의 aria-selected, 모두 같은 클래스가 붙은 꾸밈 버튼(선택으로 보지 않음)
+const OPTION_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>옵션 선택 확인</title></head><body><main>
+<h1>옵션 선택 확인</h1>
+<p>사이즈</p><div class="sizes"><button type="button" class="size">S</button><button type="button" class="size on">M</button><button type="button" class="size">L</button></div>
+<p>색상</p><ul class="colors"><li class="is-selected"><button type="button">빨강</button></li><li><button type="button">파랑</button></li></ul>
+<p>배송</p><ul role="listbox" aria-label="배송 방법"><li role="option" aria-selected="false">일반 배송</li><li role="option" aria-selected="true">빠른 배송</li></ul>
+<p>꾸밈</p><div><button type="button" class="active">하나</button><button type="button" class="active">둘</button></div>
+<p>끝</p></main>
+<script>
+document.querySelectorAll('.size').forEach((b) => b.addEventListener('click', () => document.querySelectorAll('.size').forEach((x) => x.classList.toggle('on', x === b))));
+document.querySelectorAll('.colors button').forEach((b) => b.addEventListener('click', () => document.querySelectorAll('.colors li').forEach((li) => li.classList.toggle('is-selected', li === b.parentElement))));
+</script></body></html>`;
+
 // 이름 짓기 요청 글 (같은 모양 항목을 한 번만 묻는지 센다)
 const labelCalls = [];
 // 같은 모양 항목·단서 없는 항목 확인 페이지: 앞의 이름 없는 버튼 5개(도움돼요 3개 + 다른 모양 2개)는 페이지를 열 때 미리 분석되고,
@@ -109,6 +123,10 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/choice-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     return res.end(CHOICE_FIXTURE);
+  }
+  if (req.url === '/option-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(OPTION_FIXTURE);
   }
   if (req.url === '/search-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -328,6 +346,27 @@ c = await press('Enter', 300);
 check('후보를 고르고 Enter: 들어간 값과 접힘', c.startsWith('부산, 접힘'), c);
 await press('Escape', 300);
 
+console.log('\n== 고른 옵션 알림 (클래스로만 표시한 옵션 버튼, aria-selected)');
+await page.goto(`${base}/option-fixture/`);
+await page.waitForTimeout(500);
+c = await toItem('KeyB', 'M', 6);
+check('클래스로 고른 사이즈 버튼은 선택됨으로 읽음', c.startsWith('M, 버튼, 선택됨'), c);
+c = await toItem('KeyB', 'S', 6);
+check('고르지 않은 사이즈 버튼은 선택됨을 읽지 않음', c.startsWith('S, 버튼') && !c.includes('선택됨'), c);
+c = await press('Enter', 400);
+check('사이즈 버튼을 누르면 고른 값을 읽음', c.startsWith('S, 선택됨'), c);
+c = await toItem('KeyB', 'M', 6);
+check('다른 사이즈를 고르면 앞서 고른 버튼은 선택됨이 빠짐', c.startsWith('M, 버튼') && !c.includes('선택됨'), c);
+c = await toItem('KeyB', '빨강', 8);
+check('목록 항목에 표시가 붙은 색상 버튼도 선택됨으로 읽음', c.startsWith('빨강, 버튼, 선택됨'), c);
+c = await toItem('KeyB', '파랑', 8);
+c = await press('Enter', 400);
+check('색상 버튼을 누르면 고른 값을 읽음', c.startsWith('파랑, 선택됨'), c);
+c = await toItem('KeyC', '배송 방법', 6);
+check('목록 상자는 고른 항목(aria-selected)을 값으로 읽음', c.startsWith('배송 방법, 목록 상자, 빠른 배송'), c);
+c = await toItem('KeyB', '하나', 10);
+check('모두 같은 클래스가 붙은 버튼은 선택으로 보지 않음', c.startsWith('하나, 버튼') && !c.includes('선택됨'), c);
+
 console.log('\n== 가상 쇼핑몰(온글몰)');
 await page.goto(`${base}/mall/`);
 c = await until((t) => t.includes('온글몰'));
@@ -357,6 +396,18 @@ await page.goto(`${base}/mall/product.html?id=tumbler`);
 c = await until((t) => t.includes('스텐 진공 텀블러'));
 check('E: 상품 페이지의 첫 편집창은 검색창', (await toItem('KeyE', '상품 검색', 3)).includes('상품 검색'));
 check('C: 색상 선택 상자', (await toItem('KeyC', '색상', 3)).includes('색상'));
+c = await press('Enter', 400);
+check('선택 상자에서 Enter: 화살표로 고르는 방법을 안내', c.includes('글쓰기 모드') && c.includes('화살표'), c);
+await press('Escape', 300);
+// 일부러 넣은 접근성 문제: 양말 사이즈 버튼은 고른 것을 색과 테두리(클래스 on)로만 보여 준다 → 온글이 클래스로 알아봄
+await page.goto(`${base}/mall/product.html?id=socks`);
+c = await until((t) => t.includes('면 양말'));
+c = await toItem('KeyB', '250mm', 30);
+check('온글몰 사이즈 버튼: 고르기 전에는 선택됨 없음', c.startsWith('250mm, 버튼') && !c.includes('선택됨'), c);
+c = await press('Enter', 500);
+check('온글몰 사이즈 버튼을 누르면 고른 값을 읽음', c.includes('250mm, 선택됨') || (await until((t) => t.includes('250mm, 선택됨'), 1500)).includes('250mm, 선택됨'), c);
+c = await toItem('KeyB', '250mm', 30);
+check('온글몰 사이즈 버튼: 고른 뒤 다시 가면 선택됨', c.startsWith('250mm, 버튼, 선택됨'), c);
 
 console.log('\n== 같은 모양 항목, 단서 없는 항목 (가짜 AI)');
 const callsBefore = labelCalls.length;

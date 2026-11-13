@@ -261,7 +261,9 @@
       const refreshed = model.refreshItem(item);
       if (refreshed.phrase !== item.phrase && items[index]?.el === item.el) {
         items[index] = refreshed;
-        output.say(refreshed.states.join(', ') || refreshed.phrase, { interrupt: true });
+        // 옵션 버튼·목록 항목을 골랐으면 무엇을 골랐는지 이름과 함께 읽는다 ("M, 선택됨")
+        const picked = ['button', 'option'].includes(item.role) && refreshed.states.includes('선택됨') && !item.states.includes('선택됨');
+        output.say(picked ? `${refreshed.name}, 선택됨` : refreshed.states.join(', ') || refreshed.phrase, { interrupt: true });
       }
     }, 150);
   }
@@ -274,8 +276,11 @@
       ignoreFocusUntil = performance.now() + 200;
       el.focus({ preventScroll: true });
     }
-    const field = target && target !== document.body ? model.itemFor(target).phrase : '';
-    guide('focus-mode', { field }, { interrupt: false });
+    const targetItem = target && target !== document.body ? model.itemFor(target) : null;
+    const field = targetItem?.phrase ?? '';
+    // 선택 상자처럼 글자를 치지 않고 화살표로 고르는 요소는 고르는 방법을 알려 준다
+    const choosing = targetItem && ['combobox', 'listbox'].includes(targetItem.role) && !model.isEditField(targetItem);
+    guide(choosing ? 'choose-mode' : 'focus-mode', { field }, { interrupt: false });
   }
 
   function leaveFocusMode(announce = true) {
