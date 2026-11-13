@@ -96,6 +96,15 @@ document.querySelectorAll('.size').forEach((b) => b.addEventListener('click', ()
 document.querySelectorAll('.colors button').forEach((b) => b.addEventListener('click', () => document.querySelectorAll('.colors li').forEach((li) => li.classList.toggle('is-selected', li === b.parentElement))));
 </script></body></html>`;
 
+// 버튼·입력 요소 목록: 상품마다 같은 이름의 버튼(장바구니 담기)은 앞 제목으로, 같은 제목 아래 같은 이름(삭제)은 순서로 구분한다
+const ACTION_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>버튼 목록 확인</title></head><body><main>
+<h1>버튼 목록 확인</h1>
+<h2>스텐 텀블러</h2><button type="button">장바구니 담기</button>
+<h2>면 양말</h2><button type="button">장바구니 담기</button><button type="button">찜하기</button>
+<h2>담은 상품</h2><button type="button">삭제</button><button type="button">삭제</button>
+<label>쿠폰 번호 <input type="text"></label><label><input type="checkbox"> 선물 포장</label>
+<p>끝</p></main></body></html>`;
+
 // 이름 짓기 요청 글 (같은 모양 항목을 한 번만 묻는지 센다)
 const labelCalls = [];
 // 같은 모양 항목·단서 없는 항목 확인 페이지: 앞의 이름 없는 버튼 5개(도움돼요 3개 + 다른 모양 2개)는 페이지를 열 때 미리 분석되고,
@@ -123,6 +132,10 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/choice-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     return res.end(CHOICE_FIXTURE);
+  }
+  if (req.url === '/action-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(ACTION_FIXTURE);
   }
   if (req.url === '/option-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -345,6 +358,37 @@ check('콤보 상자 다음 후보 (펼쳐짐 반복 없음)', c.startsWith('부
 c = await press('Enter', 300);
 check('후보를 고르고 Enter: 들어간 값과 접힘', c.startsWith('부산, 접힘'), c);
 await press('Escape', 300);
+
+console.log('\n== 버튼 목록, 입력 요소 목록 (온글 메뉴)');
+await page.goto(`${base}/action-fixture/`);
+await page.waitForTimeout(500);
+// 온글 메뉴에서 ㅂ(Q 키 자리)으로 버튼 목록 항목으로 간다
+await press('Alt+Shift+KeyM', 400);
+c = await press('KeyQ', 200);
+check('메뉴에서 첫 글자(ㅂ)로 버튼 목록으로 감', c.startsWith('버튼 목록'), c);
+c = await press('Enter', 400);
+check('버튼 목록이 열리고 같은 이름 버튼은 앞 제목을 함께 읽음', c.includes('버튼 목록. 5개 중 1번, 장바구니 담기, 버튼, 스텐 텀블러 아래'), c);
+c = await press('ArrowDown', 150);
+check('두 번째 장바구니 담기는 다른 제목', c.startsWith('장바구니 담기, 버튼, 면 양말 아래'), c);
+c = await press('ArrowDown', 150);
+check('이름이 하나뿐인 버튼은 제목을 붙이지 않음', c.startsWith('찜하기, 버튼, 3/5'), c);
+c = await press('ArrowDown', 150);
+check('같은 제목 아래 같은 이름은 순서로 구분', c.startsWith('삭제, 버튼, 담은 상품 아래, 1번째'), c);
+c = await press('ArrowUp', 150);
+c = await press('ArrowUp', 150);
+c = await press('Enter', 500);
+check('고르면 그 버튼으로 이동해 읽음', c.startsWith('장바구니 담기, 버튼'), c);
+c = await press('ArrowUp', 150);
+check('이동한 곳은 면 양말 상품의 버튼 (바로 앞이 제목)', c.startsWith('면 양말, 제목 2'), c);
+await press('Alt+Shift+KeyM', 400);
+c = await press('KeyD', 200);
+check('메뉴에서 ㅇ으로 입력 요소 목록으로 감', c.startsWith('입력 요소 목록'), c);
+c = await press('Enter', 400);
+check('입력 요소 목록: 편집창과 체크박스', c.includes('입력 요소 목록. 2개 중 1번, 쿠폰 번호'), c);
+c = await press('ArrowDown', 150);
+check('두 번째는 체크박스', c.includes('선물 포장') && c.includes('체크박스'), c);
+await press('Escape', 200);
+await press('Escape', 200);
 
 console.log('\n== 고른 옵션 알림 (클래스로만 표시한 옵션 버튼, aria-selected)');
 await page.goto(`${base}/option-fixture/`);
