@@ -67,6 +67,34 @@
     document.getElementById('steps').scrollIntoView();
   });
 
+  // 단축키 칸 설명 창: 칸을 누르면 그 칸의 <template> 설명(과 그림)을 띄운다.
+  // 오른쪽 위 X, 창 바깥(어두운 배경) 누르기, Esc로 닫히고, 닫으면 누른 칸으로 초점이 돌아간다.
+  const pop = document.getElementById('key-pop');
+  if (pop && typeof pop.showModal === 'function') {
+    const combo = pop.querySelector('.key-pop-combo');
+    const title = pop.querySelector('.key-pop-title');
+    const sub = pop.querySelector('.key-pop-sub');
+    const body = pop.querySelector('.key-pop-body');
+    let opener = null;
+    for (const btn of document.querySelectorAll('.key-btn')) {
+      btn.addEventListener('click', () => {
+        combo.innerHTML = btn.querySelector('.key-combo').innerHTML;
+        title.textContent = btn.querySelector('.key-what').textContent;
+        sub.textContent = btn.querySelector('.key-sub')?.textContent || '';
+        body.replaceChildren(btn.nextElementSibling.content.cloneNode(true));
+        opener = btn;
+        pop.showModal();
+        pop.querySelector('.key-pop-x').focus();
+      });
+    }
+    pop.querySelector('.key-pop-x').addEventListener('click', () => pop.close());
+    // 대화상자 자체(안쪽 .key-pop-in 바깥 = 배경)를 누른 경우만 닫는다
+    pop.addEventListener('click', (e) => {
+      if (e.target === pop) pop.close();
+    });
+    pop.addEventListener('close', () => opener?.focus());
+  }
+
   // 복사 버튼
   for (const btn of document.querySelectorAll('.copy')) {
     btn.addEventListener('click', async () => {

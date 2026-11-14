@@ -292,64 +292,65 @@ Codex CLI: … (함께 담긴 것)
 
   <section class="card" id="use-keys" aria-labelledby="use-keys-title">
     <h3 id="use-keys-title">단축키 한눈에 보기</h3>
+    <p class="key-note">칸을 누르면 하는 일을 설명하는 창이 뜹니다.</p>
     <section class="key-group" aria-labelledby="keys-anywhere">
       <h4 id="keys-anywhere">어디서든</h4>
       <p class="key-note">주소창에서도 동작</p>
       <ul class="keygrid">
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd></span><span class="key-what">온글 켜기·끄기</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></span><span class="key-what">온글 메뉴</span><span class="key-sub">모든 기능, 제목·링크·버튼 목록</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd></span><span class="key-what">읽기 멈춤</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></span><span class="key-what">지금 위치 다시 읽기</span></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd></span><span class="key-what">온글 켜기·끄기</span></button><template><p>아무 웹페이지에서 눌러 온글을 켜고, 한 번 더 누르면 끕니다. 꺼져 있으면 키가 원래 브라우저 동작대로 움직입니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></span><span class="key-what">온글 메뉴</span><span class="key-sub">모든 기능, 제목·링크·버튼 목록</span></button><template><p>모든 기능과 이 페이지의 제목·링크·버튼 목록을 한곳에 모은 메뉴입니다. 위아래 화살표로 고르고 Enter로 실행합니다. 키가 생각나지 않으면 이것부터 여세요.</p><img src="images/key-menu.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd></span><span class="key-what">읽기 멈춤</span></button><template><p>읽던 말을 멈춥니다. 초점이 주소창 같은 다른 곳에 있어도 동작합니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></span><span class="key-what">지금 위치 다시 읽기</span></button><template><p>놓친 내용을 다시 듣고 싶을 때, 지금 항목을 처음부터 다시 읽습니다.</p></template></li>
       </ul>
     </section>
     <section class="key-group" aria-labelledby="keys-read">
       <h4 id="keys-read">읽기</h4>
       <ul class="keygrid">
-        <li><span class="key-combo"><kbd>↓</kbd> <kbd>↑</kbd></span><span class="key-what">다음 · 이전 항목</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd></span><span class="key-what">끝까지 계속 읽기</span><span class="key-sub">아무 키나 누르면 멈춤</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Ctrl</kbd><kbd class="os-mac">Control</kbd></span><span class="key-what">말 바로 멈추기</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Ctrl</kbd><kbd class="os-mac">Control</kbd>+<kbd>Home</kbd> <kbd>End</kbd></span><span class="key-what">페이지 처음 · 끝</span></li>
-        <li><span class="key-combo"><kbd>Enter</kbd></span><span class="key-what">누르기</span><span class="key-sub">편집창·선택 상자는 글쓰기 모드</span></li>
-        <li><span class="key-combo"><kbd>Esc</kbd></span><span class="key-what">읽기 모드로 돌아오기</span></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>↓</kbd> <kbd>↑</kbd></span><span class="key-what">다음 · 이전 항목</span></button><template><p>페이지를 문단, 링크, 버튼, 그림 같은 항목 하나씩 읽습니다. 읽는 위치는 화면에 테두리와 자막으로도 보입니다.</p><img src="images/key-read.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd></span><span class="key-what">끝까지 계속 읽기</span><span class="key-sub">아무 키나 누르면 멈춤</span></button><template><p>지금 위치부터 페이지 끝까지 쉬지 않고 읽습니다. 아무 키나 누르면 그 자리에서 멈춥니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Ctrl</kbd><kbd class="os-mac">Control</kbd></span><span class="key-what">말 바로 멈추기</span></button><template><p>이 키 하나만 짧게 누르면 지금 읽는 말을 바로 끊습니다. 읽는 위치는 그대로입니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Ctrl</kbd><kbd class="os-mac">Control</kbd>+<kbd>Home</kbd> <kbd>End</kbd></span><span class="key-what">페이지 처음 · 끝</span></button><template><p>페이지의 맨 첫 항목이나 맨 마지막 항목으로 바로 갑니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>Enter</kbd></span><span class="key-what">누르기</span><span class="key-sub">편집창·선택 상자는 글쓰기 모드</span></button><template><p>지금 항목이 링크나 버튼이면 누릅니다. 편집창이나 선택 상자에서는 글쓰기 모드가 되어 글을 입력하거나 항목을 고를 수 있습니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>Esc</kbd></span><span class="key-what">읽기 모드로 돌아오기</span></button><template><p>글쓰기 모드에서 다 입력했으면 누릅니다. 다시 화살표와 한 글자 키로 페이지를 읽을 수 있습니다.</p></template></li>
       </ul>
     </section>
     <section class="key-group" aria-labelledby="keys-jump">
       <h4 id="keys-jump">건너뛰기</h4>
       <p class="key-note"><kbd>Shift</kbd>를 함께 누르면 이전으로. 한글 입력 상태에서도 동작</p>
       <ul class="keygrid">
-        <li><span class="key-combo"><kbd>H</kbd></span><span class="key-what">제목</span></li>
-        <li><span class="key-combo"><kbd>1</kbd>~<kbd>6</kbd></span><span class="key-what">그 수준의 제목</span></li>
-        <li><span class="key-combo"><kbd>K</kbd></span><span class="key-what">링크</span></li>
-        <li><span class="key-combo"><kbd>B</kbd></span><span class="key-what">버튼</span></li>
-        <li><span class="key-combo"><kbd>F</kbd></span><span class="key-what">입력 요소</span></li>
-        <li><span class="key-combo"><kbd>E</kbd></span><span class="key-what">편집창</span></li>
-        <li><span class="key-combo"><kbd>C</kbd></span><span class="key-what">콤보 상자</span></li>
-        <li><span class="key-combo"><kbd>X</kbd></span><span class="key-what">체크박스</span></li>
-        <li><span class="key-combo"><kbd>R</kbd></span><span class="key-what">라디오 버튼</span></li>
-        <li><span class="key-combo"><kbd>T</kbd></span><span class="key-what">표</span></li>
-        <li><span class="key-combo"><kbd>L</kbd></span><span class="key-what">목록</span></li>
-        <li><span class="key-combo"><kbd>G</kbd></span><span class="key-what">그림</span></li>
-        <li><span class="key-combo"><kbd>D</kbd></span><span class="key-what">영역</span><span class="key-sub">머리말, 메뉴, 본문, 바닥글</span></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>H</kbd></span><span class="key-what">제목</span></button><template><p>다음 제목으로 건너뜁니다. 긴 페이지에서 원하는 부분을 빨리 찾을 때 씁니다. Shift와 함께 누르면 이전 제목으로 갑니다.</p><img src="images/key-heading.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>1</kbd>~<kbd>6</kbd></span><span class="key-what">그 수준의 제목</span></button><template><p>숫자 키는 그 수준의 제목만 골라 건너뜁니다. 예를 들어 2는 큰 소제목만, 3은 그 아래 소제목만 찾습니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>K</kbd></span><span class="key-what">링크</span></button><template><p>다음 링크로 건너뜁니다. 다른 페이지로 가는 글자를 빨리 찾을 때 씁니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>B</kbd></span><span class="key-what">버튼</span></button><template><p>다음 버튼으로 건너뜁니다. "장바구니 담기", "구매하기" 같은 버튼을 찾을 때 편합니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>F</kbd></span><span class="key-what">입력 요소</span></button><template><p>편집창, 선택 상자, 체크박스, 라디오 버튼처럼 입력하는 곳이면 무엇이든 다음 것으로 건너뜁니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>E</kbd></span><span class="key-what">편집창</span></button><template><p>검색창처럼 글을 쓰는 칸으로 건너뜁니다. 도착해서 Enter를 누르면 입력할 수 있습니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>C</kbd></span><span class="key-what">콤보 상자</span></button><template><p>옵션 고르기 같은 선택 상자로 건너뜁니다. Enter를 누른 뒤 위아래 화살표로 고릅니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>X</kbd></span><span class="key-what">체크박스</span></button><template><p>"약관 동의" 같은 체크 칸으로 건너뜁니다. Enter나 스페이스로 체크하고 풉니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>R</kbd></span><span class="key-what">라디오 버튼</span></button><template><p>여러 개 중 하나만 고르는 버튼으로 건너뜁니다. 배송 방법이나 결제 수단을 고를 때 자주 나옵니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>T</kbd></span><span class="key-what">표</span></button><template><p>다음 표로 건너뜁니다. 상품 사양표나 배송비 표를 찾을 때 씁니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>L</kbd></span><span class="key-what">목록</span></button><template><p>글머리표나 번호가 붙은 다음 목록으로 건너뜁니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>G</kbd></span><span class="key-what">그림</span></button><template><p>다음 그림으로 건너뜁니다. 이름 없는 그림은 AI가 설명을 붙여 "AI 추정"이라고 함께 읽습니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>D</kbd></span><span class="key-what">영역</span><span class="key-sub">머리말, 메뉴, 본문, 바닥글</span></button><template><p>머리말, 메뉴, 본문, 바닥글처럼 페이지를 나눈 구역으로 건너뜁니다. 긴 메뉴를 지나 본문으로 바로 갈 때 편합니다.</p></template></li>
       </ul>
     </section>
     <section class="key-group" aria-labelledby="keys-find">
       <h4 id="keys-find">찾기·도움</h4>
       <ul class="keygrid">
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></span><span class="key-what">상품 핵심 정보</span><span class="key-sub">상품명, 가격, 옵션, 구매 버튼</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd></span><span class="key-what">키 도움말</span><span class="key-sub">지금 위치에서 쓸 키부터</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd></span><span class="key-what">읽기·글쓰기 모드 바꾸기</span></li>
-        <li><span class="key-combo"><kbd>F6</kbd></span><span class="key-what">주소창에서 페이지로</span></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></span><span class="key-what">상품 핵심 정보</span><span class="key-sub">상품명, 가격, 옵션, 구매 버튼</span></button><template><p>상품 페이지에서 상품명, 가격, 옵션, 수량, 구매·장바구니 버튼을 목록으로 모아 줍니다. 고르면 그 위치로 바로 가고, AI는 쓰지 않습니다.</p><img src="images/key-product.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd></span><span class="key-what">키 도움말</span><span class="key-sub">지금 위치에서 쓸 키부터</span></button><template><p>지금 위치에서 쓸 수 있는 키부터 목록으로 보여 줍니다. 위아래 화살표로 하나씩 들을 수 있습니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd></span><span class="key-what">읽기·글쓰기 모드 바꾸기</span></button><template><p>읽기 모드(화살표와 한 글자 키로 읽기)와 글쓰기 모드(누르는 키가 그대로 입력됨)를 바꿉니다. 키가 엉뚱하게 동작하면 눌러 보세요.</p><img src="images/key-mode.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd>F6</kbd></span><span class="key-what">주소창에서 페이지로</span></button><template><p>초점이 주소창에 있을 때 누르면 웹페이지 본문으로 옮겨 가고, 온글이 이어서 읽습니다.</p></template></li>
       </ul>
     </section>
     <section class="key-group" aria-labelledby="keys-ai">
       <h4 id="keys-ai">AI 기능</h4>
       <p class="key-note">온글 메뉴에서도 고를 수 있음</p>
       <ul class="keygrid">
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></span><span class="key-what">상세 이미지 읽기</span><span class="key-sub">1~2분 걸릴 수 있음</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></span><span class="key-what">페이지 요약</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd></span><span class="key-what">페이지에 질문</span><span class="key-sub">"배송비 얼마야?"</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></span><span class="key-what">지금 항목 AI 설명</span></li>
-        <li><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></span><span class="key-what">AI 결과 모음</span></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></span><span class="key-what">상세 이미지 읽기</span><span class="key-sub">1~2분 걸릴 수 있음</span></button><template><p>쇼핑몰 상세 이미지 속 글자(성분, 크기, 주의사항 등)를 AI가 읽어 항목별 글로 정리합니다. 다른 곳으로 가도 분석은 계속되고, 결과는 AI 결과 모음에서도 들을 수 있습니다.</p><img src="images/key-detail.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></span><span class="key-what">페이지 요약</span></button><template><p>긴 페이지를 핵심 3~7항목으로 줄여 줍니다. 항목을 고르면 그 내용이 있는 원문 위치로 이동합니다.</p><img src="images/key-summary.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd></span><span class="key-what">페이지에 질문</span><span class="key-sub">"배송비 얼마야?"</span></button><template><p>궁금한 것을 입력하면 이 페이지 내용만 근거로 답하고, 근거가 있는 위치로 이동할 수 있습니다.</p><img src="images/key-ask.jpg" alt="" width="1200" height="675"></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></span><span class="key-what">지금 항목 AI 설명</span></button><template><p>지금 읽는 버튼, 그림, 글이 무엇인지 AI가 더 자세히 설명합니다. 이름만 듣고 뜻을 모르겠을 때 씁니다.</p></template></li>
+        <li><button type="button" class="key-btn" aria-haspopup="dialog"><span class="key-combo"><kbd class="os-win">Alt</kbd><kbd class="os-mac">Option</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></span><span class="key-what">AI 결과 모음</span></button><template><p>자동 보완, 요약, 상세 이미지 읽기, 질문 답, 항목 설명 결과를 모아 다시 듣습니다. 최근 것이 앞에 옵니다.</p></template></li>
       </ul>
     </section>
     <p class="tip">"AI 추정", "AI 추출", "AI 생성"이 붙은 내용은 AI가 만든 것이라 틀릴 수 있습니다. 가격 같은 중요한 내용은 "원문으로 이동"으로 확인하세요. 기능 키 글자(S, Q, D, E, M)는 온글 설정에서 바꿀 수 있습니다.</p>
@@ -456,6 +457,16 @@ Codex CLI: … (함께 담긴 것)
     <p><button type="button" id="reset" class="link">체크한 단계 모두 지우기</button></p>
   </div>
 </footer>
+
+<dialog class="key-pop" id="key-pop" aria-labelledby="key-pop-title">
+  <div class="key-pop-in">
+    <button type="button" class="key-pop-x" aria-label="닫기">&times;</button>
+    <p class="key-combo key-pop-combo"></p>
+    <h4 id="key-pop-title" class="key-pop-title"></h4>
+    <p class="key-sub key-pop-sub"></p>
+    <div class="key-pop-body"></div>
+  </div>
+</dialog>
 
 <script src="guide.js"></script>
 </body>
