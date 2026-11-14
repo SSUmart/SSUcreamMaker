@@ -174,7 +174,9 @@ details p { margin: 8px 0 0; color: var(--muted); }
 .key-group h4 { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
 .key-note { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
 .keygrid { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.keygrid li { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); min-width: 0; }
+.keygrid li { display: flex; min-width: 0; }
+.key-btn { flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
+.key-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
 .key-combo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 3px; font-size: 15px; line-height: 1.6; }
 .key-what { font-weight: 700; font-size: 16px; line-height: 1.4; }
 .key-sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -182,5 +184,18 @@ details p { margin: 8px 0 0; color: var(--muted); }
 @media (max-width: 640px) {
   .keygrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #keys-jump + .key-note + .keygrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .keygrid li { padding: 10px; }
+  .key-btn { padding: 10px; }
 }
+
+/* 단축키 칸을 누르면 뜨는 설명 창. 오른쪽 위 X, 창 바깥 누르기, Esc로 닫힘 */
+.key-pop { padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--text); box-shadow: 0 20px 60px rgba(0, 0, 0, .45); }
+.key-pop::backdrop { background: rgba(0, 0, 0, .55); }
+.key-pop-in { position: relative; padding: 22px 22px 20px; }
+.key-pop-x { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 28px; line-height: 1; cursor: pointer; }
+.key-pop-x:hover { background: var(--panel2); color: var(--text); }
+.key-pop-combo { margin: 0 48px 6px 0; }
+.key-pop-title { margin: 0 48px 2px 0; font-size: 20px; line-height: 1.4; }
+.key-pop-sub { margin: 0; }
+.key-pop-sub:empty { display: none; }
+.key-pop-body p { margin: 12px 0 0; font-size: 17px; }
+.key-pop-body img { display: block; width: 100%; height: auto; margin-top: 14px; border-radius: 12px; border: 1px solid var(--line); }
