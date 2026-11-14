@@ -69,3 +69,12 @@ button {
     color: #ff8a80;
   }
 }
+
+/* ChatGPT 연결 확인의 단계별 결과 */
+#test-steps .pass {
+  color: #166534;
+}
+#test-steps .fail {
+  color: #b91c1c;
+  font-weight: 700;
+}

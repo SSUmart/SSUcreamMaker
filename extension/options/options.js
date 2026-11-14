@@ -353,12 +353,30 @@ $('test-button').addEventListener('click', async () => {
   }
   const provider = PROVIDERS[active.name];
   status.textContent = `${provider.label} 연결 확인 중입니다.`;
+  showSteps(null);
   try {
-    await provider.test(active.config);
-    status.textContent = `${provider.label} 연결에 성공했습니다.`;
+    const result = await provider.test(active.config);
+    status.textContent = result?.message ?? `${provider.label} 연결에 성공했습니다.`;
+    showSteps(result?.steps);
   } catch (error) {
     status.textContent = `연결 실패. ${userMessage(error)}`;
+    showSteps(error.steps);
   }
 });
+
+// ChatGPT 연결 확인의 단계별 결과: "1단계 연결 프로그램: 됨, 설치됨" … 막힌 단계 뒤는 "확인하지 않음"
+function showSteps(steps) {
+  const list = $('test-steps');
+  list.hidden = !steps?.length;
+  list.replaceChildren(
+    ...(steps ?? []).map((step, i) => {
+      const li = document.createElement('li');
+      const mark = step.ok === true ? '됨' : step.ok === false ? '막힘' : '확인하지 않음';
+      li.className = step.ok === true ? 'pass' : step.ok === false ? 'fail' : '';
+      li.textContent = `${i + 1}단계 ${step.name}: ${mark}${step.ok === null ? '' : `, ${step.detail}`}`;
+      return li;
+    })
+  );
+}
 
 init();

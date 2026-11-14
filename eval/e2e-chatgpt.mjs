@@ -137,6 +137,11 @@ try {
   check('미설치: 안내 문장', (await state()).includes('설치되어 있지 않습니다'), await state());
   check('미설치: 설치 안내 링크 보임', await options.isVisible('#chatgpt-guide'));
   check('미설치: 로그인 버튼 숨김', !(await options.isVisible('#chatgpt-login')));
+  const steps = () => options.$$eval('#test-steps li', (li) => li.map((x) => x.textContent));
+  await options.click('#test-button');
+  await waitUntil(options, () => /성공|실패/.test(document.getElementById('status').textContent));
+  check('미설치 연결 확인: 1단계에서 막혔다고 알림', (await status()).startsWith('연결 실패. ChatGPT 연결 1단계(연결 프로그램)에서 막혔습니다. 온글 연결 프로그램이 설치되어 있지 않습니다'), await status());
+  check('미설치 연결 확인: 단계별 결과', JSON.stringify((await steps()).map((t) => t.split(',')[0])) === JSON.stringify(['1단계 연결 프로그램: 막힘', '2단계 Codex CLI: 확인하지 않음', '3단계 로그인: 확인하지 않음', '4단계 모델 요청: 확인하지 않음']), JSON.stringify(await steps()));
 
   // 3) 연결 프로그램 등록 → 다시 확인 → 로그인 안 됨
   register();
@@ -173,7 +178,8 @@ try {
   check('저장: 연결 방식·모델', saved.connection === 'chatgpt' && saved.chatgpt.model === 'fake-small' && !('labelWithApi' in saved.chatgpt));
   await options.click('#test-button');
   await waitUntil(options, () => /성공|실패/.test(document.getElementById('status').textContent));
-  check('연결 확인 성공', (await status()) === 'ChatGPT 연결에 성공했습니다.', await status());
+  check('연결 확인 성공: 네 단계 모두 됨', (await status()) === 'ChatGPT 연결에 성공했습니다. 연결 프로그램, Codex CLI, 로그인, 모델 요청 네 단계가 모두 됩니다.', await status());
+  check('연결 확인 성공: 단계별 결과 네 줄 모두 됨', (await steps()).length === 4 && (await steps()).every((t) => t.includes(': 됨')), JSON.stringify(await steps()));
   const testCall = calls().at(-1);
   check('연결 확인: 고른 모델로 codex exec', testCall?.args.includes('-m') && testCall.args[testCall.args.indexOf('-m') + 1] === 'fake-small');
   check('연결 확인: 기록 안 남김·읽기 전용', testCall?.args.includes('--ephemeral') && testCall.args[testCall.args.indexOf('--sandbox') + 1] === 'read-only');
@@ -207,7 +213,12 @@ try {
       return e.message;
     }
   });
-  check('로그아웃 뒤 AI 요청: 로그인 안내', answer.includes('로그인되어 있지 않습니다'), answer);
+  check('로그아웃 뒤 AI 요청: 막힌 단계(로그인)와 해결 방법', answer.startsWith('ChatGPT 연결 3단계(로그인)에서 막혔습니다.') && answer.includes('로그인'), answer);
+  await options.click('#test-button');
+  await waitUntil(options, () => /성공|실패/.test(document.getElementById('status').textContent));
+  check('로그아웃 뒤 연결 확인: 3단계에서 막힘', (await status()).startsWith('연결 실패. ChatGPT 연결 3단계(로그인)에서 막혔습니다.'), await status());
+  check('로그아웃 뒤 연결 확인: 1·2단계는 됨', (await steps())[0].includes(': 됨') && (await steps())[1].includes(': 됨') && (await steps())[2].includes(': 막힘'), JSON.stringify(await steps()));
+  await options.screenshot({ path: path.join(OUT, 'connection-check.png'), fullPage: true });
 } finally {
   await ctx.close();
   server.close();

@@ -316,8 +316,8 @@ test('ChatGPT: 연결 프로그램 오류와 미설치를 한국어로 알린다
   await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.kind === 'limit' && /한도/.test(e.message) && !RAW_ERROR.test(e.message));
   mockBridge(() => 'missing');
   await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.kind === 'no-bridge' && /연결 프로그램이 설치되어 있지 않습니다/.test(e.message) && !RAW_ERROR.test(e.message));
-  mockBridge(() => ({ type: 'result', loggedIn: false }));
-  await assert.rejects(PROVIDERS.chatgpt.test({ model: '' }), /로그인되어 있지 않습니다/);
+  mockBridge((m) => (m.type === 'hello' ? { type: 'result', protocol: 1, codex: '0.1.0' } : { type: 'result', loggedIn: false }));
+  await assert.rejects(PROVIDERS.chatgpt.test({ model: '' }), (e) => /로그인되어 있지 않습니다/.test(e.message) && e.stage === 2 && e.steps.length === 4);
 });
 
 test('ChatGPT: 요청은 하나씩 차례로 보낸다 (자동 보완은 따로 줄을 선다)', async () => {
@@ -371,4 +371,49 @@ test('설정: 연결 방식 기본값은 API, ChatGPT를 켜면 모든 기능이
   assert.match(activeProvider(mergeSettings({ connection: 'chatgpt' })).error, /꺼져 있습니다/);
   // API 연결은 지금과 같다
   assert.equal(activeProvider(mergeSettings({ aiEnabled: true, gemini: { apiKey: 'g' } }), { task: 'label' }).name, 'gemini');
+});
+
+test('ChatGPT 연결 확인: 연결 프로그램 → Codex CLI → 로그인 → 모델 요청 순서로 처음 막힌 단계를 알려 준다', async () => {
+  const { diagnose } = await import('../lib/chatgpt.js');
+  const ok = { hello: { type: 'result', protocol: 1, codex: '0.1.0', bridge: '1.0.0' }, status: { type: 'result', loggedIn: true }, generate: { type: 'result', text: 'OK' } };
+  const run = (over) => {
+    mockBridge((m) => ({ ...ok, ...over })[m.type]);
+    return diagnose({ model: '' });
+  };
+  let r = await run({});
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.steps.map((s) => s.ok), [true, true, true, true]);
+
+  mockBridge(() => 'missing');
+  r = await diagnose({});
+  assert.equal(r.stage, 0);
+  assert.match(r.message, /^ChatGPT 연결 1단계\(연결 프로그램\)에서 막혔습니다\. 온글 연결 프로그램이 설치되어 있지 않습니다/);
+  assert.deepEqual(r.steps.map((s) => s.ok), [false, null, null, null]);
+
+  r = await run({ hello: { type: 'result', protocol: 99, codex: '0.1.0' } });
+  assert.equal(r.stage, 0);
+  assert.match(r.message, /버전과 맞지 않습니다/);
+
+  r = await run({ hello: { type: 'result', protocol: 1, codex: null } });
+  assert.equal(r.stage, 1);
+  assert.match(r.message, /2단계\(Codex CLI\).*Codex CLI를 찾지 못했습니다/);
+
+  r = await run({ status: { type: 'result', loggedIn: false } });
+  assert.equal(r.stage, 2);
+  assert.match(r.message, /3단계\(로그인\).*로그인 버튼/);
+
+  r = await run({ generate: { type: 'error', kind: 'limit', message: 'ChatGPT 사용 한도에 도달했습니다.' } });
+  assert.equal(r.stage, 3);
+  assert.equal(r.message, 'ChatGPT 연결 4단계(모델 요청)에서 막혔습니다. ChatGPT 사용 한도에 도달했습니다.');
+  assert.ok(!RAW_ERROR.test(r.message));
+});
+
+test('ChatGPT: 실제 AI 요청이 실패해도 연결 확인과 같은 문구로 막힌 단계를 알려 준다', async () => {
+  mockBridge(() => ({ type: 'error', kind: 'login', message: 'ChatGPT 로그인이 풀렸습니다. 온글 설정에서 다시 로그인하세요.' }));
+  await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.kind === 'login' && e.message.startsWith('ChatGPT 연결 3단계(로그인)에서 막혔습니다. ChatGPT 로그인이 풀렸습니다'));
+  mockBridge(() => 'missing');
+  await assert.rejects(PROVIDERS.chatgpt.describe('설명', [], { model: '' }), (e) => e.message.startsWith('ChatGPT 연결 1단계(연결 프로그램)에서 막혔습니다.'));
+  // 단계와 상관없는 오류(잘못된 요청)는 그대로
+  mockBridge(() => ({ type: 'error', kind: 'bad-request', message: 'AI에 보낼 글이 비어 있습니다.' }));
+  await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.message === 'AI에 보낼 글이 비어 있습니다.');
 });
