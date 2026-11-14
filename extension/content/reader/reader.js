@@ -210,7 +210,16 @@
     output.focus(item);
     output.say(prefix ? `${prefix} ${item.phrase}` : item.phrase, { interrupt: true });
     ns.ai?.onItemRead?.(item);
+    missed = null;
+    contextHint(item);
     return true;
+  }
+
+  // 목록·표·선택 상자에 들어서면 그 자리에서 쓸 키를 항목 뒤에 짧게 덧붙인다 (설문: 단축키를 몰라 어렵다).
+  // 처음 몇 번만 읽고(자동 안내), 짧은 안내 설정이면 읽지 않는다. 그 사이 다른 곳으로 옮기면 읽지 않는다.
+  function contextHint(item) {
+    const id = guidance.hintFor(item, model.isEditField(item));
+    if (id) guide(id, {}, { dropIfStale: true });
   }
 
   function step(delta) {
@@ -220,11 +229,22 @@
     moveTo(target);
   }
 
+  // 같은 키로 연달아 찾지 못한 횟수 { key, count }. 다른 곳으로 옮기면 지운다
+  let missed = null;
+
   function jump(test, backward, label, key) {
     const order = backward ? -1 : 1;
     for (let i = index + order; i >= 0 && i < items.length; i += order) {
       if (test(items[i])) return moveTo(i);
     }
+    // 페이지에 하나도 없으면 반대쪽을 찾으라고 하지 않는다
+    if (!items.some(test)) {
+      missed = null;
+      return guide('none-on-page', { label }, { interrupt: true });
+    }
+    missed = missed?.key === key ? { key, count: missed.count + 1 } : { key, count: 1 };
+    // 같은 키로 두 번째 못 찾으면 다른 방법(온글 메뉴의 목록)을 알려 준다
+    if (missed.count >= 2) return guide('not-found-again', { label, key, backward, list: guidance.listFor(label) }, { interrupt: true });
     guide('not-found', { label, key, backward }, { interrupt: true });
   }
 
