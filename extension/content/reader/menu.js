@@ -112,7 +112,14 @@
     // AI 기능은 웹페이지에서만 쓸 수 있다 (온글 설정 같은 확장 페이지에는 넣을 수 없음)
     const onWebPage = /^(https?|file):$/.test(location.protocol);
     // 첫 항목은 사용 가이드: 메뉴를 열면 가이드를 볼지 기능을 고를지 바로 선택하게 한다
-    const list = [{ label: '사용 가이드', action: () => ns.guide.openContents() }];
+    const list = [
+      { label: '사용 가이드', action: () => ns.guide.openContents() },
+      {
+        label: '연습하기',
+        hint: '다섯 단계로 기본 키를 3분쯤 연습. 새 탭에서 열림',
+        action: () => chrome.runtime.sendMessage({ type: 'ongeul-open-practice' }).catch(() => {})
+      }
+    ];
     if (onWebPage) {
       list.push(
         { label: '페이지 요약', keyText: keys.summary, action: run('summarize-page') },
