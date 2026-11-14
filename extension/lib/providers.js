@@ -1,5 +1,5 @@
 import { STRUCTURE_PROMPT, TRANSCRIBE_PROMPT, isNoText } from './structure.js';
-import { bridgeRequest, generate as chatgptGenerate } from './chatgpt.js';
+import { diagnose, generate as chatgptGenerate } from './chatgpt.js';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const TILE_ORDER_NOTE =
@@ -228,10 +228,11 @@ const chatgpt = {
   async describe(prompt, tiles, config, onProgress = () => {}) {
     return chatgptGenerate(prompt, tiles, config, onProgress);
   },
+  // 연결 프로그램 → Codex CLI → 로그인 → 모델 요청을 차례로 확인한다. 실패하면 막힌 단계와 해결 방법을 담은 오류를 던진다
   async test(config) {
-    const { loggedIn } = await bridgeRequest('status');
-    if (!loggedIn) throw new Error('ChatGPT에 로그인되어 있지 않습니다. ChatGPT 로그인 버튼으로 먼저 로그인하세요.');
-    await chatgptGenerate('OK라고만 답하세요.', [], config);
+    const result = await diagnose(config);
+    if (!result.ok) throw Object.assign(new Error(result.message), { stage: result.stage, steps: result.steps });
+    return result;
   }
 };
 
