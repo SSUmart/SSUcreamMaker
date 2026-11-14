@@ -274,6 +274,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'ongeul-open-options':
       chrome.runtime.openOptionsPage();
       return;
+    // 온글 연습 (practice/practice.html): 확장 안에 있어 인터넷 없이도 열린다
+    case 'ongeul-open-practice':
+      chrome.tabs.create({ url: chrome.runtime.getURL('practice/practice.html') });
+      return;
     case 'ongeul-claim-newtab-question':
       claimNewTabQuestion().then((ask) => sendResponse({ ask }), () => sendResponse({ ask: false }));
       return true;

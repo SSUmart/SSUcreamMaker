@@ -394,7 +394,9 @@ check('고르면 그 버튼으로 이동해 읽음', c.startsWith('장바구니 
 c = await press('ArrowUp', 150);
 check('이동한 곳은 면 양말 상품의 버튼 (바로 앞이 제목)', c.startsWith('면 양말, 제목 2'), c);
 await press('Alt+Shift+KeyM', 400);
+// ㅇ으로 시작하는 항목(연습하기, 입력 요소 목록, 영역 목록…)을 차례로 돈다
 c = await press('KeyD', 200);
+if (!c.startsWith('입력 요소 목록')) c = await press('KeyD', 200);
 check('메뉴에서 ㅇ으로 입력 요소 목록으로 감', c.startsWith('입력 요소 목록'), c);
 c = await press('Enter', 400);
 check('입력 요소 목록: 편집창과 체크박스', c.includes('입력 요소 목록. 2개 중 1번, 쿠폰 번호'), c);
@@ -613,6 +615,57 @@ check('설정 화면: 사용 가이드 전체', (await options.$$eval('#guide-te
 const optionsCaption = await options.evaluate(() => document.querySelector('[data-ongeul-ui]')?.shadowRoot?.querySelector('.caption span:last-child')?.textContent ?? '');
 check('설정 화면도 온글이 읽음', optionsCaption.includes('온글 설정'), optionsCaption);
 await options.close();
+
+console.log('\n== 온글 연습 (확장 안 연습 페이지)');
+await page.bringToFront();
+await press('Escape', 200);
+await press('Alt+Shift+KeyM', 400);
+c = await press('ArrowDown', 200);
+check('메뉴 두 번째 항목은 연습하기', c.startsWith('연습하기'), c);
+const practicePromise = ctx.waitForEvent('page');
+await press('Enter', 300);
+const prac = await practicePromise;
+prac.on('pageerror', (e) => errors.push(`연습: ${e.message}`));
+await prac.waitForLoadState();
+check('연습하기: 확장 안 연습 페이지가 새 탭으로 열림', prac.url() === `chrome-extension://${id}/practice/practice.html`, prac.url());
+await prac.bringToFront();
+await prac.waitForTimeout(1200);
+const pcap = async () => (await prac.evaluate(() => document.querySelector('[data-ongeul-ui]')?.shadowRoot?.querySelector('.caption span:last-child')?.textContent ?? '')) ?? '';
+const pkey = async (key, wait = 250) => {
+  await prac.keyboard.press(key);
+  await prac.waitForTimeout(wait);
+  return pcap();
+};
+const progressText = () => prac.textContent('#progress');
+// 1단계: 아래 화살표로 1단계 마지막 줄까지
+for (let i = 0; i < 12 && !(await pcap()).includes('1단계 마지막 줄'); i++) await pkey('ArrowDown', 150);
+c = await prac.waitForTimeout(700).then(pcap);
+check('1단계: 마지막 줄까지 읽으면 잘했습니다와 다음 단계', c.includes('잘했습니다. 1단계 완료. 다음은 2단계'), c);
+// 2단계: 아래 화살표로 지나가면 완료가 아니고, H로 가야 완료
+c = await pkey('KeyH', 150);
+c = await pkey('KeyH', 800);
+check('2단계: H로 도착한 제목에 가면 완료', c.includes('도착한 제목') && c.includes('2단계 완료'), c);
+// 3단계: B로 연습 버튼, Enter
+c = await pkey('KeyB', 200);
+check('3단계: B로 연습 버튼', c.startsWith('연습 버튼, 버튼'), c);
+c = await pkey('Enter', 900);
+check('3단계: Enter로 누르면 완료', c.includes('3단계 완료'), c);
+// 4단계: C, Enter, 파랑 고르기, Esc. 헤드리스 크롬의 선택 상자는 화살표로 값이 바뀌지 않아(목록 팝업이 열림) 고르는 동작만 selectOption으로 대신한다
+await pkey('KeyC', 200);
+await pkey('Enter', 300);
+await prac.selectOption('#choose-goal', '파랑');
+await prac.waitForTimeout(200);
+check('4단계: 파랑을 골랐어도 Esc 전에는 완료가 아님', (await progressText()).startsWith('3/'), await progressText());
+c = await pkey('Escape', 900);
+check('4단계: Esc로 읽기 모드로 돌아오면 완료', c.includes('4단계 완료') && (await prac.inputValue('#choose-goal')) === '파랑', c);
+// 5단계: 온글 메뉴 열고 닫기
+await pkey('Alt+Shift+KeyM', 400);
+c = await pkey('Escape', 1000);
+check('5단계: 메뉴를 열었다 닫으면 연습 끝', c.includes('다섯 단계를 모두 마쳤습니다'), c);
+check('진행 표시 5/5', (await progressText()) === '5/5 단계 완료', await progressText());
+await prac.screenshot({ path: path.join(OUT, 'practice.png'), fullPage: true });
+await prac.close();
+await page.bringToFront();
 
 console.log('\n== 끄기');
 await sw.evaluate(() => chrome.storage.local.set({ readerEnabled: false }));

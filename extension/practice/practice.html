@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>온글 연습</title>
+  <link rel="stylesheet" href="../check/check.css">
+  <style>
+    .step { border: 2px solid #d1d5db; border-radius: 8px; padding: 8px 16px; margin: 16px 0; }
+    .step.current { border-color: #1d4ed8; }
+    .step.done { border-color: #166534; }
+    .step.done h2::after { content: ' (완료)'; color: #166534; }
+    kbd { border: 1px solid #9ca3af; border-radius: 4px; padding: 0 4px; background: #f3f4f6; }
+    #progress { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>온글 연습</h1>
+    <p>다섯 단계로 온글의 기본 키를 연습합니다. 3분쯤 걸립니다. 인터넷이 없어도 됩니다.</p>
+    <p>단계마다 맞게 누르면 온글이 "잘했습니다"라고 알려 주고 다음 단계를 읽어 줍니다. 처음부터 들으려면 아래 화살표를 누르세요.</p>
+    <p id="progress" role="status">0/5 단계 완료</p>
+
+    <section class="step" data-step="read">
+      <h2>1단계. 아래 화살표로 차례로 읽기</h2>
+      <p>아래 화살표를 누를 때마다 다음 줄을 읽습니다. 위 화살표는 앞 줄로 돌아갑니다.</p>
+      <p>아래 화살표를 몇 번 더 눌러 이 단계의 마지막 줄까지 읽어 보세요.</p>
+      <p id="read-goal">1단계 마지막 줄입니다.</p>
+    </section>
+
+    <section class="step" data-step="heading">
+      <h2>2단계. H로 제목 건너뛰기</h2>
+      <p>H 키를 누르면 다음 제목으로 건너뜁니다. Shift와 H를 함께 누르면 앞 제목으로 갑니다. 긴 페이지에서 원하는 곳을 빨리 찾을 때 씁니다.</p>
+      <p>H 키를 눌러 "도착한 제목"으로 가 보세요.</p>
+      <h3 id="heading-goal">도착한 제목</h3>
+    </section>
+
+    <section class="step" data-step="button">
+      <h2>3단계. B로 버튼 찾아 누르기</h2>
+      <p>B 키를 누르면 다음 버튼으로 건너뜁니다. 버튼에서 Enter를 누르면 버튼이 눌립니다.</p>
+      <p>B 키로 "연습 버튼"에 가서 Enter를 눌러 보세요.</p>
+      <p><button type="button" id="button-goal">연습 버튼</button></p>
+    </section>
+
+    <section class="step" data-step="choose">
+      <h2>4단계. 옵션 고르기</h2>
+      <p>C 키를 누르면 다음 선택 상자로 건너뜁니다. 선택 상자에서 Enter를 누르고 위아래 화살표로 고른 뒤, 다 골랐으면 Esc를 누릅니다.</p>
+      <p>"색상" 선택 상자에서 파랑을 골라 보세요.</p>
+      <p>
+        <label for="choose-goal">색상</label>
+        <select id="choose-goal">
+          <option value="">색상을 고르세요</option>
+          <option>빨강</option>
+          <option>파랑</option>
+          <option>노랑</option>
+        </select>
+      </p>
+    </section>
+
+    <section class="step" data-step="menu">
+      <h2>5단계. 온글 메뉴 열기</h2>
+      <p>키가 생각나지 않으면 온글 메뉴를 여세요. 온글의 모든 기능이 목록에 있습니다. 위아래 화살표로 고르고 Enter로 실행하며, Esc로 닫습니다.</p>
+      <p id="menu-key">Alt와 Shift와 M을 함께 눌러 온글 메뉴를 열었다가 Esc로 닫아 보세요.</p>
+    </section>
+
+    <section class="step" data-step="finish" id="finish">
+      <h2>연습을 마쳤습니다</h2>
+      <p>이제 연습용 쇼핑몰 온글몰에서 상품을 골라 장바구니에 담아 보세요. 상품 페이지에서는 Alt와 Shift와 P를 누르면 상품명, 가격, 옵션, 구매 버튼으로 바로 갈 수 있습니다.</p>
+      <p>이 연습은 온글 메뉴의 "연습하기"에서 언제든 다시 열 수 있습니다. Ctrl과 W를 누르면 이 탭을 닫습니다.</p>
+    </section>
+  </main>
+  <!-- 이 페이지도 온글로 읽을 수 있게 온글 스크립트를 넣는다 (확장 페이지에는 content script가 들어가지 않음) -->
+  <script src="../content/reader/defaults.js"></script>
+  <script src="../content/reader/guidance.js"></script>
+  <script src="../content/reader/model.js"></script>
+  <script src="../content/reader/hangul-braille.js"></script>
+  <script src="../content/reader/output.js"></script>
+  <script src="../content/reader/braille.js"></script>
+  <script src="../content/reader/describe.js"></script>
+  <script src="../content/reader/ai.js"></script>
+  <script src="../content/reader/guide-content.js"></script>
+  <script src="../content/reader/guide.js"></script>
+  <script src="../content/reader/product.js"></script>
+  <script src="../content/reader/menu.js"></script>
+  <script src="../content/reader/input-language.js"></script>
+  <script src="../content/reader/reader.js"></script>
+  <script src="practice.js"></script>
+</body>
+</html>
