@@ -168,3 +168,19 @@ details p { margin: 8px 0 0; color: var(--muted); }
   .api .table-wrap th:first-child { width: 68px; }
   .table-wrap td:first-child { white-space: normal; }
 }
+
+/* 사용법: 단축키 한눈에 보기 (그룹마다 칸 격자) */
+.key-group { margin: 18px 0 0; }
+.key-group h4 { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
+.key-note { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
+.keygrid { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.keygrid li { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); min-width: 0; }
+.key-combo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 3px; font-size: 15px; line-height: 1.6; }
+.key-what { font-weight: 700; font-size: 16px; line-height: 1.4; }
+.key-sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
+#keys-jump + .key-note + .keygrid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+@media (max-width: 640px) {
+  .keygrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #keys-jump + .key-note + .keygrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .keygrid li { padding: 10px; }
+}
