@@ -38,6 +38,8 @@ export function serveShop(req, res) {
   const file = shopFile(new URL(req.url, 'http://localhost').pathname);
   if (!file || !fs.statSync(file, { throwIfNoEntry: false })?.isFile()) return false;
   res.setHeader('content-type', TYPES[path.extname(file)]);
+  // 고친 css·js가 옛 사본 대신 바로 쓰이도록, 브라우저가 매번 서버에 새 파일인지 묻게 한다
+  res.setHeader('cache-control', 'no-cache');
   fs.createReadStream(file)
     .on('error', () => res.destroy())
     .pipe(res);
