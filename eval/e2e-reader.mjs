@@ -105,6 +105,15 @@ const ACTION_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-
 <label>쿠폰 번호 <input type="text"></label><label><input type="checkbox"> 선물 포장</label>
 <p>끝</p></main></body></html>`;
 
+// 그 자리에서 쓸 키 안내: 목록, 표, 선택 상자, 편집창. 버튼은 하나도 없다 (페이지에 없음 안내 확인)
+const HINT_FIXTURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>키 안내 확인</title></head><body><main>
+<h1>키 안내 확인</h1>
+<ul><li>사과</li><li>배</li></ul>
+<table><caption>배송비</caption><tr><th>지역</th><th>요금</th></tr><tr><td>서울</td><td>3,000원</td></tr></table>
+<label>색상 <select><option>빨강</option><option>파랑</option></select></label>
+<label>메모 <input type="text"></label>
+<p>끝</p></main></body></html>`;
+
 // 이름 짓기 요청 글 (같은 모양 항목을 한 번만 묻는지 센다)
 const labelCalls = [];
 // 같은 모양 항목·단서 없는 항목 확인 페이지: 앞의 이름 없는 버튼 5개(도움돼요 3개 + 다른 모양 2개)는 페이지를 열 때 미리 분석되고,
@@ -132,6 +141,10 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/choice-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     return res.end(CHOICE_FIXTURE);
+  }
+  if (req.url === '/hint-fixture/') {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    return res.end(HINT_FIXTURE);
   }
   if (req.url === '/action-fixture/') {
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -389,6 +402,41 @@ c = await press('ArrowDown', 150);
 check('두 번째는 체크박스', c.includes('선물 포장') && c.includes('체크박스'), c);
 await press('Escape', 200);
 await press('Escape', 200);
+
+console.log('\n== 그 자리에서 쓸 키 안내');
+// 앞선 확인에서 읽은 횟수를 지워 처음 쓰는 사람과 같게 한다
+await sw.evaluate(() =>
+  chrome.storage.local.get('guidanceSeen').then(({ guidanceSeen = {} }) => {
+    for (const id of ['hint-list', 'hint-table', 'hint-choose', 'hint-edit']) delete guidanceSeen[id];
+    return chrome.storage.local.set({ guidanceSeen });
+  })
+);
+await page.goto(`${base}/hint-fixture/`);
+await page.waitForTimeout(500);
+c = await press('KeyL', 500);
+check('목록에 들어서면 목록 키를 덧붙임', c.includes('목록') && c.includes('L 키를 누르세요'), c);
+c = await press('KeyT', 500);
+check('표에 들어서면 표 키를 덧붙임', c.includes('배송비') && c.includes('T 키를 누르세요'), c);
+c = await press('KeyC', 500);
+check('선택 상자에 들어서면 고르는 법을 덧붙임', c.startsWith('색상') && c.includes('Enter를 누르고 위아래 화살표로 고르세요'), c);
+c = await press('KeyE', 500);
+check('편집창에 들어서면 글 쓰는 법을 덧붙임', c.startsWith('메모') && c.includes('Enter를 누르면 글을 쓸 수 있습니다'), c);
+c = await press('Alt+Shift+Digit1', 400);
+check('키 도움말은 지금 위치에서 쓸 키부터', c.includes('1번, 지금 위치에서, 글쓰기 모드로 들어가 글 쓰기, Enter'), c);
+await press('Escape', 200);
+c = await press('KeyE', 400);
+check('편집창을 한 번 못 찾으면 평소 안내', c.startsWith('아래쪽에 남은 편집창 없음') && !c.includes('온글 메뉴'), c);
+c = await press('KeyE', 400);
+check('같은 키로 두 번째 못 찾으면 온글 메뉴의 목록을 알려 줌', c.includes('입력 요소 목록을 고르면'), c);
+c = await press('KeyB', 400);
+check('페이지에 하나도 없으면 없다고 알림', c.startsWith('이 페이지에는 버튼 없음'), c);
+// 세 번 들은 뒤에는 덧붙이지 않는다 (자동 안내)
+await sw.evaluate(() =>
+  chrome.storage.local.get('guidanceSeen').then(({ guidanceSeen = {} }) => chrome.storage.local.set({ guidanceSeen: { ...guidanceSeen, 'hint-list': 5 } }))
+);
+await press('Control+Home', 200);
+c = await press('KeyL', 500);
+check('익숙해지면(여러 번 들으면) 목록 키를 덧붙이지 않음', c.includes('목록') && !c.includes('L 키를 누르세요'), c);
 
 console.log('\n== 고른 옵션 알림 (클래스로만 표시한 옵션 버튼, aria-selected)');
 await page.goto(`${base}/option-fixture/`);

@@ -292,7 +292,12 @@
   function openHelp({ back = false } = {}) {
     const r = ns.reader;
     if (!r?.enabled) return;
-    const list = ns.guidance.helpEntries({ ...r.shortcuts, keys: ns.guidance.keyNames(r.settings.reader.commandKeys) });
+    // 지금 위치에서 쓸 키를 맨 앞에 둔다 (설문: 단축키를 몰라 어렵다)
+    const item = r.items[r.index];
+    const list = [
+      ...ns.guidance.hereEntries(item, item ? ns.model.isEditField(item) : false),
+      ...ns.guidance.helpEntries({ ...r.shortcuts, keys: ns.guidance.keyNames(r.settings.reader.commandKeys) })
+    ];
     setList('키 도움말', { back });
     show(list);
     ns.output.raise?.();

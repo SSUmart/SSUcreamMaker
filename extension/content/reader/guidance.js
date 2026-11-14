@@ -166,6 +166,36 @@
           : `아래쪽에 남은 ${p.label} 없음. 지금 위치는 그대로입니다. 위쪽에서 찾으려면 Shift와 ${p.key} 키를 누르세요.`,
       short: (p) => `${p.backward ? '이전' : '다음'} ${p.label} 없음`
     },
+    // 같은 키로 두 번째 못 찾을 때: 다른 방법을 알려 준다 (짧은 안내 설정이어도 읽는다)
+    'not-found-again': {
+      always: true,
+      detailed: (p) =>
+        `${p.backward ? '위쪽' : '아래쪽'}에 남은 ${p.label} 없음. ` +
+        (p.list
+          ? `${p.menu || keysOf(p).menu} 키로 온글 메뉴를 열고 ${p.list}을 고르면 이 페이지의 ${p.label} 전체를 듣고 골라 갈 수 있습니다.`
+          : `${p.backward ? '' : 'Shift와 '}${p.key} 키로 반대쪽을 찾거나, Ctrl과 Home으로 페이지 처음부터 찾아 보세요.`)
+    },
+    'none-on-page': {
+      always: true,
+      detailed: (p) => `이 페이지에는 ${p.label} 없음.`
+    },
+    // 그 자리에서 쓸 키 (hintFor). 처음 몇 번만 읽고 익숙해지면 읽지 않는다 (short가 빈 문장)
+    'hint-list': {
+      detailed: () => '목록 안 항목은 아래 화살표로 읽고, 목록을 건너뛰려면 L 키를 누르세요.',
+      short: () => ''
+    },
+    'hint-table': {
+      detailed: () => '표 안 칸은 아래 화살표로 차례로 읽고, 표를 건너뛰려면 T 키를 누르세요.',
+      short: () => ''
+    },
+    'hint-choose': {
+      detailed: () => 'Enter를 누르고 위아래 화살표로 고르세요.',
+      short: () => ''
+    },
+    'hint-edit': {
+      detailed: () => 'Enter를 누르면 글을 쓸 수 있습니다.',
+      short: () => ''
+    },
     'unreadable-page': {
       always: true,
       detailed: (p) =>
@@ -322,6 +352,41 @@
     ];
   }
 
+  // 항목에 들어섰을 때 덧붙일 키 안내 id (없으면 null). editField: 글을 쓰는 칸인지 (model.isEditField)
+  function hintFor(item, editField = false) {
+    if (!item) return null;
+    if (item.category === 'list') return 'hint-list';
+    if (item.category === 'table') return 'hint-table';
+    if (editField) return 'hint-edit';
+    if (['combobox', 'listbox'].includes(item.role)) return 'hint-choose';
+    return null;
+  }
+
+  // 키 도움말 맨 앞에 둘 "지금 위치에서" 쓸 키. item: 지금 읽는 항목
+  function hereEntries(item, editField = false) {
+    if (!item) return [];
+    const here = (label, keyText) => ({ label: `지금 위치에서, ${label}`, keyText });
+    if (item.category === 'list') return [here('목록 안 항목 읽기', '아래 화살표'), here('다음 목록으로 건너뛰기', 'L')];
+    if (item.category === 'table') return [here('표 안 칸 차례로 읽기', '아래 화살표'), here('다음 표로 건너뛰기', 'T')];
+    if (editField) return [here('글쓰기 모드로 들어가 글 쓰기', 'Enter'), here('다 썼으면 읽기 모드로', 'Esc'), here('다음 편집창', 'E')];
+    if (['combobox', 'listbox'].includes(item.role)) return [here('펼쳐서 위아래 화살표로 고르기', 'Enter'), here('다 골랐으면 읽기 모드로', 'Esc'), here('다음 콤보 상자', 'C')];
+    if (item.category === 'button') return [here('버튼 누르기', 'Enter'), here('다음 버튼', 'B')];
+    if (item.category === 'link') return [here('링크로 이동', 'Enter'), here('다음 링크', 'K')];
+    if (item.category === 'field') return [here('누르거나 고르기', 'Enter 또는 스페이스'), here('다음 입력 요소', 'F')];
+    if (item.category === 'heading') return [here('다음 제목', 'H'), here('같은 수준의 다음 제목', `숫자 ${item.level}`)];
+    return [];
+  }
+
+  // 한 글자 키의 이름 → 온글 메뉴에서 같은 것을 모아 볼 수 있는 목록 이름
+  function listFor(label) {
+    if (label === '버튼') return '버튼 목록';
+    if (label === '링크') return '링크 목록';
+    if (label === '영역') return '영역 목록';
+    if (/^제목/.test(label)) return '제목 목록';
+    if (['입력 요소', '편집창', '체크박스', '라디오 버튼', '콤보 상자'].includes(label)) return '입력 요소 목록';
+    return '';
+  }
+
   // 안내 문장 고르기. seen: 안내별로 읽은 횟수(자동 모드에서 씀)
   function message(id, params = {}, { verbosity = 'auto', seen = 0 } = {}) {
     const entry = MESSAGES[id];
@@ -331,5 +396,5 @@
     return (detailed ? entry.detailed : entry.short)(params);
   }
 
-  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, helpEntries, shortcutText, codeText, comboText, keyNames, pressText, needsShortcutSetup };
+  ns.guidance = { MESSAGES, AUTO_DETAILED_TIMES, MODIFIER, message, hintFor, listFor, hereEntries, helpEntries, shortcutText, codeText, comboText, keyNames, pressText, needsShortcutSetup };
 })();
