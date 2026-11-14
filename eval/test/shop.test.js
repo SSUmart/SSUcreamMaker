@@ -20,7 +20,7 @@ test('/guide/는 설치 가이드와 그림을 내려주고, 화면 찍는 스�
   assert.equal(shopFile('/guide/images/options-done.png'), path.join(guideDir, 'images/options-done.png'));
   assert.equal(shopFile('/guide/capture-screens.mjs'), null);
   assert.equal(shopFile('/guide/../web.mjs'), null);
-  for (const src of fs.readFileSync(path.join(guideDir, 'index.html'), 'utf8').matchAll(/(?:src|href)="((?:images\/)?[\w.-]+\.(?:png|jpg|css|js))"/g)) {
+  for (const src of fs.readFileSync(path.join(guideDir, 'index.html'), 'utf8').matchAll(/(?:src|href)="((?:images\/)?[\w.-]+\.(?:png|jpg|css|js))(?:\?v=\d+)?"/g)) {
     assert.ok(fs.existsSync(path.join(guideDir, src[1])), `가이드가 쓰는 파일이 없음: ${src[1]}`);
   }
 });
