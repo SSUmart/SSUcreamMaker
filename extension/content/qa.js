@@ -5,14 +5,15 @@
     window.__ssucreamQa();
     return;
   }
-  const { collect, focusSource, announce, el, createDialog, friendlyError, STYLE } = window.__ssucreamPage;
+  const { collect, collectImages, hasUnreadDetailImages, focusSource, announce, el, createDialog, friendlyError, STYLE } =
+    window.__ssucreamPage;
   const history = [];
   let busy = false;
 
   const { dialog, open: showDialog, closeTo, announce: announceInDialog } = createDialog('ssucream-qa', '페이지에 질문하기');
   const help = el(
     'p',
-    '이 페이지에 적힌 내용만으로 AI가 답합니다. 답은 틀릴 수 있으니 중요한 정보는 근거 위치로 이동해 확인하세요.',
+    '이 페이지에 적힌 내용만으로 AI가 답합니다. 페이지 글에 답이 없으면 상세 이미지 속 글자도 읽어 다시 찾습니다. 답은 틀릴 수 있으니 중요한 정보는 근거 위치로 이동해 확인하세요.',
     STYLE.note
   );
 
@@ -55,8 +56,73 @@
     return { item, answer, question };
   }
 
+  const ask = (page, question) =>
+    chrome.runtime.sendMessage({ type: 'ask-page', page: page.payload, question, history: history.slice() });
+
+  // 질문하려고 읽은 상세 이미지 내용 (이 페이지 주소에서만 씀). 상세 이미지 읽기 결과 상자가 페이지에 있으면
+  // collect()가 그 글을 이미 모으므로 이것은 더하지 않는다.
+  let detail = null;
+  let readingDetail = false;
+
+  // 페이지 글 뒤에 상세 이미지에서 읽은 문단을 붙인다. 그 문단의 근거 위치는 첫 상세 이미지.
+  function withDetail(page) {
+    if (!detail || detail.url !== location.href || document.getElementById('ssucream-detail')) return page;
+    const start = page.payload.paragraphs.length;
+    return {
+      payload: { ...page.payload, paragraphs: [...page.payload.paragraphs, ...detail.paragraphs] },
+      elements: [...page.elements, ...detail.paragraphs.map(() => detail.anchor)],
+      withDetail: true,
+      detailStart: start
+    };
+  }
+
+  // 진행 안내: 온글이 켜져 있으면 온글이, 아니면 대화상자 안의 안내 영역이 읽는다
+  function tell(text) {
+    const reader = globalThis.__ongeul?.reader;
+    if (reader?.enabled) reader.say(text, { interrupt: false, message: true });
+    else announceInDialog(text);
+  }
+
+  // 상세 이미지 속 글자를 읽어 둔다. 읽었으면 true, 시도했지만 실패했으면 false, 읽을 이미지가 없으면 null.
+  // 결과는 서비스 워커가 페이지별로 저장하므로, 나중에 상세 이미지 읽기를 실행해도 AI를 다시 부르지 않는다.
+  async function readDetailImages(entry) {
+    const images = collectImages();
+    if (!images.size) return null;
+    const waiting = '페이지 글에서 찾지 못해 상세 이미지 속 글자를 읽고 다시 찾는 중입니다. 1~2분 걸릴 수 있습니다.';
+    entry.answer.textContent = waiting;
+    tell(waiting);
+    readingDetail = true;
+    try {
+      const result = await chrome.runtime.sendMessage({ type: 'extract-detail', urls: [...images.keys()] });
+      if (!result || result.error || !result.sections?.length) return false;
+      detail = {
+        url: location.href,
+        // 근거 위치: 첫 세로로 긴 이미지(상세 이미지). 같은 너비의 상품 사진이 앞에 있어도 그쪽으로 가지 않게 한다
+        anchor:
+          [...images.values()].find((img) => img.naturalWidth && img.naturalHeight >= img.naturalWidth * 1.2) ??
+          images.get(result.firstUrl) ??
+          images.values().next().value,
+        paragraphs: result.sections.flatMap(({ title, items }) => items.map((item) => `상세 이미지 ${title}: ${item}`))
+      };
+      return true;
+    } catch {
+      return false;
+    } finally {
+      readingDetail = false;
+    }
+  }
+
+  // 상세 이미지를 읽는 동안 서비스 워커가 보내는 진행 안내("…초 지남")를 대화상자에서 알린다
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === 'progress' && message.task === 'extract-detail' && readingDetail && dialog.open) tell(message.text);
+  });
+
   function showAnswer(entry, result, page) {
-    entry.answer.textContent = result.error ? `답변 실패. ${result.error}` : `답변: ${result.answer} (AI 답변)`;
+    const fromDetail = !result.error && page.withDetail && result.sources?.some((n) => n > page.detailStart);
+    entry.answer.textContent = result.error
+      ? `답변 실패. ${result.error}`
+      : `답변: ${result.answer} (${fromDetail ? '상세 이미지에서 AI가 읽은 내용으로 답변' : 'AI 답변'})`;
+    if (result.detailFailed) entry.answer.textContent += ' 상세 이미지 속 글자도 읽어 보았지만 읽지 못했습니다.';
     const source = !result.error && page.elements[result.sources[0] - 1];
     if (source) {
       const button = el('button', '근거 위치로 이동', STYLE.button);
@@ -102,13 +168,19 @@
     if (!globalThis.__ongeul?.reader?.enabled) announceInDialog('답을 찾는 중입니다.');
     try {
       // 요약·상세 이미지 추출 결과가 그 사이 생겼을 수 있어 질문할 때마다 새로 모은다.
-      const page = collect();
-      const result = await chrome.runtime.sendMessage({
-        type: 'ask-page',
-        page: page.payload,
-        question,
-        history: history.slice()
-      });
+      let page = withDetail(collect());
+      let result = await ask(page, question);
+      // 페이지 글에 답이 없고 아직 읽지 않은 상세 이미지가 있으면, 이미지 속 글자를 읽어 한 번 더 찾는다
+      // (쇼핑몰은 주의사항·사양을 상세 이미지에만 적는 경우가 많음. 읽은 결과는 이 페이지의 다음 질문에도 씀)
+      if (result?.found === false && !page.withDetail && hasUnreadDetailImages()) {
+        const read = await readDetailImages(entry);
+        if (read) {
+          page = withDetail(collect());
+          result = await ask(page, question);
+        } else if (read === false) {
+          result = { ...result, detailFailed: true };
+        }
+      }
       showAnswer(entry, result ?? { error: '응답이 없습니다.' }, page);
       if (!result?.error) {
         history.push({ question, answer: result.answer });
