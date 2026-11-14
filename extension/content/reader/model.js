@@ -12,7 +12,7 @@
   // 한 항목으로 읽기에 너무 긴 글은 문장 단위로 나눈다 (점자 한 줄 40칸, 음성 한 번에 듣기 좋은 길이)
   const MAX_CHUNK = 300;
   const MAX_NAME = 500;
-  // 상세 이미지 후보의 최소 화면 너비 (detail.js collectImages와 같은 기준)
+  // 상세 이미지 후보의 최소 화면 너비 (page-text.js collectImages와 같은 기준)
   const DETAIL_MIN_WIDTH = 300;
 
   // 읽을 때 쓰는 종류 이름 (NVDA·센스리더 한국어 안내를 참고)

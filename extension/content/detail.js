@@ -9,9 +9,6 @@
   const SR_ONLY =
     'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;' +
     'clip:rect(0,0,0,0);white-space:nowrap;border:0;';
-  const LAZY_ATTRS = ['data-src', 'data-original', 'data-lazy-src', 'data-lazy', 'ec-data-src'];
-  const MAX_IMAGES = 60;
-  const MIN_RENDERED_WIDTH = 300;
   let busy = false;
 
   function statusRegion() {
@@ -51,35 +48,6 @@
     region.textContent = '';
     clearTimeout(announceTimer);
     announceTimer = setTimeout(() => (region.textContent = text), 100);
-  }
-
-  function imageUrl(img) {
-    for (const attr of LAZY_ATTRS) {
-      const value = img.getAttribute(attr);
-      if (value && !value.startsWith('data:')) return new URL(value, document.baseURI).href;
-    }
-    const src = img.currentSrc || img.src;
-    return src && !src.startsWith('data:') ? src : null;
-  }
-
-  // 상세 이미지가 아닌 곳: 리뷰(사용자 사진, 다른 상품 주문 화면 캡처가 섞임)와 다른 상품으로 가는 링크(관련 상품 썸네일)
-  const NOT_DETAIL = 'header, nav, footer, #ssucream-detail, [class*="review" i], [id*="review" i], a[href]';
-
-  // 문서 순서대로 후보 이미지를 모은다. 정확한 판별은 서비스 워커가 실제 크기로 한다.
-  // 닫힌 탭처럼 화면에 그려지지 않는 이미지(getClientRects가 비어 있음)는 뺀다. 아직 불러오지 않은 지연 로딩 이미지는
-  // 크기가 0이어도 자리는 있으므로 남는다.
-  function collectImages() {
-    const found = new Map();
-    for (const img of document.images) {
-      if (img.closest(NOT_DETAIL) || !img.getClientRects().length) continue;
-      const width = img.getBoundingClientRect().width;
-      if (width > 0 && width < MIN_RENDERED_WIDTH) continue;
-      const url = imageUrl(img);
-      if (!url || found.has(url)) continue;
-      found.set(url, img);
-      if (found.size >= MAX_IMAGES) break;
-    }
-    return found;
   }
 
   // 숨기기·보이기. 사이트 CSS(section{display:block} 등)가 hidden 속성을 덮을 수 있어 display도 직접 바꾼다
@@ -234,7 +202,7 @@
       notify(text);
     };
     try {
-      const images = collectImages();
+      const images = window.__ssucreamPage.collectImages();
       if (!images.size) {
         fail('이 페이지에서 이미지를 찾지 못했습니다.');
         return;

@@ -14,6 +14,8 @@ const EXT = path.resolve(here, '../extension');
 const OUT = path.join(here, 'results', 'e2e');
 fs.mkdirSync(OUT, { recursive: true });
 const prompts = [];
+// 상세 이미지 읽기(F2)가 돌려줄 정리 결과. 5)에서 주의사항이 상세 이미지에만 있는 상품으로 바꾼다
+let detailSections = [{ title: '가격·할인', items: ['정가 39,000원'] }];
 const num = (prompt, word) => {
   const line = prompt.split('\n').find((l) => /^\[\d+\]/.test(l) && l.includes(word));
   return line ? Number(line.match(/^\[(\d+)\]/)[1]) : 999;
@@ -26,7 +28,7 @@ const server = http.createServer(async (req, res) => {
     let content;
     // 상세 이미지 읽기(F2) 요청: 조각 글자 읽기, 정리
     if (Array.isArray(prompt)) content = '정가 39,000원';
-    else if (prompt.startsWith('쇼핑몰 상품 상세')) content = '{"sections":[{"title":"가격·할인","items":["정가 39,000원"]}]}';
+    else if (prompt.startsWith('쇼핑몰 상품 상세')) content = JSON.stringify({ sections: detailSections });
     // 요약·질문 요청: 실제 프롬프트에서 근거 문단 번호를 찾아 답한다
     else if (prompts.push(prompt) && prompt.startsWith('다음 웹페이지 글을 요약하세요')) {
       content = '```json\n' + JSON.stringify({
@@ -39,9 +41,12 @@ const server = http.createServer(async (req, res) => {
         ]
       }) + '\n```';
     } else {
-      content = prompt.trimEnd().split('\n').at(-1).startsWith('질문: 탄산')
-        ? JSON.stringify({ found: true, answer: '압력 때문에 탄산음료는 권하지 않습니다.', sources: [num(prompt, '탄산')] })
-        : JSON.stringify({ found: false, answer: '', sources: [] });
+      const last = prompt.trimEnd().split('\n').at(-1);
+      if (last.startsWith('질문: 탄산')) {
+        content = JSON.stringify({ found: true, answer: '압력 때문에 탄산음료는 권하지 않습니다.', sources: [num(prompt, '탄산')] });
+      } else if (last.includes('주의사항') && prompt.includes('오븐')) {
+        content = JSON.stringify({ found: true, answer: '오븐과 직화에 쓰지 말고, 뜨거울 때 찬물을 붓지 마세요.', sources: [num(prompt, '오븐')] });
+      } else content = JSON.stringify({ found: false, answer: '', sources: [] });
     }
     res.setHeader('content-type', 'application/json');
     return res.end(JSON.stringify({ choices: [{ message: { content } }] }));
@@ -153,6 +158,37 @@ check('상세 이미지: 닫기', !(await page.isVisible('#ssucream-detail')));
 const beforeDetail = prompts.length;
 await inject(['content/page-text.js', 'content/detail.js']);
 check('상세 이미지: 다시 실행하면 AI 없이 다시 열림', (await page.isVisible('#ssucream-detail h3')) && prompts.length === beforeDetail);
+
+// 5) 질문 → 페이지 글에 없음 → 상세 이미지를 읽고 다시 찾기 (온글몰 머그: 주의사항이 상세 이미지에만 있음)
+detailSections = [{ title: '주의사항', items: ['오븐과 가스레인지 직화에는 쓰지 마세요.', '뜨거운 머그에 찬물을 바로 붓지 마세요.'] }];
+await page.goto(`${base}/mall/product.html?id=mug`);
+await page.waitForFunction(() => [...document.querySelectorAll('.detail-images img')].length && [...document.querySelectorAll('.detail-images img')].every((i) => i.complete));
+const beforeMug = prompts.length;
+await inject(['content/page-text.js', 'content/qa.js']);
+await page.waitForSelector('#ssucream-qa[open]');
+await page.fill('#ssucream-qa-input', '제품 사용시 주의사항이 무엇인가요?');
+await page.press('#ssucream-qa-input', 'Enter');
+await page.waitForFunction(() => /답변:|답변 실패/.test(document.querySelector('#ssucream-qa li:last-child p:nth-of-type(2)')?.textContent ?? ''), null, { timeout: 60000 });
+const mugAnswer = await page.textContent('#ssucream-qa li:last-child p:nth-of-type(2)');
+check('상세 이미지 질문: 처음엔 페이지 글만 보냄', !prompts[beforeMug].includes('오븐'));
+check('상세 이미지 질문: 이미지를 읽고 다시 물어 답함', mugAnswer.includes('오븐과 직화') && prompts.length === beforeMug + 2);
+check('상세 이미지 질문: 상세 이미지에서 읽은 답이라고 알림', mugAnswer.includes('상세 이미지에서 AI가 읽은 내용으로 답변'));
+check('상세 이미지 질문: 답 문단에 포커스', (await focusedText()).startsWith('답변: 오븐과 직화'));
+await page.screenshot({ path: path.join(OUT, 'qa-detail.png') });
+await page.click('#ssucream-qa li:last-child button');
+check('상세 이미지 질문: 근거 이동은 상세 이미지로', await page.evaluate(() => document.activeElement?.matches('.detail-images img')));
+const beforeSecond = prompts.length;
+await inject(['content/page-text.js', 'content/qa.js']);
+await page.fill('#ssucream-qa-input', '전자레인지 주의사항도 알려줘');
+await page.press('#ssucream-qa-input', 'Enter');
+await page.waitForFunction(() => document.querySelectorAll('#ssucream-qa li').length === 2 && /답변:/.test(document.querySelector('#ssucream-qa li:last-child p:nth-of-type(2)').textContent));
+check('상세 이미지 질문: 다음 질문은 읽은 내용을 처음부터 함께 보냄(한 번만 물음)', prompts.length === beforeSecond + 1 && prompts.at(-1).includes('상세 이미지 주의사항: 오븐'));
+await page.keyboard.press('Escape');
+const beforeDetailCmd = prompts.length;
+await inject(['content/page-text.js', 'content/detail.js']);
+await page.waitForFunction(() => ['done', 'error'].includes(document.getElementById('ssucream-status')?.dataset.state), null, { timeout: 60000 });
+check('상세 이미지 질문: 그 뒤 상세 이미지 읽기는 AI 다시 안 부름', (await page.textContent('#ssucream-detail')).includes('오븐') && prompts.length === beforeDetailCmd);
+
 await ctx.close();
 server.close();
 console.log(process.exitCode ? '\n실패한 항목이 있습니다.' : `\n모두 통과. 스크린샷: ${path.relative(process.cwd(), OUT)}`);
