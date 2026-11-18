@@ -21,3 +21,5 @@ dist/
 /skills-lock.json
 # 개인 발표자료 초안 등 docs 폴더의 HTML (eval 등 다른 곳의 HTML은 커밋함)
 /docs/*.html
+# 저장소 최상위에 둔 강의 자료 PDF (개인 참고용, 저장소에 포함하지 않음)
+/*.pdf

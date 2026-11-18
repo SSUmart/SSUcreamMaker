@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- `.gitignore`에 저장소 최상위의 PDF(강의 자료 등 개인 참고 파일)를 무시하는 규칙 추가
+
 ## [26.4.0-beta.2] - 2026-11-14
 
 ### Fixed
