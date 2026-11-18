@@ -347,15 +347,19 @@ $('test-button').addEventListener('click', async () => {
   const settings = readForm();
   // 연결 확인은 AI 사용이 꺼져 있어도 할 수 있게 한다.
   const active = activeProvider({ ...settings, aiEnabled: true });
-  if (active.error) {
+  // API 키 연결은 키·모델이 비어 있어도 확인을 돌려 1단계에서 막혔다고 단계별로 보여 준다
+  const apiName = settings.connection !== 'chatgpt' && settings.provider !== 'chatgpt' && PROVIDERS[settings.provider] ? settings.provider : null;
+  if (active.error && !apiName) {
     status.textContent = active.error;
+    showSteps(null);
     return;
   }
-  const provider = PROVIDERS[active.name];
+  const provider = PROVIDERS[active.name ?? apiName];
+  const config = active.config ?? settings[apiName];
   status.textContent = `${provider.label} 연결 확인 중입니다.`;
   showSteps(null);
   try {
-    const result = await provider.test(active.config);
+    const result = await provider.test(config);
     status.textContent = result?.message ?? `${provider.label} 연결에 성공했습니다.`;
     showSteps(result?.steps);
   } catch (error) {
@@ -364,7 +368,7 @@ $('test-button').addEventListener('click', async () => {
   }
 });
 
-// ChatGPT 연결 확인의 단계별 결과: "1단계 연결 프로그램: 됨, 설치됨" … 막힌 단계 뒤는 "확인하지 않음"
+// 연결 확인의 단계별 결과: "1단계 연결 프로그램: 됨, 설치됨" … 막힌 단계 뒤는 "확인하지 않음"
 function showSteps(steps) {
   const list = $('test-steps');
   list.hidden = !steps?.length;

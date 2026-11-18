@@ -12,11 +12,17 @@ async function apiError(name, res) {
   console.warn(`${name} 오류 응답 (${res.status})`, body.slice(0, 500));
   const error = new Error(apiErrorMessage(name, res.status, body));
   error.status = res.status;
+  error.keyRejected = isKeyRejected(res.status, body);
   return error;
 }
 
+// Gemini는 틀린 키에 400을 돌려주기도 해서 응답 본문도 본다
+function isKeyRejected(status, body) {
+  return status === 401 || status === 403 || /API_KEY_INVALID|API key not valid/i.test(body);
+}
+
 function apiErrorMessage(name, status, body) {
-  if (status === 401 || status === 403 || /API_KEY_INVALID|API key not valid/i.test(body)) {
+  if (isKeyRejected(status, body)) {
     return `${name} API 키가 올바르지 않습니다. 온글 설정에서 API 키를 확인하세요.`;
   }
   if (status === 429) return `${name} 요청 한도를 넘었습니다. 잠시 뒤 다시 시도하거나 온글 설정에서 다른 모델을 고르세요.`;
@@ -60,11 +66,52 @@ async function fetchWithRetry(name, url, init) {
       res = await fetch(url, init);
     } catch (error) {
       console.warn(`${name} 연결 실패`, error);
-      throw new Error(`${name} 서버에 연결하지 못했습니다. 인터넷 연결과 온글 설정의 API 주소를 확인하세요.`);
+      throw Object.assign(new Error(`${name} 서버에 연결하지 못했습니다. 인터넷 연결과 온글 설정의 API 주소를 확인하세요.`), { network: true });
     }
     if (res.ok || !RETRY.statuses.includes(res.status) || attempt >= RETRY.delays.length) return res;
     await new Promise((resolve) => setTimeout(resolve, RETRY.delays[attempt]));
   }
+}
+
+// API 키 연결 확인의 단계. ChatGPT 연결 확인(lib/chatgpt.js의 diagnose)과 같은 모양으로 돌려준다.
+// 1단계 키와 모델 입력 → 2단계 서버 연결·키 확인(서버에 닿고 키를 받아들임) → 3단계 모델 요청(짧은 답을 받음)
+export const API_STAGES = ['키와 모델 입력', '서버 연결·키 확인', '모델 요청'];
+
+export function apiStageText(label, stage) {
+  return `${label} 연결 ${stage + 1}단계(${API_STAGES[stage]})에서 막혔습니다.`;
+}
+
+// 돌려주는 값: { ok, stage(막힌 단계, 다 되면 -1), steps: [{ name, ok, detail }], message }
+export async function diagnoseApi(label, config, request) {
+  const steps = API_STAGES.map((name) => ({ name, ok: null, detail: '확인하지 않음' }));
+  const fail = (stage, message) => {
+    steps[stage] = { ...steps[stage], ok: false, detail: message };
+    return { ok: false, stage, steps, message: `${apiStageText(label, stage)} ${message}` };
+  };
+  const pass = (stage, detail) => {
+    steps[stage] = { ...steps[stage], ok: true, detail };
+  };
+  if (!config.apiKey?.trim()) return fail(0, `API 키가 없습니다. 온글 설정에 ${label} API 키를 넣고 저장하세요.`);
+  if (!config.model?.trim()) return fail(0, `AI 모델을 고르지 않았습니다. 온글 설정에서 ${label} 모델을 고르고 저장하세요.`);
+  pass(0, '입력됨');
+  try {
+    await request();
+  } catch (error) {
+    // 서버에 닿지 못했거나 키를 거절당하면 2단계, 키는 받아들였지만 답을 못 받으면(모델 이름, 한도, 서버 문제) 3단계
+    if (error.network || error.keyRejected) return fail(1, error.message);
+    pass(1, '키를 받아들임');
+    return fail(2, error.message);
+  }
+  pass(1, '키를 받아들임');
+  pass(2, '답을 받음');
+  return { ok: true, stage: -1, steps, message: `${label} 연결에 성공했습니다. 키와 모델 입력, 서버 연결·키 확인, 모델 요청 세 단계가 모두 됩니다.` };
+}
+
+// 연결 확인: 단계별 결과를 돌려주고, 막히면 막힌 단계와 해결 방법을 담은 오류를 던진다
+async function testApi(label, config, request) {
+  const result = await diagnoseApi(label, config, request);
+  if (!result.ok) throw Object.assign(new Error(result.message), { stage: result.stage, steps: result.steps });
+  return result;
 }
 
 // --- Gemini: 조각 전체를 한 번에 보내 바로 JSON으로 정리한다.
@@ -108,7 +155,7 @@ const gemini = {
     return geminiGenerate(config, [{ text: prompt }, ...images], true);
   },
   async test(config) {
-    await geminiGenerate(config, [{ text: 'OK라고만 답하세요.' }], false);
+    return testApi('Gemini', config, () => geminiGenerate(config, [{ text: 'OK라고만 답하세요.' }], false));
   }
 };
 
@@ -211,7 +258,7 @@ const nim = {
     );
   },
   async test(config) {
-    await nimChat(config, 'OK라고만 답하세요.', 16);
+    return testApi('NVIDIA NIM', config, () => nimChat(config, 'OK라고만 답하세요.', 16));
   }
 };
 
