@@ -417,3 +417,38 @@ test('ChatGPT: 실제 AI 요청이 실패해도 연결 확인과 같은 문구�
   mockBridge(() => ({ type: 'error', kind: 'bad-request', message: 'AI에 보낼 글이 비어 있습니다.' }));
   await assert.rejects(PROVIDERS.chatgpt.generateJson('질문', { model: '' }), (e) => e.message === 'AI에 보낼 글이 비어 있습니다.');
 });
+
+// API 키 연결 확인도 ChatGPT처럼 막힌 단계를 알려 준다: 1 키와 모델 입력 → 2 서버 연결·키 확인 → 3 모델 요청
+test('API 키 연결 확인: 키나 모델이 없으면 요청 없이 1단계에서 막힘', async () => {
+  const calls = mockFetch([]);
+  await assert.rejects(PROVIDERS.gemini.test({ apiKey: ' ', model: 'm' }), (e) =>
+    e.stage === 0 && e.steps.length === 3 && /^Gemini 연결 1단계\(키와 모델 입력\)에서 막혔습니다\. API 키가 없습니다/.test(e.message) && e.steps[1].ok === null
+  );
+  await assert.rejects(PROVIDERS.nim.test({ apiKey: 'nv', model: '', baseUrl: 'http://localhost:9/v1' }), (e) =>
+    e.stage === 0 && /^NVIDIA NIM 연결 1단계/.test(e.message) && /모델을 고르지 않았습니다/.test(e.message)
+  );
+  assert.equal(calls.length, 0);
+});
+
+test('API 키 연결 확인: 키를 거절하면 2단계, 키는 받았지만 답을 못 받으면 3단계', async () => {
+  mockFetch([{ status: 400, body: { error: { message: 'API key not valid', status: 'INVALID_ARGUMENT' } } }]);
+  await assert.rejects(PROVIDERS.gemini.test({ apiKey: 'bad', model: 'm' }), (e) =>
+    e.stage === 1 && e.steps[0].ok === true && e.steps[1].ok === false && /2단계\(서버 연결·키 확인\).*API 키가 올바르지 않습니다/.test(e.message)
+  );
+  mockFetch([{ status: 404, body: {} }]);
+  await assert.rejects(PROVIDERS.nim.test({ apiKey: 'nv', model: 'x', baseUrl: 'http://localhost:9/v1' }), (e) =>
+    e.stage === 2 && e.steps[1].ok === true && /3단계\(모델 요청\).*모델이나 API 주소를 찾지 못했습니다/.test(e.message) && !RAW_ERROR.test(e.message)
+  );
+});
+
+test('API 키 연결 확인: 서버에 닿지 못하면 2단계, 모두 되면 세 단계 모두 됨', async () => {
+  globalThis.fetch = async () => {
+    throw new TypeError('Failed to fetch');
+  };
+  await assert.rejects(PROVIDERS.gemini.test({ apiKey: 'k', model: 'm' }), (e) => e.stage === 1 && /서버에 연결하지 못했습니다/.test(e.message));
+  mockFetch([{ body: { candidates: [{ content: { parts: [{ text: 'OK' }] } }] } }]);
+  const result = await PROVIDERS.gemini.test({ apiKey: 'k', model: 'm' });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.steps.map((s) => s.ok), [true, true, true]);
+  assert.match(result.message, /^Gemini 연결에 성공했습니다/);
+});
