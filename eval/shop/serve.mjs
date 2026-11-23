@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // 주소 앞부분 → 내려줄 폴더
-const ROOTS = { '/shop/': ROOT, '/mall/': path.resolve(ROOT, '../mall'), '/guide/': path.resolve(ROOT, '../guide'), '/info/': path.resolve(ROOT, '../info') };
+const ROOTS = { '/shop/': ROOT, '/mall/': path.resolve(ROOT, '../mall'), '/guide/': path.resolve(ROOT, '../guide'), '/info/': path.resolve(ROOT, '../info'), '/present/': path.resolve(ROOT, '../present') };
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',

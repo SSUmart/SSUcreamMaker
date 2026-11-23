@@ -1,0 +1,155 @@
+/* 발표 자료. 색·글꼴은 설치 가이드(../guide/guide.css)를 그대로 쓰고, 여기서는 16:9 슬라이드 배치만 정한다 */
+html, body { height: 100%; }
+body.deck { margin: 0; display: grid; place-items: center; overflow: hidden; }
+
+/* 화면에 맞는 가장 큰 16:9 무대. 글자 크기는 무대 폭(cqw) 기준이라 창 크기와 함께 커지고 작아진다 */
+.stage {
+  position: relative;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 6cqh 6cqw 9cqh;
+  font-size: 1.75cqw; line-height: 1.55;
+}
+.slide[hidden] { display: none; }
+.slide h2 { margin: 0 0 3cqh; font-size: 3.2cqw; line-height: 1.25; font-weight: 900; }
+.slide h2 .no { color: var(--accent); margin-right: 1.2cqw; }
+.slide p { margin: 0 0 1.5cqh; }
+.muted { color: var(--muted); }
+.todo { color: var(--muted); font-style: italic; }
+
+/* 1. 표지 */
+.cover { justify-content: center; background: linear-gradient(180deg, rgba(255, 122, 26, 0.12), transparent 70%); }
+.cover .kicker { font-size: 1.4cqw; }
+.cover h1 { margin: 0 0 3cqh; font-size: 4.6cqw; line-height: 1.25; }
+.cover .lead { font-size: 2cqw; margin: 0; }
+.cover .meta { margin-top: 6cqh; font-size: 1.5cqw; color: var(--muted); }
+
+/* 2. 목차: 왼쪽 그림 판, 오른쪽 목록. 그림이 어두운 바탕이라 왼쪽 판은 밝은 테마에서도 어둡게 둔다 */
+.toc-slide { flex-direction: row; padding: 0; }
+.toc-side { position: relative; flex: 0 0 35.5%; background: #0e1014; overflow: hidden; }
+.toc-side img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; }
+.toc-side h2 { position: relative; margin: 0; padding: 7cqh 0 0 4cqw; color: #fff; font-size: 4.6cqw; letter-spacing: -0.02em; }
+.toc-main { flex: 1; display: flex; align-items: center; padding: 0 8cqw 0 10cqw; }
+.toc-list { list-style: none; margin: 0; padding: 0; width: 100%; }
+.toc-list > li { margin-bottom: 3.2cqh; }
+.toc-list a, .toc-head { display: flex; align-items: baseline; color: var(--text); text-decoration: none; font-size: 2.2cqw; font-weight: 700; }
+.toc-list a:hover { color: var(--accent); }
+.toc-list .no { flex: none; width: 4.5cqw; color: var(--accent); }
+.toc-list .pg { margin-left: auto; color: var(--muted); font-size: 1.7cqw; font-weight: 400; }
+.toc-list .pg::before { content: "-- "; }
+.toc-list ul { list-style: disc; margin: 1.2cqh 0 0; padding-left: 6.5cqw; color: var(--muted); }
+.toc-list ul li { margin-bottom: 0.8cqh; }
+.toc-list ul a { font-size: 1.7cqw; font-weight: 400; }
+
+/* 카드 묶음 */
+.cols { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 2.4cqw; flex: 1; min-height: 0; }
+.box { background: var(--panel2); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 2.4cqh 2cqw; min-height: 0; }
+.box h3 { margin: 0 0 1.5cqh; font-size: 2.1cqw; color: var(--accent2); }
+.box ul { margin: 0; padding-left: 2.2cqw; }
+.box li { margin-bottom: 0.8cqh; }
+.stat { font-size: 3.6cqw; font-weight: 900; color: var(--accent); line-height: 1.1; }
+
+/* 표: 가이드의 .table-wrap 모양에 글자 크기만 무대 기준으로 */
+.slide .table-wrap { margin: 0; flex: 0 1 auto; min-height: 0; overflow: auto; }
+.slide .table-wrap table { font-size: 1.4cqw; }
+.slide .table-wrap th, .slide .table-wrap td { padding: 0.9cqh 1cqw; }
+.slide .table-wrap thead th { font-size: 1.3cqw; }
+.slide .table-wrap td.n { text-align: center; white-space: nowrap; }
+.slide .note { margin-top: 1.5cqh; font-size: 1.3cqw; color: var(--muted); }
+
+/* 9. Q&A */
+.qna { justify-content: center; align-items: center; text-align: center; }
+.qna h2 { font-size: 8cqw; color: var(--accent); margin-bottom: 2cqh; }
+
+/* 넘기기 단추와 쪽 번호 */
+.nav { position: absolute; right: 2cqw; bottom: 2cqh; display: flex; align-items: center; gap: 1cqw; font-size: 1.3cqw; color: var(--muted); }
+.nav button { font: inherit; cursor: pointer; padding: 0.6cqh 1.4cqw; border-radius: 0.8cqw; border: 1px solid var(--line); background: var(--panel2); color: var(--text); }
+.nav button:disabled { opacity: 0.35; cursor: default; }
+
+
+/* 5·6. 결과 표: 응답자별 점수 칸, 평균 강조, 맨 아래 응답자 평균 */
+.slide .result thead th:nth-child(n+3) { text-align: center; }
+.slide .result tfoot th, .slide .result tfoot td { padding: 0.9cqh 1cqw; border-top: 2px solid var(--line); background: var(--panel2); }
+.slide .result tfoot th { text-align: left; }
+.hi, .slide td.hi { color: var(--ok); }
+.lo, .slide td.lo { color: var(--warn); }
+.who { display: inline-block; margin-left: 0.6cqw; padding: 0 0.8cqw; border-radius: 99px; background: var(--accent); color: #111; font-size: 1.1cqw; font-weight: 700; vertical-align: 0.15em; }
+.slide .fb td { vertical-align: middle; }
+.slide table.fb { font-size: 1.3cqw; }
+.slide .fb td { vertical-align: top; }
+.slide .fb ul { margin: 0; padding-left: 1.4cqw; }
+.slide .fb li { margin: 0; }
+.slide .fb th:nth-child(3), .slide .fb td:nth-child(3) { background: color-mix(in srgb, var(--ok) 7%, transparent); }
+
+/* 아이콘(Codex로 만든 둥근 정사각형 그림) */
+.ic { flex: none; width: 4.2cqw; height: 4.2cqw; border-radius: 22%; }
+.ic.big { width: 9cqw; height: 9cqw; }
+
+/* 3. POC 타겟 선정: 사람 카드 두 장 + 오른쪽 장소·환경·진행 방식 */
+.target { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr 0.95fr; gap: 1.8cqw; }
+.who-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 2.6cqh 1.8cqw; display: flex; flex-direction: column; gap: 3cqh; }
+.who-top { display: flex; align-items: center; gap: 1.6cqw; }
+.who-top p { margin: 0; }
+.who-role { font-weight: 700; color: var(--accent2); font-size: 1.6cqw; }
+.who-sub { color: var(--muted); font-size: 1.35cqw; }
+.kw { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.4cqh; }
+.kw li, .fact, .op { display: flex; align-items: center; gap: 1.2cqw; }
+.kw strong, .fact strong, .op strong { display: block; font-size: 1.6cqw; line-height: 1.3; }
+.kw span, .fact span, .op span:not(.who) { display: block; color: var(--muted); font-size: 1.25cqw; line-height: 1.4; }
+.side { display: flex; flex-direction: column; gap: 2cqh; }
+.fact { background: var(--panel2); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.6cqh 1.4cqw; }
+.how { flex: 1; border-left: 0.4cqw solid var(--accent); background: var(--panel2); border-radius: 0 1.2cqw 1.2cqw 0; padding: 1.8cqh 1.6cqw; }
+.slide .how-title { margin: 0 0 1cqh; font-weight: 700; color: var(--accent); font-size: 1.5cqw; }
+.how ol { margin: 0; padding-left: 1.8cqw; font-size: 1.3cqw; line-height: 1.45; }
+.how li { margin-bottom: 1cqh; }
+.how li::marker { color: var(--accent); font-weight: 700; }
+
+/* 7. 기타 의견: 좋았던 점 세 칸, 아래에 불편했던 점·바라는 점 */
+.slide .op-label { margin: 0 0 1.2cqh; font-weight: 700; font-size: 1.5cqw; }
+.op-label.good { color: var(--ok); }
+.op-label.bad { color: var(--warn); }
+.op-label.want { color: var(--accent); }
+.ops { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 1.8cqw; margin-bottom: 3.5cqh; }
+.op { background: var(--panel2); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 2cqh 1.4cqw; }
+.op .ic { width: 6cqw; height: 6cqw; }
+.op .who { margin: 0.8cqh 0 0; }
+/* 3·7장 크기 키우기 */
+.who-card { justify-content: flex-start; gap: 4.5cqh; padding: 3.5cqh 2cqw; }
+.ic.big { width: 10.5cqw; height: 10.5cqw; }
+.who-role { font-size: 1.8cqw; }
+.who-sub { font-size: 1.5cqw; }
+.kw { gap: 4cqh; }
+.kw .ic, .fact .ic { width: 5.6cqw; height: 5.6cqw; }
+.kw strong, .fact strong { font-size: 1.95cqw; }
+.kw span, .fact span { font-size: 1.45cqw; }
+.how ol { font-size: 1.6cqw; line-height: 1.5; }
+.how li { margin-bottom: 1.6cqh; }
+.slide .how-title { font-size: 1.8cqw; }
+.ops { gap: 2.2cqw; margin-bottom: 6cqh; }
+.op { padding: 3.2cqh 1.8cqw; gap: 1.8cqw; }
+.op .ic { width: 8.5cqw; height: 8.5cqw; }
+.op strong { font-size: 2.1cqw; }
+.op span:not(.who) { font-size: 1.5cqw; }
+.slide .op-label { font-size: 1.8cqw; margin-bottom: 1.6cqh; }
+.op .who { font-size: 1.25cqw; margin: 1.2cqh 0 0; }
+.who-role { white-space: nowrap; font-size: 1.6cqw; }
+.slide .notes { list-style: none; padding: 0; margin: 1.5cqh 0 0; line-height: 1.6; }
+.notes strong { color: var(--text); margin-right: 0.8cqw; }
+.thanks { background: linear-gradient(180deg, rgba(255, 122, 26, 0.12), transparent 70%); }
+.thanks h2 { font-size: 5cqw; }
+.how-steps { margin: 0; font-size: 1.5cqw; line-height: 1.45; }
+.how-steps dt { font-size: 1.2cqw; font-weight: 700; color: var(--muted); margin-top: 1.6cqh; }
+.how-steps dt:first-child { margin-top: 0; }
+.how-steps dd { margin: 0.4cqh 0 0; }
+.how-steps dd.was { color: var(--muted); text-decoration: line-through; }
+.how-steps ul { margin: 0; padding-left: 1.6cqw; }
+.how-steps li { margin-bottom: 0.6cqh; }
+.how-steps dd.now { font-weight: 700; color: var(--accent2); }
