@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온글 POC 평가 발표</title>
+<meta name="description" content="실제 POC 대상자와 보호자를 대상으로 알아본 온글 프로젝트 평가 발표 자료입니다.">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../guide/guide.css?v=2">
+<link rel="stylesheet" href="present.css?v=1">
+</head>
+<body class="deck">
+<main class="stage" aria-roledescription="발표 자료">
+
+<!-- 1. 표지 -->
+<section class="slide cover" aria-roledescription="슬라이드" aria-label="1장 표지">
+  <p class="kicker">온글 · AI를 결합한 웹 스크린리더</p>
+  <h1>실제 POC 대상자와 보호자를 대상으로 알아본<br><em>프로젝트 평가</em></h1>
+  <p class="lead">실 사용자와 보호자의 설문으로 본 온글의 현재와 개선 방향</p>
+  <p class="meta">1조 - 백경민, 안용욱, 유원준</p>
+</section>
+
+<!-- 2. 목차 -->
+<section class="slide toc-slide" aria-roledescription="슬라이드" aria-label="2장 목차" hidden>
+  <div class="toc-side">
+    <img src="images/toc-left.jpg" alt="헤드폰으로 스크린리더를 들으며 점자 디스플레이와 키보드로 PC를 쓰는 시각장애인 그림">
+    <h2>Contents</h2>
+  </div>
+  <div class="toc-main">
+    <ol class="toc-list">
+      <li><a href="#3"><span class="no">01</span>POC 타겟 선정<span class="pg" aria-hidden="true">03</span></a></li>
+      <li><a href="#4"><span class="no">02</span>설문 내용<span class="pg" aria-hidden="true">04</span></a></li>
+      <li><span class="toc-head"><span class="no">03</span>설문 결과</span>
+        <ul>
+          <li><a href="#5">실 사용자<span class="pg" aria-hidden="true">05</span></a></li>
+          <li><a href="#6">보호자<span class="pg" aria-hidden="true">06</span></a></li>
+        </ul>
+      </li>
+      <li><a href="#7"><span class="no">04</span>기타 의견<span class="pg" aria-hidden="true">07</span></a></li>
+      <li><a href="#8"><span class="no">05</span>피드백과 개선 필요 항목<span class="pg" aria-hidden="true">08</span></a></li>
+      <li><a href="#9"><span class="no">06</span>Q&amp;A<span class="pg" aria-hidden="true">09</span></a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3. POC 타겟 선정 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="3장 POC 타겟 선정" hidden>
+  <h2><span class="no">01</span>POC 타겟 선정</h2>
+  <div class="target">
+    <div class="who-card">
+      <div class="who-top"><img class="ic big" src="images/icons/elder.jpg" alt=""><div><p class="who-role">실 사용자 · 어르신</p><p class="stat">3명</p><p class="who-sub">70대 2명 · 60대 1명</p></div></div>
+      <ul class="kw">
+        <li><img class="ic" src="images/icons/glasses.jpg" alt=""><div><strong>노안</strong><span>안경을 써도 작은 글씨는 어려움</span></div></li>
+        <li><img class="ic" src="images/icons/screenreader.jpg" alt=""><div><strong>스크린리더 처음</strong><span>시력을 완전히 잃지는 않음</span></div></li>
+      </ul>
+    </div>
+    <div class="who-card">
+      <div class="who-top"><img class="ic big" src="images/icons/caregiver.jpg" alt=""><div><p class="who-role">보호자 · 요양보호사</p><p class="stat">2명</p><p class="who-sub">직접 응답 · 어르신 설문 도움</p></div></div>
+      <ul class="kw">
+        <li><img class="ic" src="images/icons/keyboard.jpg" alt=""><div><strong>먼저 익혀 제공</strong><span>어르신께 드리려고 직접 써 봄</span></div></li>
+        <li><img class="ic" src="images/icons/screenreader.jpg" alt=""><div><strong>센스리더 경험 1명</strong><span>장애인 시설에서 사용을 도움 · 1명은 처음</span></div></li>
+      </ul>
+    </div>
+    <div class="side">
+      <div class="fact"><img class="ic" src="images/icons/care-home.jpg" alt=""><div><strong>평택 민들레요양원</strong><span>설문 장소</span></div></div>
+      <div class="fact"><img class="ic" src="images/icons/laptop.jpg" alt=""><div><strong>Windows 노트북</strong><span>요양보호사 노트북 · 5명 모두</span></div></div>
+      <div class="how">
+        <p class="how-title">진행 방식</p>
+        <dl class="how-steps">
+          <dt>처음 계획</dt>
+          <dd class="was">요양원에 직접 방문해서 진행</dd>
+          <dt>바꾼 이유</dt>
+          <dd><ul><li>날씨가 추워지며<br>독감 등 전염병 위험</li><li>요양원이 면회 등<br>외부 방문을 자제</li></ul></dd>
+          <dt>바꾼 방식</dt>
+          <dd class="now">요양보호사의 도움으로<br>설문 진행</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 설문 내용 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="4장 설문 내용" hidden>
+  <h2><span class="no">02</span>설문 내용</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">영역</th><th scope="col">번호</th><th scope="col">문항 (얼마나 만족하셨나요?)</th></tr></thead>
+      <tbody>
+        <tr><td>시작하기</td><td class="n">1</td><td>온글을 설치하고 기능(API 키 또는 ChatGPT 계정 연결)까지 설정하는 과정</td></tr>
+        <tr><td rowspan="2">읽기와 이동</td><td class="n">2</td><td>평소 이용하는 웹페이지의 글을 빠짐없이, 올바른 순서로 읽어 준 점</td></tr>
+        <tr><td class="n">3</td><td>제목·링크·버튼 등을 한 글자 키(H, K, B 등)로 건너뛰며 원하는 곳을 찾기</td></tr>
+        <tr><td rowspan="3">AI 기능</td><td class="n">4</td><td>상품 상세 이미지 속 글자(가격, 옵션, 주의사항 등)를 읽어 준 결과</td></tr>
+        <tr><td class="n">5</td><td>페이지에 질문했을 때(예: "배송비 얼마야?") 받은 답의 정확도</td></tr>
+        <tr><td class="n">6</td><td>AI 결과가 나올 때까지 기다리는 시간과, 기다리는 동안의 안내</td></tr>
+        <tr><td rowspan="4">실제 사용</td><td class="n">7</td><td>실제 쇼핑몰에서 상품을 찾고 가격, 옵션, 상세 정보를 확인하는 과정</td></tr>
+        <tr><td class="n">8</td><td>다른 사람의 도움 없이 혼자서 원하는 일을 해낼 수 있었던 점</td></tr>
+        <tr><td class="n">9</td><td>온글을 전체적으로 써 본 경험</td></tr>
+        <tr><td class="n">10</td><td>온글을 앞으로도 쓰거나 주변에 추천하고 싶은 정도</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">5점 척도(1 매우 불만족 ~ 5 매우 만족) · 문항마다 이유(선택) · 끝에 "하고 싶은 말" 자유 의견</p>
+</section>
+
+<!-- 5. 설문 결과: 실 사용자 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="5장 설문 결과 실 사용자" hidden>
+  <h2><span class="no">03</span>설문 결과 · 실 사용자 <span class="muted">(어르신 3명)</span></h2>
+  <div class="table-wrap">
+    <table class="result">
+      <thead><tr><th scope="col">영역</th><th scope="col">문항</th><th scope="col">A</th><th scope="col">B</th><th scope="col">C</th><th scope="col">평균</th><th scope="col">만족 비율</th></tr></thead>
+      <tbody>
+        <tr><td>시작하기</td><td>1. 설치와 기능 설정</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n"><strong>3.33</strong></td><td class="n">33%</td></tr>
+        <tr><td rowspan="2">읽기와 이동</td><td>2. 빠짐없이, 올바른 순서로 읽기</td><td class="n">4</td><td class="n">3</td><td class="n">2</td><td class="n lo"><strong>3.00</strong></td><td class="n">33%</td></tr>
+        <tr><td>3. 한 글자 키로 건너뛰며 찾기</td><td class="n">4</td><td class="n">3</td><td class="n">3</td><td class="n"><strong>3.33</strong></td><td class="n">33%</td></tr>
+        <tr><td rowspan="3">AI 기능</td><td>4. 상세 이미지 속 글자 읽기</td><td class="n">5</td><td class="n">4</td><td class="n">3</td><td class="n hi"><strong>4.00</strong></td><td class="n">67%</td></tr>
+        <tr><td>5. 페이지 질문 응답의 정확도</td><td class="n">3</td><td class="n">5</td><td class="n">3</td><td class="n"><strong>3.67</strong></td><td class="n">33%</td></tr>
+        <tr><td>6. AI 결과 기다리는 시간과 안내</td><td class="n">3</td><td class="n">4</td><td class="n">2</td><td class="n lo"><strong>3.00</strong></td><td class="n">33%</td></tr>
+        <tr><td rowspan="4">실제 사용</td><td>7. 실제 쇼핑몰에서 상품 정보 확인</td><td class="n">3</td><td class="n">5</td><td class="n">3</td><td class="n"><strong>3.67</strong></td><td class="n">33%</td></tr>
+        <tr><td>8. 도움 없이 혼자 해내기</td><td class="n">4</td><td class="n">5</td><td class="n">3</td><td class="n hi"><strong>4.00</strong></td><td class="n">67%</td></tr>
+        <tr><td>9. 전체 경험</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n hi"><strong>4.00</strong></td><td class="n">100%</td></tr>
+        <tr><td>10. 계속 쓰거나 추천할 마음</td><td class="n">4</td><td class="n">5</td><td class="n">3</td><td class="n hi"><strong>4.00</strong></td><td class="n">67%</td></tr>
+      </tbody>
+      <tfoot><tr><th scope="row" colspan="2">응답자 평균</th><td class="n">3.70</td><td class="n">4.20</td><td class="n">2.90</td><td class="n"><strong>3.60</strong></td><td class="n">50%</td></tr></tfoot>
+    </table>
+  </div>
+  <p class="note">A·B·C: 어르신 응답자 · 만족 비율: 4점(만족) 이상을 준 응답자 비율 · <span class="hi" aria-hidden="true">■</span> 평균 4점 이상 <span class="lo" aria-hidden="true">■</span> 평균 3점 이하</p>
+</section>
+
+<!-- 6. 설문 결과: 보호자 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="6장 설문 결과 보호자" hidden>
+  <h2><span class="no">03</span>설문 결과 · 보호자 <span class="muted">(요양보호사 2명)</span></h2>
+  <div class="table-wrap">
+    <table class="result">
+      <thead><tr><th scope="col">영역</th><th scope="col">문항</th><th scope="col">D</th><th scope="col">E</th><th scope="col">평균</th><th scope="col">만족 비율</th></tr></thead>
+      <tbody>
+        <tr><td>시작하기</td><td>1. 설치와 기능 설정</td><td class="n">3</td><td class="n">3</td><td class="n lo"><strong>3.00</strong></td><td class="n">0%</td></tr>
+        <tr><td rowspan="2">읽기와 이동</td><td>2. 빠짐없이, 올바른 순서로 읽기</td><td class="n">4</td><td class="n">3</td><td class="n"><strong>3.50</strong></td><td class="n">50%</td></tr>
+        <tr><td>3. 한 글자 키로 건너뛰며 찾기</td><td class="n">4</td><td class="n">3</td><td class="n"><strong>3.50</strong></td><td class="n">50%</td></tr>
+        <tr><td rowspan="3">AI 기능</td><td>4. 상세 이미지 속 글자 읽기</td><td class="n">5</td><td class="n">4</td><td class="n hi"><strong>4.50</strong></td><td class="n">100%</td></tr>
+        <tr><td>5. 페이지 질문 응답의 정확도</td><td class="n">3</td><td class="n">5</td><td class="n hi"><strong>4.00</strong></td><td class="n">50%</td></tr>
+        <tr><td>6. AI 결과 기다리는 시간과 안내</td><td class="n">3</td><td class="n">4</td><td class="n"><strong>3.50</strong></td><td class="n">50%</td></tr>
+        <tr><td rowspan="4">실제 사용</td><td>7. 실제 쇼핑몰에서 상품 정보 확인</td><td class="n">3</td><td class="n">5</td><td class="n hi"><strong>4.00</strong></td><td class="n">50%</td></tr>
+        <tr><td>8. 도움 없이 혼자 해내기</td><td class="n">3</td><td class="n">5</td><td class="n hi"><strong>4.00</strong></td><td class="n">50%</td></tr>
+        <tr><td>9. 전체 경험</td><td class="n">4</td><td class="n">4</td><td class="n hi"><strong>4.00</strong></td><td class="n">100%</td></tr>
+        <tr><td>10. 계속 쓰거나 추천할 마음</td><td class="n">3</td><td class="n">5</td><td class="n hi"><strong>4.00</strong></td><td class="n">50%</td></tr>
+      </tbody>
+      <tfoot><tr><th scope="row" colspan="2">응답자 평균</th><td class="n">3.50</td><td class="n">4.10</td><td class="n"><strong>3.80</strong></td><td class="n">55%</td></tr></tfoot>
+    </table>
+  </div>
+  <p class="note">D·E: 요양보호사 응답자 · 어르신께 제공하기 위해 직접 써 보며 기능을 익힌 경험 기준 · <span class="hi" aria-hidden="true">■</span> 평균 4점 이상 <span class="lo" aria-hidden="true">■</span> 평균 3점 이하</p>
+</section>
+
+<!-- 7. 기타 의견 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="7장 기타 의견" hidden>
+  <h2><span class="no">04</span>기타 의견 <span class="muted">(총합)</span></h2>
+  <p class="op-label good">좋았던 점</p>
+  <div class="ops" style="--n: 3">
+    <div class="op"><img class="ic" src="images/icons/keyboard.jpg" alt=""><div><strong>단축키 제공</strong><span class="who">어르신</span></div></div>
+    <div class="op"><img class="ic" src="images/icons/low-cost.jpg" alt=""><div><strong>적은 비용으로 시설에 제공</strong><span class="who">요양보호사</span></div></div>
+    <div class="op"><img class="ic" src="images/icons/search-qa.jpg" alt=""><div><strong>질문·항목 찾기</strong><span>웹이 어려운<br>어르신에게 유용</span><span class="who">요양보호사</span></div></div>
+  </div>
+  <div class="ops two">
+    <div><p class="op-label bad">불편했던 점</p>
+      <div class="op"><img class="ic" src="images/icons/keyboard.jpg" alt=""><div><strong>단축키가 낯섦</strong><span>컴퓨터 환경이 익숙하지 않음</span><span class="who">어르신</span></div></div></div>
+    <div><p class="op-label want">바라는 점</p>
+      <div class="op"><img class="ic" src="images/icons/voice.jpg" alt=""><div><strong>음성 바꾸기</strong><span>지금 음성은 딱딱함</span><span class="who">어르신</span></div></div></div>
+  </div>
+</section>
+
+<!-- 8. 피드백과 개선 필요 항목 -->
+<section class="slide" aria-roledescription="슬라이드" aria-label="8장 피드백과 개선 필요 항목" hidden>
+  <h2><span class="no">05</span>피드백과 개선 필요 항목</h2>
+  <div class="table-wrap">
+    <table class="fb">
+      <thead><tr><th scope="col">순위</th><th scope="col">피드백 · 점수</th><th scope="col">이미 한 것 <span class="muted">(26.4.0까지)</span></th><th scope="col">앞으로 할 것</th></tr></thead>
+      <tbody>
+        <tr><td class="n"><strong>1</strong></td><td><strong>음성이 딱딱함</strong> <span class="who">어르신 의견</span><br><span class="muted">2. 읽기 순서</span> <strong class="lo">3.20</strong></td>
+          <td><ul><li>설정에서 한국어 음성·읽기 속도 선택</li><li>평가용 쇼핑몰 읽기 순서 정답과 162/162 일치</li></ul></td>
+          <td><ul><li>더 자연스러운 음성 추가</li><li>음성 설정을 찾기 쉽게</li><li>실제 사이트 읽기 순서 보강</li></ul></td></tr>
+        <tr><td class="n"><strong>2</strong></td><td><strong>설치·설정이 어려움</strong><br><span class="muted">1. 설치와 기능 설정</span> <strong class="lo">3.20</strong> <span class="muted">· 5명 중 1명 만족</span></td>
+          <td><ul><li>연결 프로그램까지 담은 통합 설치 파일</li><li>단계별 설치 가이드</li><li>연결 확인에서 막힌 단계와 해결 방법 안내</li></ul></td>
+          <td><ul><li>개발자 모드 없이 설치(웹스토어 배포 검토)</li><li>시설 담당자용 간단 설치 안내</li></ul></td></tr>
+        <tr><td class="n"><strong>3</strong></td><td><strong>AI 결과 대기</strong><br><span class="muted">6. 기다리는 시간과 안내</span> <strong class="lo">3.20</strong> <span class="muted">· 5명 중 2명 만족</span></td>
+          <td><ul><li>"요약하는 중입니다" 등 대기 안내</li><li>상세 이미지까지 찾을 때 진행 상황 안내</li><li>한 번 읽은 상세 이미지는 다시 쓰기</li></ul></td>
+          <td><ul><li>응답 시간 단축</li><li>얼마나 남았는지 알려 주기</li></ul></td></tr>
+        <tr><td class="n"><strong>4</strong></td><td><strong>단축키가 어려움</strong> <span class="who">어르신 의견</span><br><span class="muted">3. 한 글자 키 이동</span> <strong>3.40</strong></td>
+          <td><ul><li>온글 메뉴에서 목록으로 기능 고르기</li><li>온글 연습(5단계, 3분)</li><li>그 자리에서 쓸 키 안내</li></ul></td>
+          <td><ul><li>키 몇 개만 쓰는 쉬운 모드</li><li>컴퓨터가 낯선 분을 위한 연습 과정</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="note notes">
+    <li><strong>점수</strong> 응답자 5명(어르신 3명, 요양보호사 2명) 통합 평균</li>
+    <li><strong>순위</strong> 점수가 낮은 순 (같으면 의견이 함께 나온 항목, 그다음 만족 비율이 낮은 항목)</li>
+    <li><strong>유지할 강점</strong> 상세 이미지 속 글자 읽기 4.20, 도움 없이 혼자 해내기·전체 경험·추천 4.00</li>
+  </ul>
+</section>
+
+<!-- 9. Q&A -->
+<section class="slide qna" aria-roledescription="슬라이드" aria-label="9장 Q&amp;A" hidden>
+  <h2>Q&amp;A</h2>
+</section>
+
+<!-- 10. 마무리 -->
+<section class="slide qna thanks" aria-roledescription="슬라이드" aria-label="10장 마무리" hidden>
+  <h2>들어 주셔서 감사합니다</h2>
+</section>
+
+<div class="nav">
+  <button type="button" id="prev" aria-label="이전 장">‹</button>
+  <span id="count" aria-hidden="true"></span>
+  <button type="button" id="next" aria-label="다음 장">›</button>
+</div>
+<p id="live" class="sr-only" aria-live="polite"></p>
+</main>
+<script src="present.js?v=1"></script>
+</body>
+</html>

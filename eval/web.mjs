@@ -3,6 +3,7 @@
 //   (평가용 쇼핑몰 /shop/ 페이지는 평가 도구 전용이라 여기서는 내려주지 않는다. 온글몰이 다시 쓰는 /shop/images/만 내려준다)
 //   /guide/  온글 설치 가이드 (ChatGPT 계정 연결까지, 사용자에게 주는 페이지)
 //   /info/   온글 프로젝트에서 확인한 디지털미디어 원리를 나누는 공유 페이지
+//   /present/ POC 대상자·보호자 설문 평가 발표 자료 (16:9, 한 장씩 넘김)
 //   /survey/ 평가 설문 (관리자 /survey/admin, 응답 링크 /survey/s/<토큰>, 결과 페이지 /survey/result-<순번>). SURVEY_ADMIN_PASSWORD가 있을 때만 켠다
 //
 // 실행 (eval 폴더에서): SURVEY_ADMIN_PASSWORD=<비밀번호> npm run web
@@ -26,7 +27,7 @@ export function createWebServer({ start = '/mall/', survey } = {}) {
       return res.end();
     }
     // 끝의 / 없이 들어오면 붙여 준다 (가이드·공유 페이지의 그림 주소가 상대 경로라서)
-    if (pathname === '/guide' || pathname === '/info') {
+    if (pathname === '/guide' || pathname === '/info' || pathname === '/present') {
       res.writeHead(301, { location: `${pathname}/` });
       return res.end();
     }
